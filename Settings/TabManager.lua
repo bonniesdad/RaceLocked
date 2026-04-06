@@ -2,13 +2,14 @@
 local TAB_WIDTH = 107
 local TAB_HEIGHT = 32
 local TAB_SPACING = 3
-local TAB_COUNT = 3
+local TAB_COUNT = 4
 local TEXTURE_PATH = 'Interface\\AddOns\\GuildWars\\Textures'
 
 local TAB_WIDTHS = {
   [1] = TAB_WIDTH,
   [2] = TAB_WIDTH,
   [3] = TAB_WIDTH,
+  [4] = 132,
 }
 
 local BASE_TEXT_COLOR = {
@@ -107,10 +108,12 @@ function RaceWars_InitializeTabs(settingsFrame)
   tabButtons[1] = createTabButton('Xaryu', 1, settingsFrame)
   tabButtons[2] = createTabButton('Pikaboo', 2, settingsFrame)
   tabButtons[3] = createTabButton('Settings', 3, settingsFrame)
+  tabButtons[4] = createTabButton('Points Explained', 4, settingsFrame)
 
   tabContents[1] = createTabContent(1, settingsFrame)
   tabContents[2] = createTabContent(2, settingsFrame)
   tabContents[3] = createTabContent(3, settingsFrame)
+  tabContents[4] = createTabContent(4, settingsFrame)
 end
 
 function RaceWars_SwitchToTab(index)
@@ -167,6 +170,9 @@ function RaceWars_SwitchToTab(index)
   if index >= 1 and index <= 2 and RaceWars_InitializeGuildLeaderboardTab then
     RaceWars_InitializeGuildLeaderboardTab(tabContents, index)
   end
+  if index == 4 and RaceWars_InitializePointsExplainedTab then
+    RaceWars_InitializePointsExplainedTab(tabContents, index)
+  end
 end
 
 function RaceWars_SetDefaultTab()
@@ -174,14 +180,11 @@ function RaceWars_SetDefaultTab()
   if RaceWarsDB and RaceWarsDB.lastOpenedSettingsTab then
     local saved = RaceWarsDB.lastOpenedSettingsTab
     if type(saved) == 'number' then
-      -- Legacy: Settings was tab 2 before guild tabs were split out.
-      if saved == 2 and TAB_COUNT >= 5 then
-        saved = 5
-      end
-      -- Legacy: five-tab layout (four guilds + Settings); drop removed guild tabs.
+      -- Legacy: five-tab layout used Settings on tab 5.
       if saved == 5 then
         saved = 3
-      elseif saved == 3 or saved == 4 then
+      end
+      if saved < 1 or saved > TAB_COUNT then
         saved = 1
       end
       if saved >= 1 and saved <= TAB_COUNT and tabContents[saved] then

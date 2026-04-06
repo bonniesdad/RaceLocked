@@ -10,6 +10,39 @@ RaceWars_MOCK_SLAIN_MAX = 4
 -- Mock rivals defeated stays separate so slain can use a lower cap.
 RaceWars_MOCK_DEFEATED_MAX = 10
 
+-- Next guild war (both tabs: same event). **Update these three each month.**
+-- Always 4:00 PM server time; do not change the hour in code unless the schedule changes.
+RaceWars_NEXT_FIGHT_SERVER_YEAR = 2026
+RaceWars_NEXT_FIGHT_SERVER_MONTH = 4
+RaceWars_NEXT_FIGHT_SERVER_DAY = 1
+RaceWars_NEXT_FIGHT_SERVER_HOUR = 16 -- 4 PM server; change only if schedule changes
+
+function RaceWars_GetNextFightUnix()
+  if not time then
+    return 0
+  end
+  local u = time({
+    year = RaceWars_NEXT_FIGHT_SERVER_YEAR,
+    month = RaceWars_NEXT_FIGHT_SERVER_MONTH,
+    day = RaceWars_NEXT_FIGHT_SERVER_DAY,
+    hour = RaceWars_NEXT_FIGHT_SERVER_HOUR,
+    min = 0,
+    sec = 0,
+    isdst = -1,
+  })
+  return u or 0
+end
+
+function RaceWars_FormatNextFightLocal(unix)
+  if not unix or unix <= 0 then
+    return 'TBD'
+  end
+  if date then
+    return date('%a %b %d, %I:%M %p', unix) .. ' Server'
+  end
+  return tostring(unix)
+end
+
 function RaceWars_GetPlayerAchievementPoints()
   -- Classic Era: wire to real achievement points when available
   return 3460
@@ -22,9 +55,6 @@ end
 
 function RaceWars_GetPlayerLeaderboardRow()
   local name = UnitName and UnitName('player')
-  if not name or name == '' then
-    name = RaceWars_LOCAL_PLAYER_NAME
-  end
   local level = UnitLevel and UnitLevel('player')
   if not level or level < 1 then
     level = 1
@@ -34,7 +64,6 @@ function RaceWars_GetPlayerLeaderboardRow()
     name = name,
     level = level,
     achievementPoints = RaceWars_GetPlayerAchievementPoints(),
-    rivalsDefeated = 0,
     slainOrc = o,
     slainTauren = ta,
     slainTroll = tr,
@@ -53,15 +82,36 @@ function RaceWars_GetLeaderboardEntryTotalSlain(e)
     + (e.slainUndead or 0)
 end
 
---- Rivals defeated (UI column); uses `rivalsDefeated` when set, else scales achievement points for legacy rows.
+--- Rivals defeated total for sorting/aggregates; missing or invalid counts as 0 (no achievement fallback).
 function RaceWars_GetLeaderboardEntryRivalsDefeated(e)
-  if not e then
+  if not e or e.rivalsDefeated == nil then
     return 0
   end
-  if e.rivalsDefeated ~= nil then
-    return e.rivalsDefeated
+  local n = e.rivalsDefeated
+  if type(n) ~= 'number' then
+    return 0
   end
-  return math.floor((e.achievementPoints or 0) / 100)
+  return n
+end
+
+--- Leaderboard cell: show a count only when `rivalsDefeated` is a positive number; otherwise "-".
+function RaceWars_FormatRivalsDefeatedCell(e)
+  if not e or e.rivalsDefeated == nil then
+    return '-'
+  end
+  local n = e.rivalsDefeated
+  if type(n) ~= 'number' or n <= 0 then
+    return '-'
+  end
+  return tostring(n)
+end
+
+function RaceWars_FormatRivalsDefeatedCount(n)
+  n = tonumber(n)
+  if not n or n <= 0 then
+    return '-'
+  end
+  return tostring(n)
 end
 
 local function leaderboardCompare(a, b)
@@ -79,49 +129,49 @@ local function leaderboardCompare(a, b)
 end
 
 local XARYU_LEADERBOARD_MOCK = {
-  { name = 'Moodoom', achievementPoints = 12450, level = 40 },
-  { name = 'Holsteinius', achievementPoints = 11820, level = 38 },
-  { name = 'Moolificent', achievementPoints = 11590, level = 36 },
-  { name = 'Uddermadness', achievementPoints = 11240, level = 34 },
-  { name = 'Grazemaster', achievementPoints = 10980, level = 32 },
-  { name = 'Cudrunner', achievementPoints = 10620, level = 30 },
-  { name = 'Mooviestar', achievementPoints = 10350, level = 28 },
-  { name = 'Heiferzen', achievementPoints = 10110, level = 26 },
-  { name = 'Angusmoo', achievementPoints = 9870, level = 24 },
-  { name = 'Butterhoof', achievementPoints = 9640, level = 22 },
-  { name = 'Moominator', achievementPoints = 9420, level = 18 },
-  { name = 'Pasturelord', achievementPoints = 9190, level = 16 },
-  { name = 'Haybelle', achievementPoints = 8960, level = 14 },
-  { name = 'Tippercow', achievementPoints = 8740, level = 12 },
-  { name = 'Steermug', achievementPoints = 8510, level = 10 },
-  { name = 'Dairyknight', achievementPoints = 8290, level = 8 },
-  { name = 'Moomaid', achievementPoints = 8070, level = 6 },
-  { name = 'Cowculator', achievementPoints = 7860, level = 4 },
-  { name = 'Ruminaunt', achievementPoints = 7640, level = 2 },
-  { name = 'Bessiemoot', achievementPoints = 7420, level = 1 },
+  { name = 'Xaryu', achievementPoints = 12450, level = 40 },
+  { name = 'Xaryuu', achievementPoints = 11820, level = 38 },
+  { name = 'Xaaryu', achievementPoints = 11590, level = 36 },
+  { name = 'Xairyu', achievementPoints = 11240, level = 34 },
+  { name = 'Zaryu', achievementPoints = 10980, level = 32 },
+  { name = 'Sharyu', achievementPoints = 10620, level = 30 },
+  { name = 'Waryu', achievementPoints = 10350, level = 28 },
+  { name = 'Xaryuuu', achievementPoints = 10110, level = 26 },
+  { name = 'Exaryu', achievementPoints = 9870, level = 24 },
+  { name = 'Xaryous', achievementPoints = 9640, level = 22 },
+  { name = 'Xaryue', achievementPoints = 9420, level = 18 },
+  { name = 'Notxaryu', achievementPoints = 9190, level = 16 },
+  { name = 'Xaryude', achievementPoints = 8960, level = 14 },
+  { name = 'Bigxaryu', achievementPoints = 8740, level = 12 },
+  { name = 'Lilxaryu', achievementPoints = 8510, level = 10 },
+  { name = 'Xaryumage', achievementPoints = 8290, level = 8 },
+  { name = 'Xaryubank', achievementPoints = 8070, level = 6 },
+  { name = 'Xaryudot', achievementPoints = 7860, level = 4 },
+  { name = 'Zaryuu', achievementPoints = 7640, level = 2 },
+  { name = 'Xaryo', achievementPoints = 7420, level = 1 },
 }
 
 local PIKABOO_LEADERBOARD_MOCK = {
-  { name = 'Zaryu', achievementPoints = 4120, level = 40 },
-  { name = 'Xaryuu', achievementPoints = 3950, level = 38 },
-  { name = 'Xaaryu', achievementPoints = 3780, level = 36 },
-  { name = 'Xairyu', achievementPoints = 3610, level = 34 },
-  { name = 'Sharyu', achievementPoints = 3450, level = 32 },
-  { name = 'Waryu', achievementPoints = 3290, level = 30 },
-  { name = 'Xaryuuu', achievementPoints = 3140, level = 28 },
-  { name = 'Exaryu', achievementPoints = 2990, level = 26 },
-  { name = 'Xaryous', achievementPoints = 2840, level = 24 },
-  { name = 'Xaryue', achievementPoints = 2700, level = 22 },
-  { name = 'Notxaryu', achievementPoints = 2560, level = 20 },
-  { name = 'Xaryude', achievementPoints = 2430, level = 18 },
-  { name = 'Bigxaryu', achievementPoints = 2300, level = 16 },
-  { name = 'Lilxaryu', achievementPoints = 2180, level = 14 },
-  { name = 'Xaryumage', achievementPoints = 2060, level = 12 },
-  { name = 'Xaryubank', achievementPoints = 1950, level = 10 },
-  { name = 'Xaryudot', achievementPoints = 1840, level = 8 },
-  { name = 'Zaryuu', achievementPoints = 1730, level = 6 },
-  { name = 'Xaryuss', achievementPoints = 1620, level = 4 },
-  { name = 'Xaryo', achievementPoints = 1520, level = 1 },
+  { name = 'Pikaboo', achievementPoints = 4120, level = 40 },
+  { name = 'Peekaboo', achievementPoints = 3950, level = 38 },
+  { name = 'Pookaboo', achievementPoints = 3780, level = 36 },
+  { name = 'Pikabo', achievementPoints = 3610, level = 34 },
+  { name = 'Boocifer', achievementPoints = 3450, level = 32 },
+  { name = 'Lilpika', achievementPoints = 3290, level = 30 },
+  { name = 'Spookaboo', achievementPoints = 3140, level = 28 },
+  { name = 'Pikaro', achievementPoints = 2990, level = 26 },
+  { name = 'Tabooey', achievementPoints = 2840, level = 24 },
+  { name = 'Booberry', achievementPoints = 2700, level = 22 },
+  { name = 'Pikastab', achievementPoints = 2560, level = 20 },
+  { name = 'Boosterboo', achievementPoints = 2430, level = 18 },
+  { name = 'Pikawar', achievementPoints = 2300, level = 16 },
+  { name = 'Boonana', achievementPoints = 2180, level = 14 },
+  { name = 'Pikabloke', achievementPoints = 2060, level = 12 },
+  { name = 'Boohoops', achievementPoints = 1950, level = 10 },
+  { name = 'Pikanto', achievementPoints = 1840, level = 8 },
+  { name = 'Boogaloo', achievementPoints = 1730, level = 6 },
+  { name = 'Pikabolt', achievementPoints = 1620, level = 4 },
+  { name = 'Peekabooya', achievementPoints = 1520, level = 1 },
 }
 
 --- Per-race slain fields sum to `total` in 0..RaceWars_MOCK_SLAIN_MAX (rivals slain column).

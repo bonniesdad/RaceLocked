@@ -38,8 +38,8 @@ local RACE_CHIP_ICON_GAP = 4
 local NAME_COL_SHRINK = 20
 local NAME_TO_LEVEL_SHIFT = 20
 local NAME_TO_TOTAL_SHIFT = 5
-local GUILD_STATS_CARD_HEIGHT = 118
-local GUILD_STATS_TOP_OFFSET = -28
+local GUILD_STATS_CARD_HEIGHT = 148
+local GUILD_STATS_TOP_OFFSET = -10
 local GUILD_STATS_TO_TABLE_GAP = 16
 local GUILD_STATS_CARD_PAD = 10
 local PANEL_BACKDROP = {
@@ -51,16 +51,7 @@ local PANEL_BACKDROP = {
   insets = { left = 3, right = 3, top = 3, bottom = 3 },
 }
 
-local function createSectionTitle(parent, text)
-  local fs = parent:CreateFontString(nil, 'OVERLAY', 'GameFontNormalLarge')
-  fs:SetPoint('TOP', parent, 'TOP', 0, -6)
-  fs:SetText(text)
-  fs:SetTextColor(0.98, 0.82, 0.35)
-  fs:SetJustifyH('CENTER')
-  return fs
-end
-
-local function createLeaderboardPanel(parent, titleText, rows, rowTint, panelWidth, anchorSide)
+local function createLeaderboardPanel(parent, rows, rowTint, panelWidth, anchorSide)
   local panel = CreateFrame('Frame', nil, parent, 'BackdropTemplate')
   panel:SetBackdrop(PANEL_BACKDROP)
   panel:SetBackdropColor(0.06, 0.05, 0.05, 0.92)
@@ -78,8 +69,6 @@ local function createLeaderboardPanel(parent, titleText, rows, rowTint, panelWid
     panel:SetPoint('TOPRIGHT', parent, 'TOPRIGHT', 0, 0)
     panel:SetPoint('BOTTOMRIGHT', parent, 'BOTTOMRIGHT', 0, 0)
   end
-
-  createSectionTitle(panel, titleText)
 
   local tableTopY = GUILD_STATS_TOP_OFFSET - GUILD_STATS_CARD_HEIGHT - GUILD_STATS_TO_TABLE_GAP
   local tableTop = CreateFrame('Frame', nil, panel)
@@ -101,6 +90,10 @@ local function createLeaderboardPanel(parent, titleText, rows, rowTint, panelWid
   local visibleSlain = {}
   for s = 1, #SLAIN_COLUMNS do
     visibleSlain[#visibleSlain + 1] = SLAIN_COLUMNS[s]
+  end
+
+  if RaceWars_SortLeaderboardInPlace then
+    RaceWars_SortLeaderboardInPlace(rows)
   end
 
   local RIVALS_LABEL_DEFEATED = 'Rivals Defeated'
@@ -213,14 +206,37 @@ local function createLeaderboardPanel(parent, titleText, rows, rowTint, panelWid
 
     local insetL = 12 + GUILD_STATS_CARD_PAD
 
+    local topName = rows[1] and rows[1].name
+    if not topName or topName == '' then
+      topName = '—'
+    end
+
+    local championFs = card:CreateFontString(nil, 'OVERLAY', 'GameFontHighlightSmall')
+    championFs:SetPoint('TOPLEFT', card, 'TOPLEFT', insetL, -GUILD_STATS_CARD_PAD - 2)
+    championFs:SetText('Champion: ' .. tostring(topName))
+    championFs:SetTextColor(0.98, 0.86, 0.42)
+
+    local nextFightUnix = RaceWars_GetNextFightUnix and RaceWars_GetNextFightUnix()
+    local nextFightStr = (RaceWars_FormatNextFightLocal and RaceWars_FormatNextFightLocal(nextFightUnix)) or 'TBD'
+    local nextFightFs = card:CreateFontString(nil, 'OVERLAY', 'GameFontNormalSmall')
+    nextFightFs:SetPoint('TOPLEFT', championFs, 'BOTTOMLEFT', 0, -4)
+    nextFightFs:SetText('Next Fight: ' .. nextFightStr)
+    nextFightFs:SetTextColor(0.65, 0.72, 0.68)
+
     local eyebrow = card:CreateFontString(nil, 'OVERLAY', 'GameFontNormalSmall')
-    eyebrow:SetPoint('TOPLEFT', card, 'TOPLEFT', insetL, -GUILD_STATS_CARD_PAD - 2)
+    eyebrow:SetPoint('TOPLEFT', nextFightFs, 'BOTTOMLEFT', 0, -10)
     eyebrow:SetText('Rivals by race (Orc, Tauren, Troll, Undead)')
     eyebrow:SetTextColor(0.55, 0.6, 0.52)
 
     local totalNum = card:CreateFontString(nil, 'OVERLAY', 'GameFontHighlightLarge')
     totalNum:SetPoint('TOPLEFT', eyebrow, 'BOTTOMLEFT', 0, -4)
-    totalNum:SetText(string.format('Defeated: %d   Slain: %d', sumGuildRivalsDefeated, sumRowTotals))
+    totalNum:SetText(
+      string.format(
+        'Defeated: %s   Slain: %d',
+        RaceWars_FormatRivalsDefeatedCount(sumGuildRivalsDefeated),
+        sumRowTotals
+      )
+    )
     totalNum:SetTextColor(0.98, 0.84, 0.4)
 
     local cardInnerW = math.max(120, tableInnerWidth - insetL - GUILD_STATS_CARD_PAD)
@@ -284,7 +300,7 @@ local function createLeaderboardPanel(parent, titleText, rows, rowTint, panelWid
       cvDef:SetPoint('TOPLEFT', cl, 'BOTTOMLEFT', 0, -2)
       cvDef:SetWidth(textW)
       cvDef:SetJustifyH('LEFT')
-      cvDef:SetText('Defeated: ' .. tostring(sumDefBySlainKey[col.key] or 0))
+      cvDef:SetText('Defeated: ' .. RaceWars_FormatRivalsDefeatedCount(sumDefBySlainKey[col.key]))
       cvDef:SetTextColor(0.85, 0.92, 0.8)
 
       local cvSl = chip:CreateFontString(nil, 'OVERLAY', 'GameFontHighlightSmall')
@@ -337,11 +353,6 @@ local function createLeaderboardPanel(parent, titleText, rows, rowTint, panelWid
   hLvl:SetJustifyH('RIGHT')
   hLvl:SetText('Level')
   hLvl:SetTextColor(1, 0.92, 0.62)
-
-  -- rows may already be sorted from RaceWars_GetSortedGuildLeaderboardCopy(); sort is idempotent
-  if RaceWars_SortLeaderboardInPlace then
-    RaceWars_SortLeaderboardInPlace(rows)
-  end
 
   local rowStep = ROW_HEIGHT + ROW_GAP
   local scrollChildHeight = #rows * ROW_HEIGHT + math.max(0, #rows - 1) * ROW_GAP
@@ -413,7 +424,7 @@ local function createLeaderboardPanel(parent, titleText, rows, rowTint, panelWid
     defFs:SetPoint('LEFT', row, 'LEFT', xDef, 0)
     defFs:SetWidth(colDefW)
     defFs:SetJustifyH('LEFT')
-    defFs:SetText(tostring(RaceWars_GetLeaderboardEntryRivalsDefeated(data)))
+    defFs:SetText(RaceWars_FormatRivalsDefeatedCell(data))
     if isLocal then
       defFs:SetTextColor(1, 0.92, 0.55)
     else
@@ -448,12 +459,10 @@ end
 
 local GUILD_LEADERBOARD_TAB_CONFIG = {
   {
-    panelTitle = 'Xaryu',
     guildKey = RaceWars_GUILD_XARYU,
     rowTint = ROW_BG_XARYU,
   },
   {
-    panelTitle = 'Pikaboo',
     guildKey = RaceWars_GUILD_PIKABOO,
     rowTint = ROW_BG_PIKABOO,
   },
@@ -479,5 +488,5 @@ function RaceWars_InitializeGuildLeaderboardTab(tabContents, guildTabIndex)
 
   local innerW = contentW - (PANEL_SIDE_MARGIN * 2)
   local rows = (RaceWars_GetSortedGuildLeaderboardCopy and RaceWars_GetSortedGuildLeaderboardCopy(cfg.guildKey)) or {}
-  createLeaderboardPanel(container, cfg.panelTitle, rows, cfg.rowTint, innerW, 'FULL')
+  createLeaderboardPanel(container, rows, cfg.rowTint, innerW, 'FULL')
 end
