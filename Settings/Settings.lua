@@ -160,10 +160,8 @@ function OpenRaceWarsSettingsToTab(tabIndex)
   if type(tabIndex) == 'number' then
     if tabIndex == 5 then
       tabIndex = 3
-    elseif tabIndex == 3 or tabIndex == 4 then
-      tabIndex = 1
     end
-    if tabIndex < 1 or tabIndex > 3 then
+    if tabIndex < 1 or tabIndex > 4 then
       tabIndex = 1
     end
   end

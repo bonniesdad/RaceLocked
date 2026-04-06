@@ -251,7 +251,7 @@ local function styleDataRow(row, data, pos)
   end
   row.rankFs:SetText(tostring(pos))
   row.nameFs:SetText(data.name)
-  row.defeatedFs:SetText(tostring(RaceWars_GetLeaderboardEntryRivalsDefeated(data)))
+  row.defeatedFs:SetText(RaceWars_FormatRivalsDefeatedCell(data))
   row.slainFs:SetText(tostring(RaceWars_GetLeaderboardEntryTotalSlain(data)))
   row.lvlFs:SetText(tostring(data.level))
 end

@@ -18,4 +18,5 @@ MainScreenLeaderboard.lua
 
 Settings/Settings.lua
 Settings/RaceWarsLeaderboardTab.lua
+Settings/PointsExplainedTab.lua
 Settings/TabManager.lua
