@@ -22,7 +22,7 @@ local CHAMPION_BORDER = { r = 0.58, g = 0.5, b = 0.32, a = 0.92 }
 local AP_BG = { r = 0.08, g = 0.1, b = 0.14, a = 0.94 }
 local AP_BORDER = { r = 0.38, g = 0.45, b = 0.52, a = 0.88 }
 
-local CHAMPION_ICON_TEX = 'Interface\\Icons\\Achievement_PVP_A_04'
+local CHAMPION_ICON_TEX = 'Interface\\Icons\\spell_holy_surgeoflight'
 
 local PANEL_BACKDROP = {
   bgFile = 'Interface\\Buttons\\WHITE8x8',
