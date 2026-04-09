@@ -249,6 +249,14 @@ local function styleDataRow(row, data, pos)
   row.lvlFs:SetText(tostring(data.level))
 end
 
+local function applyMainScreenLeaderboardVisibility()
+  if RaceLockedDB and RaceLockedDB.showOnScreenLeaderboard == false then
+    mainFrame:Hide()
+  else
+    mainFrame:Show()
+  end
+end
+
 local function refreshMainLeaderboard()
   if RaceLocked_GetMainScreenCombinedLeaderboardWindow then
     local window, rankStart = RaceLocked_GetMainScreenCombinedLeaderboardWindow(VISIBLE_ROWS)
@@ -262,6 +270,7 @@ local function refreshMainLeaderboard()
   local topBlock = FRAME_PAD_TOP + TABLE_HEADER_H
   local rowsBlock = VISIBLE_ROWS * (ROW_H + ROW_GAP)
   mainFrame:SetHeight(math.max(109, topBlock + rowsBlock + BOTTOM_PAD - 1))
+  applyMainScreenLeaderboardVisibility()
 end
 
 mainFrame:SetMovable(true)
@@ -322,5 +331,6 @@ end)
 
 RaceLockedMainLeaderboardFrame = mainFrame
 RaceLocked_RefreshMainScreenLeaderboard = refreshMainLeaderboard
+_G.RaceLocked_ApplyMainScreenLeaderboardVisibility = applyMainScreenLeaderboardVisibility
 
 refreshMainLeaderboard()

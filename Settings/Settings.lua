@@ -26,8 +26,8 @@ end
 local settingsFrame =
   CreateFrame('Frame', 'RaceLockedSettingsFrame', UIParent, 'BackdropTemplate')
 tinsert(UISpecialFrames, 'RaceLockedSettingsFrame')
-local SETTINGS_FRAME_WIDTH = 548
-local SETTINGS_FRAME_HEIGHT = 680
+local SETTINGS_FRAME_WIDTH = 418
+local SETTINGS_FRAME_HEIGHT = 580
 settingsFrame:SetSize(SETTINGS_FRAME_WIDTH, SETTINGS_FRAME_HEIGHT)
 settingsFrame:SetMovable(true)
 settingsFrame:EnableMouse(true)
@@ -187,6 +187,9 @@ end
 
 if not RaceLockedDB then RaceLockedDB = {} end
 if not RaceLockedDB.minimapButton then RaceLockedDB.minimapButton = { hide = false } end
+if RaceLockedDB.showOnScreenLeaderboard == nil then
+  RaceLockedDB.showOnScreenLeaderboard = true
+end
 
 local addonLDB = LibStub('LibDataBroker-1.1'):NewDataObject('RaceLocked', {
   type = 'data source',

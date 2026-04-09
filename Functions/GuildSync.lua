@@ -15,6 +15,14 @@ local GUILD_NOTIFY_MAX_WAIT_SEC = 1.0
 local guildNotifySeq = 0
 local guildNotifyFirstQueued
 
+-- Enable chat logging: /run RaceLockedDB.debugGuildSync = true  (nil/false = off)
+local function guildSyncLog(msg)
+  if not RaceLockedDB or not RaceLockedDB.debugGuildSync then
+    return
+  end
+  print('|cfff44336[Race Locked]|r [GuildSync] ' .. tostring(msg))
+end
+
 local function inGuildNow()
   return IsInGuild() and true or false
 end
@@ -60,6 +68,7 @@ function RaceLocked_BroadcastGuildPing()
   end
   local payload = table.concat({ '1', name, guid, tostring(ap), tostring(level) }, MSG_SEP)
   if #payload > 255 then
+    guildSyncLog(string.format('send skipped: payload too long (%d bytes)', #payload))
     return
   end
   if C_ChatInfo and C_ChatInfo.SendAddonMessage then
@@ -67,6 +76,7 @@ function RaceLocked_BroadcastGuildPing()
   elseif SendAddonMessage then
     SendAddonMessage(MSG_PREFIX, payload, 'GUILD')
   end
+  guildSyncLog(string.format('sent GUILD: name=%s ap=%s level=%s', name, tostring(ap), tostring(level)))
 end
 
 local function startBroadcastTicker()
@@ -196,7 +206,7 @@ syncFrame:SetScript('OnEvent', function(_, event, ...)
       notifyDataChanged()
     end
   elseif event == 'CHAT_MSG_ADDON' then
-    local prefix, message, channel = ...
+    local prefix, message, channel, sender = ...
     if prefix ~= MSG_PREFIX or not isGuildAddonChannel(channel) then
       return
     end
@@ -204,6 +214,15 @@ syncFrame:SetScript('OnEvent', function(_, event, ...)
     if entry then
       mergeGuildPeer(entry)
       notifyDataChangedDeferred()
+      guildSyncLog(string.format(
+        'recv GUILD from %s: name=%s ap=%s level=%s',
+        tostring(sender or '?'),
+        tostring(entry.name),
+        tostring(entry.achievementPoints),
+        tostring(entry.level)
+      ))
+    else
+      guildSyncLog(string.format('recv GUILD ignored: invalid payload (len=%d)', type(message) == 'string' and #message or 0))
     end
   elseif event == 'GUILD_ROSTER_UPDATE' then
     local now = inGuildNow()

@@ -1,14 +1,15 @@
 -- Use RaceLocked_* globals only so we never collide with other addons' tab managers
-local TAB_WIDTH = 107
 local TAB_HEIGHT = 32
 local TAB_SPACING = 3
 local TAB_COUNT = 3
 local TEXTURE_PATH = 'Interface\\AddOns\\RaceLocked\\Textures'
 
+-- Uneven widths so three tabs fit a 418px frame; "Leaderboard" / "Points Explained" need more room than "Settings".
+local TAB_WIDTH = 132
 local TAB_WIDTHS = {
-  [1] = 140,
-  [2] = TAB_WIDTH,
-  [3] = 132,
+  [1] = 132,
+  [2] = 111,
+  [3] = 161,
 }
 
 local BASE_TEXT_COLOR = {
@@ -69,7 +70,7 @@ local function createTabButton(text, index, parentFrame)
   })
   button:SetBackdropBorderColor(0.3, 0.3, 0.3, 0.6)
 
-  local buttonText = button:CreateFontString(nil, 'OVERLAY', 'GameFontNormal')
+  local buttonText = button:CreateFontString(nil, 'OVERLAY', 'GameFontNormalSmall')
   buttonText:SetPoint('CENTER', button, 'CENTER', 0, -2)
   buttonText:SetText(text)
   buttonText:SetTextColor(BASE_TEXT_COLOR.r, BASE_TEXT_COLOR.g, BASE_TEXT_COLOR.b)
@@ -88,8 +89,8 @@ end
 local TAB_CONTENT_TOP_OFFSET = -102
 -- Match Settings.lua frame size; keep tab content inside with ~10px bottom margin
 -- Must match Settings.lua SETTINGS_FRAME_WIDTH (frame outer width)
-local SETTINGS_FRAME_WIDTH = 548
-local SETTINGS_FRAME_HEIGHT = 680
+local SETTINGS_FRAME_WIDTH = 418
+local SETTINGS_FRAME_HEIGHT = 580
 local TAB_CONTENT_WIDTH = SETTINGS_FRAME_WIDTH - 40
 local TAB_CONTENT_HEIGHT = SETTINGS_FRAME_HEIGHT + TAB_CONTENT_TOP_OFFSET - 10
 
@@ -166,6 +167,9 @@ function RaceLocked_SwitchToTab(index)
 
   if index == 1 and RaceLocked_InitializeGuildLeaderboardTab then
     RaceLocked_InitializeGuildLeaderboardTab(tabContents, index)
+  end
+  if index == 2 and RaceLocked_InitializeSettingsTab then
+    RaceLocked_InitializeSettingsTab(tabContents, index)
   end
   if index == 3 and RaceLocked_InitializePointsExplainedTab then
     RaceLocked_InitializePointsExplainedTab(tabContents, index)

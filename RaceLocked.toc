@@ -21,6 +21,7 @@ MainScreenLeaderboard.lua
 
 Settings/Settings.lua
 Settings/RaceLockedLeaderboardTab.lua
+Settings/RaceLockedSettingsTab.lua
 Settings/PointsExplainedTab.lua
 Settings/TabManager.lua
 

@@ -24,7 +24,14 @@ function RaceLocked_InitializePointsExplainedTab(tabContents, index)
 
   local scroll = CreateFrame('ScrollFrame', nil, content, 'UIPanelScrollFrameTemplate')
   scroll:SetPoint('TOPLEFT', content, 'TOPLEFT', 6, -8)
-  scroll:SetPoint('BOTTOMRIGHT', content, 'BOTTOMRIGHT', -32, 10)
+  scroll:SetPoint('BOTTOMRIGHT', content, 'BOTTOMRIGHT', -8, 10)
+
+  if scroll.ScrollBar then
+    scroll.ScrollBar:Hide()
+    scroll.ScrollBar:SetScript('OnShow', function(self)
+      self:Hide()
+    end)
+  end
 
   local scrollChild = CreateFrame('Frame', nil, scroll)
   local contentW = content:GetWidth()
@@ -32,7 +39,7 @@ function RaceLocked_InitializePointsExplainedTab(tabContents, index)
     contentW = 508
   end
   local padX = 14
-  local w = math.max(200, contentW - 52)
+  local w = math.max(200, contentW - 28)
   scrollChild:SetWidth(w + padX * 2)
   scroll:SetScrollChild(scrollChild)
 
