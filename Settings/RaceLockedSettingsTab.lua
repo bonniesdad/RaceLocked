@@ -82,8 +82,8 @@ function RaceLocked_InitializeSettingsTab(tabContents, tabIndex)
   content.raceLockedSettingsInit = true
 
   local optionsFrame = CreateFrame('Frame', nil, content, 'BackdropTemplate')
-  optionsFrame:SetPoint('TOPLEFT', content, 'TOPLEFT', 6, -8)
-  optionsFrame:SetPoint('BOTTOMRIGHT', content, 'BOTTOMRIGHT', -6, 10)
+  optionsFrame:SetPoint('TOPLEFT', content, 'TOPLEFT', 3, -14)
+  optionsFrame:SetPoint('BOTTOMRIGHT', content, 'BOTTOMRIGHT', -3, 12)
   optionsFrame:SetBackdrop({
     bgFile = 'Interface\\DialogFrame\\UI-DialogBox-Background',
     edgeFile = 'Interface\\Tooltips\\UI-Tooltip-Border',

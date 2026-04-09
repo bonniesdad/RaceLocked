@@ -1,6 +1,6 @@
 -- On-screen Race Locked: same single roster as settings, globally sorted.
 
-local FRAME_WIDTH = 202
+local FRAME_WIDTH = 220
 local ROW_H = 18
 local ROW_GAP = 2
 local VISIBLE_ROWS = 7
@@ -11,6 +11,8 @@ local FRAME_PAD_RIGHT = 5
 local FRAME_PAD_TOP = 5
 local FRAME_PAD_BOTTOM = 5
 local BOTTOM_PAD = 5
+-- Inset for level header + values from the row right (beyond `rEdge` in layoutRowColumns).
+local LVL_PAD_RIGHT = 3
 
 local FALLBACK_ROW_BG = { r = 0.38, g = 0.22, b = 0.52, a = 0.92 }
 local RACE_PRIMARY_ROW_BG = {
@@ -75,6 +77,14 @@ local function layoutRowColumns(w)
   local mid = w - rEdge - xName - colLvlW - gapRN
   local colApW = math.floor(math.max(36, math.min(80, w * 0.23)))
   local colNameW = mid - colApW
+  if colNameW < 20 then
+    colNameW = 20
+    colApW = math.max(24, mid - colNameW)
+  end
+  -- Wider achievements column, narrower name (same total mid).
+  local AP_NAME_DELTA = 30
+  colApW = colApW + AP_NAME_DELTA
+  colNameW = colNameW - AP_NAME_DELTA
   if colNameW < 20 then
     colNameW = 20
     colApW = math.max(24, mid - colNameW)
@@ -147,10 +157,10 @@ local function buildTableHeader(parent, w)
   hAp:SetPoint('LEFT', strip, 'LEFT', xAp, 0)
   hAp:SetWidth(cap)
   hAp:SetJustifyH('LEFT')
-  hAp:SetText('AP')
+  hAp:SetText('Achievements')
   hAp:SetTextColor(1, 0.92, 0.62)
   local hLvl = strip:CreateFontString(nil, 'OVERLAY', 'GameFontNormalSmall')
-  hLvl:SetPoint('RIGHT', strip, 'RIGHT', -rEdge, 0)
+  hLvl:SetPoint('RIGHT', strip, 'RIGHT', -(rEdge + LVL_PAD_RIGHT), 0)
   hLvl:SetWidth(cl)
   hLvl:SetJustifyH('RIGHT')
   hLvl:SetText('Lvl')
@@ -178,7 +188,7 @@ local function makeDataRow(parent, w)
   row.achievementFs:SetWidth(cap)
   row.achievementFs:SetJustifyH('LEFT')
   row.lvlFs = row:CreateFontString(nil, 'OVERLAY', 'GameFontHighlightSmall')
-  row.lvlFs:SetPoint('RIGHT', row, 'RIGHT', -rEdge, 0)
+  row.lvlFs:SetPoint('RIGHT', row, 'RIGHT', -(rEdge + LVL_PAD_RIGHT), 0)
   row.lvlFs:SetWidth(cl)
   row.lvlFs:SetJustifyH('RIGHT')
   return row

@@ -86,7 +86,7 @@ local function createTabButton(text, index, parentFrame)
 end
 
 -- Below title bar + divider + tab row (tabs at -57, up to ~38px tall when active) + small gap
-local TAB_CONTENT_TOP_OFFSET = -102
+local TAB_CONTENT_TOP_OFFSET = -92
 -- Match Settings.lua frame size; keep tab content inside with ~10px bottom margin
 -- Must match Settings.lua SETTINGS_FRAME_WIDTH (frame outer width)
 local SETTINGS_FRAME_WIDTH = 388

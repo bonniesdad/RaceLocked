@@ -5,13 +5,10 @@ local ROW_GAP = 1
 local HEADER_ROW_HEIGHT = 20
 local PANEL_SIDE_MARGIN = 0
 local PANEL_PAD = 3
+-- Right-hand gutter matches scrollbar width so the bar sits inside the bordered table.
 local SCROLL_BAR_WIDTH = 26
--- Horizontal extent of scroll frame past tableTop right (scrollbar sits in this strip).
-local SCROLLBAR_NUDGE_LEFT = 26
-local SCROLL_FRAME_RIGHT_OUTSET = SCROLL_BAR_WIDTH - SCROLLBAR_NUDGE_LEFT
--- Wider table on the right; scrollbar sits outside the bordered panel (sibling to the right).
-local TABLE_RIGHT_EXTRA = 10
-local PANEL_RIGHT_INSET = SCROLL_BAR_WIDTH - TABLE_RIGHT_EXTRA
+-- Shift UIPanelScrollFrameTemplate chrome left (negative x on TOPRIGHT/BOTTOMRIGHT to scroll).
+local SCROLL_BAR_NUDGE_LEFT = 21
 local FALLBACK_ROW_BG = { r = 0.38, g = 0.22, b = 0.52, a = 0.92 }
 local RACE_PRIMARY_ROW_BG = {
   ORC = { r = 0.22, g = 0.68, b = 0.28, a = 0.92 },
@@ -50,12 +47,12 @@ local function createLeaderboardPanel(parent, rows, rowTint, panelWidth, anchorS
   panel:SetBackdropColor(0.06, 0.05, 0.05, 0.92)
   panel:SetBackdropBorderColor(0.45, 0.4, 0.3, 0.9)
   if anchorSide ~= 'FULL' then
-    panel:SetWidth(math.max(80, panelWidth - PANEL_RIGHT_INSET))
+    panel:SetWidth(math.max(80, panelWidth))
   end
   if anchorSide == 'FULL' then
     local topY = panelTopInset or 0
     panel:SetPoint('TOPLEFT', parent, 'TOPLEFT', 0, topY)
-    panel:SetPoint('BOTTOMRIGHT', parent, 'BOTTOMRIGHT', -PANEL_RIGHT_INSET, 0)
+    panel:SetPoint('BOTTOMRIGHT', parent, 'BOTTOMRIGHT', 0, 0)
   elseif anchorSide == 'LEFT' then
     panel:SetPoint('TOPLEFT', parent, 'TOPLEFT', 0, 0)
     panel:SetPoint('BOTTOMLEFT', parent, 'BOTTOMLEFT', 0, 0)
@@ -71,7 +68,7 @@ local function createLeaderboardPanel(parent, rows, rowTint, panelWidth, anchorS
   tableTop:SetPoint('BOTTOMLEFT', panel, 'BOTTOMLEFT', PANEL_PAD, PANEL_PAD)
   tableTop:SetPoint('BOTTOMRIGHT', panel, 'BOTTOMRIGHT', -PANEL_PAD, PANEL_PAD)
 
-  local tableInnerWidth = panelWidth - PANEL_RIGHT_INSET - (PANEL_PAD * 2)
+  local tableInnerWidth = panelWidth - (PANEL_PAD * 2)
   if tableInnerWidth < 80 then
     tableInnerWidth = 200
   end
@@ -79,6 +76,7 @@ local function createLeaderboardPanel(parent, rows, rowTint, panelWidth, anchorS
   if listInnerW < 60 then
     listInnerW = tableInnerWidth * 0.88
   end
+  local dataInnerW = math.max(60, listInnerW - SCROLL_BAR_WIDTH)
 
   if RaceLocked_SortLeaderboardInPlace then
     RaceLocked_SortLeaderboardInPlace(rows)
@@ -93,10 +91,10 @@ local function createLeaderboardPanel(parent, rows, rowTint, panelWidth, anchorS
   colApW = math.max(colApW, math.ceil(measureFs:GetStringWidth()) + AP_COLUMN_PAD)
   measureFs:Hide()
 
-  local colRankW = math.floor(math.min(32, math.max(22, listInnerW * 0.065)))
-  local colLevelW = math.floor(math.min(32, math.max(24, listInnerW * 0.078)))
+  local colRankW = math.floor(math.min(32, math.max(22, dataInnerW * 0.065)))
+  local colLevelW = math.floor(math.min(32, math.max(24, dataInnerW * 0.078)))
   colLevelW = colLevelW + NAME_TO_LEVEL_SHIFT
-  local restW = math.max(40, listInnerW - colRankW - colApW - colLevelW)
+  local restW = math.max(40, dataInnerW - colRankW - colApW - colLevelW)
   local colNameW = math.max(48, restW - NAME_COL_SHRINK)
   local xAp = colRankW + colNameW
 
@@ -129,7 +127,7 @@ local function createLeaderboardPanel(parent, rows, rowTint, panelWidth, anchorS
   hAp:SetTextColor(1, 0.92, 0.62)
 
   local hLvl = headerBg:CreateFontString(nil, 'OVERLAY', 'GameFontHighlightSmall')
-  hLvl:SetPoint('TOPRIGHT', headerBg, 'TOPRIGHT', -4, -3)
+  hLvl:SetPoint('TOPRIGHT', headerBg, 'TOPRIGHT', -(SCROLL_BAR_WIDTH + 4), -3)
   hLvl:SetWidth(colLevelW - 4)
   hLvl:SetJustifyH('RIGHT')
   hLvl:SetText('Level')
@@ -138,34 +136,107 @@ local function createLeaderboardPanel(parent, rows, rowTint, panelWidth, anchorS
   local rowStep = ROW_HEIGHT + ROW_GAP
   local scrollChildHeight = #rows * ROW_HEIGHT + math.max(0, #rows - 1) * ROW_GAP
 
-  local scroll = CreateFrame('ScrollFrame', nil, parent, 'UIPanelScrollFrameTemplate')
+  local scroll = CreateFrame('ScrollFrame', nil, tableTop, 'UIPanelScrollFrameTemplate')
   scroll:SetFrameStrata(panel:GetFrameStrata())
-  scroll:SetFrameLevel(panel:GetFrameLevel() + 5)
+  scroll:SetFrameLevel(tableTop:GetFrameLevel() + 5)
   scroll:SetPoint('TOPLEFT', headerBg, 'BOTTOMLEFT', 0, -ROW_GAP)
-  scroll:SetPoint('BOTTOMRIGHT', tableTop, 'BOTTOMRIGHT', SCROLL_FRAME_RIGHT_OUTSET, 0)
+  scroll:SetPoint('BOTTOMRIGHT', tableTop, 'BOTTOMRIGHT', 0, 0)
   scroll:EnableMouseWheel(true)
 
+  local function nudgeScrollChromeLeft(px)
+    if not px or px == 0 then
+      return
+    end
+    local function nudgeAnchorsToScroll(f)
+      if not f or not f.GetNumPoints or not f.ClearAllPoints then
+        return
+      end
+      local n = f:GetNumPoints()
+      if not n or n < 1 then
+        return
+      end
+      local pts = {}
+      for i = 1, n do
+        pts[i] = { f:GetPoint(i) }
+      end
+      f:ClearAllPoints()
+      for _, p in ipairs(pts) do
+        local point, rel, relPoint, x, y = p[1], p[2], p[3], p[4], p[5]
+        x = x or 0
+        y = y or 0
+        if rel == scroll then
+          x = x - px
+        end
+        f:SetPoint(point, rel, relPoint, x, y)
+      end
+    end
+    nudgeAnchorsToScroll(scroll.ScrollUpButton)
+    nudgeAnchorsToScroll(scroll.ScrollDownButton)
+    nudgeAnchorsToScroll(scroll.ScrollBar)
+  end
+  nudgeScrollChromeLeft(SCROLL_BAR_NUDGE_LEFT)
+
   local scrollChild = CreateFrame('Frame', nil, scroll)
-  scrollChild:SetWidth(listInnerW)
+  scrollChild:SetFrameLevel(scroll:GetFrameLevel() + 1)
+  scrollChild:SetWidth(math.max(1, listInnerW))
   scrollChild:SetHeight(math.max(scrollChildHeight, 1))
   scroll:SetScrollChild(scrollChild)
 
-  -- ScrollFrame:GetWidth() includes the scrollbar strip; child width must match the
-  -- viewport (same as tableTop / header) or rows render wider than the header.
+  local function raiseScrollChrome()
+    local topLevel = scroll:GetFrameLevel() + 25
+    local sb = scroll.ScrollBar
+    if not sb then
+      for i = 1, select('#', scroll:GetChildren()) do
+        local c = select(i, scroll:GetChildren())
+        if c and c.GetObjectType and c:GetObjectType() == 'Slider' then
+          sb = c
+          break
+        end
+      end
+    end
+    if sb then
+      sb:SetFrameLevel(topLevel)
+      sb:Show()
+    end
+    for i = 1, select('#', scroll:GetChildren()) do
+      local c = select(i, scroll:GetChildren())
+      if c and c.GetObjectType and c:GetObjectType() == 'Button' then
+        c:SetFrameLevel(topLevel)
+        c:Show()
+      end
+    end
+  end
+
+  -- Full-width child matches headerBg; clamp horizontal scroll. Refresh rect + chrome so the bar stays visible.
   local function syncScrollChildWidth()
     local w = tableTop:GetWidth()
     if not w or w <= 4 then
-      local sw = scroll:GetWidth()
-      if sw and sw > SCROLL_FRAME_RIGHT_OUTSET + 4 then
-        w = sw - SCROLL_FRAME_RIGHT_OUTSET
-      end
+      w = scroll:GetWidth()
     end
     if w and w > 4 then
       scrollChild:SetWidth(w)
     end
+    scroll:SetHorizontalScroll(0)
+    if scroll.UpdateScrollChildRect then
+      scroll:UpdateScrollChildRect()
+    end
+    raiseScrollChrome()
   end
   scroll:SetScript('OnSizeChanged', syncScrollChildWidth)
+  scroll:SetScript('OnUpdate', function(self)
+    if (self.GetHorizontalScroll and self:GetHorizontalScroll() or 0) ~= 0 then
+      self:SetHorizontalScroll(0)
+    end
+  end)
+  if scroll.HookScript then
+    scroll:HookScript('OnScrollRangeChanged', function()
+      raiseScrollChrome()
+    end)
+  end
   syncScrollChildWidth()
+  if C_Timer and C_Timer.After then
+    C_Timer.After(0, syncScrollChildWidth)
+  end
 
   for i = 1, #rows do
     local y = -((i - 1) * rowStep)
@@ -226,7 +297,7 @@ local function createLeaderboardPanel(parent, rows, rowTint, panelWidth, anchorS
     end
 
     local lvlFs = row:CreateFontString(nil, 'OVERLAY', 'GameFontHighlightSmall')
-    lvlFs:SetPoint('RIGHT', row, 'RIGHT', -4, 0)
+    lvlFs:SetPoint('RIGHT', row, 'RIGHT', -(SCROLL_BAR_WIDTH + 4), 0)
     lvlFs:SetWidth(colLevelW - 4)
     lvlFs:SetJustifyH('RIGHT')
     lvlFs:SetText(tostring(data.level))
@@ -266,7 +337,7 @@ function RaceLocked_InitializeGuildLeaderboardTab(tabContents, tabIndex)
   local sectionGap = 8
   local championH = 0
   if RaceLocked_CreateGuildChampionSection then
-    championH = RaceLocked_CreateGuildChampionSection(container, rows, PANEL_RIGHT_INSET) or 0
+    championH = RaceLocked_CreateGuildChampionSection(container, rows, 0) or 0
   end
   local panelTop = championH > 0 and -(championH + sectionGap) or 0
   createLeaderboardPanel(container, rows, getPrimaryRowTint(), innerW, 'FULL', panelTop)
