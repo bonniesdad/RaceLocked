@@ -5,13 +5,22 @@ local BODY_COLOR = { r = 0.85, g = 0.82, b = 0.76 }
 
 local SECTIONS = {
   {
-    title = 'Level',
-    body = 'Lists are sorted by character level first: higher level ranks higher. '
-      .. 'When level is tied, Achievement Points breaks the tie, then character name.',
+    title = 'Leaderboard',
+    body = 'The leaderboard is sorted by player levels, highest first. '
+      .. 'When levels are tied, the player with the most achievements breaks the tie, then character name.',
   },
   {
-    title = 'Achievement Points',
-    body = 'Achievement Points are earned by completing achievements from the Hardcore Achievements addon.'
+    title = 'Guild Champion',
+    body = 'The guild champion is the player who ranks #1 in the leaderboard. '
+  },
+  {
+    title = 'Most Achievements',
+    body = 'The player with the most achievements in the leaderboard gains this title.',
+  },
+  {
+    title = 'On Screen Leaderboard',
+    body = 'The on screen leaderboard is a shortened version of the leaderboard. '
+      .. 'Only the closest 7 players are shown, centered on the your position.',
   },
 }
 
