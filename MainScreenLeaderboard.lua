@@ -1,4 +1,4 @@
--- On-screen Guild Wars: same combined roster as settings (both guilds + player), globally sorted
+-- On-screen Race Locked: same single roster as settings, globally sorted.
 
 local FRAME_WIDTH = 202
 local ROW_H = 18
@@ -12,10 +12,26 @@ local FRAME_PAD_TOP = 5
 local FRAME_PAD_BOTTOM = 6
 local BOTTOM_PAD = 6
 
-local ROW_BG_XARYU = { r = 0.38, g = 0.22, b = 0.52, a = 0.92 }
--- Same values as settings tab local-player row (`RaceWarsLeaderboardTab.lua`).
+local FALLBACK_ROW_BG = { r = 0.38, g = 0.22, b = 0.52, a = 0.92 }
+local RACE_PRIMARY_ROW_BG = {
+  ORC = { r = 0.22, g = 0.68, b = 0.28, a = 0.92 },
+  TAUREN = { r = 0.62, g = 0.44, b = 0.22, a = 0.92 },
+  TROLL = { r = 0.18, g = 0.62, b = 0.78, a = 0.92 },
+  SCOURGE = { r = 0.55, g = 0.32, b = 0.68, a = 0.92 },
+  HUMAN = { r = 0.62, g = 0.46, b = 0.30, a = 0.92 },
+  DWARF = { r = 0.70, g = 0.52, b = 0.33, a = 0.92 },
+  NIGHTELF = { r = 0.47, g = 0.44, b = 0.76, a = 0.92 },
+  GNOME = { r = 0.72, g = 0.45, b = 0.65, a = 0.92 },
+}
+-- Same values as settings tab local-player row (`RaceLockedLeaderboardTab.lua`).
 local ROW_HIGHLIGHT_LOCAL = { bg = { r = 0.55, g = 0.38, b = 0.14, a = 1 }, border = { r = 1, g = 0.85, b = 0.25, a = 1 } }
-local ROW_BG_PIKABOO = { r = 0.12, g = 0.38, b = 0.22, a = 0.92 }
+
+local function getPrimaryRowTint()
+  local _, raceFile = UnitRace and UnitRace('player')
+  local raceKey = raceFile and string.upper(raceFile) or nil
+  local tint = raceKey and RACE_PRIMARY_ROW_BG[raceKey] or FALLBACK_ROW_BG
+  return { r = tint.r, g = tint.g, b = tint.b, a = tint.a }
+end
 
 local function setRowBackdropPlain(row)
   row:SetBackdrop({
@@ -49,29 +65,25 @@ end
 
 local innerW = contentWidth(FRAME_WIDTH)
 
--- #, Name, Rivals Defeated, Rivals Slain, Lvl — packs to width `w`
+-- #, Name, Achievement Points, Lvl — packs to width `w`
 local function layoutRowColumns(w)
   w = math.max(80, math.floor(w + 0.5))
   local lEdge, rEdge, gapRN = 1, 2, 1
   local colRankW = math.floor(math.min(28, math.max(16, w * 0.10)))
   local xName = lEdge + colRankW + gapRN
   local colLvlW = math.floor(math.min(28, math.max(16, w * 0.10)))
-  local mid = w - rEdge - xName - colLvlW - 2 * gapRN
-  local colDefW = math.floor(math.max(18, math.min(50, w * 0.14)))
-  local colSlW = math.floor(math.max(18, math.min(50, w * 0.14)))
-  local colNameW = mid - colDefW - colSlW
+  local mid = w - rEdge - xName - colLvlW - gapRN
+  local colApW = math.floor(math.max(36, math.min(80, w * 0.23)))
+  local colNameW = mid - colApW
   if colNameW < 20 then
     colNameW = 20
-    local spare = mid - colNameW
-    colDefW = math.floor(spare / 2)
-    colSlW = spare - colDefW
+    colApW = math.max(24, mid - colNameW)
   end
-  local xDef = xName + colNameW + gapRN
-  local xSl = xDef + colDefW + gapRN
-  return colRankW, colNameW, colDefW, colSlW, colLvlW, lEdge, rEdge, gapRN, xName, xDef, xSl
+  local xAp = xName + colNameW + gapRN
+  return colRankW, colNameW, colApW, colLvlW, lEdge, rEdge, gapRN, xName, xAp
 end
 
-local mainFrame = CreateFrame('Frame', 'RaceWarsMainLeaderboardFrame', UIParent, 'BackdropTemplate')
+local mainFrame = CreateFrame('Frame', 'RaceLockedMainLeaderboardFrame', UIParent, 'BackdropTemplate')
 mainFrame:SetSize(FRAME_WIDTH, 279)
 mainFrame:SetPoint('TOPLEFT', UIParent, 'TOPLEFT', 360, -10)
 mainFrame:SetFrameStrata('LOW')
@@ -111,7 +123,7 @@ tableContentBg:SetBackdropColor(0.07, 0.06, 0.055, 1)
 
 -- Header inset matches table horizontal inset.
 local function buildTableHeader(parent, w)
-  local cr, cn, cd, cs, cl, lEdge, rEdge, gapRN, xName, xDef, xSl = layoutRowColumns(w)
+  local cr, cn, cap, cl, lEdge, rEdge, gapRN, xName, xAp = layoutRowColumns(w)
   local strip = CreateFrame('Frame', nil, parent, 'BackdropTemplate')
   strip:SetHeight(TABLE_HEADER_H)
   strip:SetPoint('TOPLEFT', parent, 'TOPLEFT', FRAME_PAD_LEFT, -FRAME_PAD_TOP)
@@ -131,18 +143,12 @@ local function buildTableHeader(parent, w)
   hName:SetJustifyH('LEFT')
   hName:SetText('Name')
   hName:SetTextColor(1, 0.92, 0.62)
-  local hDef = strip:CreateFontString(nil, 'OVERLAY', 'GameFontNormalSmall')
-  hDef:SetPoint('LEFT', strip, 'LEFT', xDef, 0)
-  hDef:SetWidth(cd)
-  hDef:SetJustifyH('LEFT')
-  hDef:SetText('Rivals Defeated')
-  hDef:SetTextColor(1, 0.92, 0.62)
-  local hSl = strip:CreateFontString(nil, 'OVERLAY', 'GameFontNormalSmall')
-  hSl:SetPoint('LEFT', strip, 'LEFT', xSl, 0)
-  hSl:SetWidth(cs)
-  hSl:SetJustifyH('LEFT')
-  hSl:SetText('Rivals Slain')
-  hSl:SetTextColor(1, 0.92, 0.62)
+  local hAp = strip:CreateFontString(nil, 'OVERLAY', 'GameFontNormalSmall')
+  hAp:SetPoint('LEFT', strip, 'LEFT', xAp, 0)
+  hAp:SetWidth(cap)
+  hAp:SetJustifyH('LEFT')
+  hAp:SetText('AP')
+  hAp:SetTextColor(1, 0.92, 0.62)
   local hLvl = strip:CreateFontString(nil, 'OVERLAY', 'GameFontNormalSmall')
   hLvl:SetPoint('RIGHT', strip, 'RIGHT', -rEdge, 0)
   hLvl:SetWidth(cl)
@@ -155,7 +161,7 @@ end
 local tableHeader = buildTableHeader(mainFrame, innerW)
 
 local function makeDataRow(parent, w)
-  local cr, cn, cd, cs, cl, lEdge, rEdge, gapRN, xName, xDef, xSl = layoutRowColumns(w)
+  local cr, cn, cap, cl, lEdge, rEdge, gapRN, xName, xAp = layoutRowColumns(w)
   local row = CreateFrame('Frame', nil, parent, 'BackdropTemplate')
   row:SetHeight(ROW_H)
   setRowBackdropPlain(row)
@@ -167,14 +173,10 @@ local function makeDataRow(parent, w)
   row.nameFs:SetPoint('LEFT', row, 'LEFT', xName, 0)
   row.nameFs:SetWidth(cn)
   row.nameFs:SetJustifyH('LEFT')
-  row.defeatedFs = row:CreateFontString(nil, 'OVERLAY', 'GameFontHighlightSmall')
-  row.defeatedFs:SetPoint('LEFT', row, 'LEFT', xDef, 0)
-  row.defeatedFs:SetWidth(cd)
-  row.defeatedFs:SetJustifyH('LEFT')
-  row.slainFs = row:CreateFontString(nil, 'OVERLAY', 'GameFontHighlightSmall')
-  row.slainFs:SetPoint('LEFT', row, 'LEFT', xSl, 0)
-  row.slainFs:SetWidth(cs)
-  row.slainFs:SetJustifyH('LEFT')
+  row.achievementFs = row:CreateFontString(nil, 'OVERLAY', 'GameFontHighlightSmall')
+  row.achievementFs:SetPoint('LEFT', row, 'LEFT', xAp, 0)
+  row.achievementFs:SetWidth(cap)
+  row.achievementFs:SetJustifyH('LEFT')
   row.lvlFs = row:CreateFontString(nil, 'OVERLAY', 'GameFontHighlightSmall')
   row.lvlFs:SetPoint('RIGHT', row, 'RIGHT', -rEdge, 0)
   row.lvlFs:SetWidth(cl)
@@ -217,48 +219,39 @@ for i = 1, VISIBLE_ROWS do
   dataRows[i]:SetFrameLevel(baseLevel + LAYER_TABLE)
 end
 
--- Row tint by guild (same roster as menu). `data.guild` comes from `LeaderboardData.lua`.
+-- Row tint for the single roster.
 local function styleDataRow(row, data, pos)
   if not data then
     row:Hide()
     return
   end
   row:Show()
-  local isLocalPlayer = RaceWars_IsLocalLeaderboardName(data.name)
+  local isLocalPlayer = RaceLocked_IsLocalLeaderboardRow and RaceLocked_IsLocalLeaderboardRow(data)
+    or RaceLocked_IsLocalLeaderboardName(data.name)
   if isLocalPlayer then
     setRowBackdropLocalHighlight(row)
     row.rankFs:SetTextColor(1, 0.95, 0.5)
     row.nameFs:SetTextColor(1, 0.95, 0.5)
-    row.defeatedFs:SetTextColor(1, 0.92, 0.55)
-    row.slainFs:SetTextColor(1, 0.92, 0.55)
+    row.achievementFs:SetTextColor(1, 0.92, 0.55)
     row.lvlFs:SetTextColor(1, 0.92, 0.55)
-  elseif data.guild == RaceWars_GUILD_PIKABOO then
-    setRowBackdropPlain(row)
-    row:SetBackdropColor(ROW_BG_PIKABOO.r, ROW_BG_PIKABOO.g, ROW_BG_PIKABOO.b, ROW_BG_PIKABOO.a)
-    row.rankFs:SetTextColor(0.75, 0.96, 0.82)
-    row.nameFs:SetTextColor(0.94, 0.98, 0.94)
-    row.defeatedFs:SetTextColor(0.88, 0.95, 0.88)
-    row.slainFs:SetTextColor(0.88, 0.95, 0.88)
-    row.lvlFs:SetTextColor(0.88, 0.95, 0.88)
   else
+    local rowTint = getPrimaryRowTint()
     setRowBackdropPlain(row)
-    row:SetBackdropColor(ROW_BG_XARYU.r, ROW_BG_XARYU.g, ROW_BG_XARYU.b, ROW_BG_XARYU.a)
+    row:SetBackdropColor(rowTint.r, rowTint.g, rowTint.b, rowTint.a)
     row.rankFs:SetTextColor(0.88, 0.82, 1)
     row.nameFs:SetTextColor(0.95, 0.92, 1)
-    row.defeatedFs:SetTextColor(0.9, 0.86, 0.98)
-    row.slainFs:SetTextColor(0.9, 0.86, 0.98)
+    row.achievementFs:SetTextColor(0.9, 0.86, 0.98)
     row.lvlFs:SetTextColor(0.9, 0.86, 0.98)
   end
   row.rankFs:SetText(tostring(pos))
   row.nameFs:SetText(data.name)
-  row.defeatedFs:SetText(RaceWars_FormatRivalsDefeatedCell(data))
-  row.slainFs:SetText(tostring(RaceWars_GetLeaderboardEntryTotalSlain(data)))
+  row.achievementFs:SetText(tostring(data.achievementPoints or 0))
   row.lvlFs:SetText(tostring(data.level))
 end
 
 local function refreshMainLeaderboard()
-  if RaceWars_GetMainScreenCombinedLeaderboardWindow then
-    local window, rankStart = RaceWars_GetMainScreenCombinedLeaderboardWindow(VISIBLE_ROWS)
+  if RaceLocked_GetMainScreenCombinedLeaderboardWindow then
+    local window, rankStart = RaceLocked_GetMainScreenCombinedLeaderboardWindow(VISIBLE_ROWS)
     for i = 1, VISIBLE_ROWS do
       local data = window[i]
       local pos = data and ((rankStart or 1) + i - 1) or nil
@@ -297,8 +290,8 @@ mainFrame:SetScript('OnMouseUp', function(_, button)
     local dx = math.abs(x - mouseDownPos.x)
     local dy = math.abs(y - mouseDownPos.y)
     mouseDownPos = nil
-    if dx < 4 and dy < 4 and _G.ToggleRaceWarsSettings then
-      _G.ToggleRaceWarsSettings()
+    if dx < 4 and dy < 4 and _G.ToggleRaceLockedSettings then
+      _G.ToggleRaceLockedSettings()
     end
   end
 end)
@@ -327,7 +320,7 @@ mainFrame:SetScript('OnEvent', function(self, event)
   end
 end)
 
-RaceWarsMainLeaderboardFrame = mainFrame
-RaceWars_RefreshMainScreenLeaderboard = refreshMainLeaderboard
+RaceLockedMainLeaderboardFrame = mainFrame
+RaceLocked_RefreshMainScreenLeaderboard = refreshMainLeaderboard
 
 refreshMainLeaderboard()

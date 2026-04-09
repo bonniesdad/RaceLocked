@@ -1,4 +1,4 @@
-# Guild Wars
+# Race Locked
 
 > Theorycrafting a new unique playthrough of World of Warcraft (classic/anniversary)
 >

@@ -1,5 +1,5 @@
 -- Settings frame and toggle — same patterns as UltraFound
-local TEXTURE_PATH = 'Interface\\AddOns\\GuildWars\\Textures'
+local TEXTURE_PATH = 'Interface\\AddOns\\RaceLocked\\Textures'
 
 local CLASS_BACKGROUND_MAP = {
   WARRIOR = TEXTURE_PATH .. '\\bg_warrior.png',
@@ -24,8 +24,8 @@ local function getClassBackgroundTexture()
 end
 
 local settingsFrame =
-  CreateFrame('Frame', 'RaceWarsSettingsFrame', UIParent, 'BackdropTemplate')
-tinsert(UISpecialFrames, 'RaceWarsSettingsFrame')
+  CreateFrame('Frame', 'RaceLockedSettingsFrame', UIParent, 'BackdropTemplate')
+tinsert(UISpecialFrames, 'RaceLockedSettingsFrame')
 local SETTINGS_FRAME_WIDTH = 548
 local SETTINGS_FRAME_HEIGHT = 680
 settingsFrame:SetSize(SETTINGS_FRAME_WIDTH, SETTINGS_FRAME_HEIGHT)
@@ -45,13 +45,13 @@ settingsFrame:SetScript('OnHide', function(self)
 end)
 settingsFrame:SetPoint('CENTER', UIParent, 'CENTER', 0, 30)
 
-local function ResetRaceWarsMenuPosition()
+local function ResetRaceLockedMenuPosition()
   settingsFrame:ClearAllPoints()
   settingsFrame:SetPoint('CENTER', UIParent, 'CENTER', 0, 30)
-  print('|cfff44336[Guild Wars]|r Menu position reset to default.')
+  print('|cfff44336[Race Locked]|r Menu position reset to default.')
 end
 
-_G.ResetRaceWarsMenuPosition = ResetRaceWarsMenuPosition
+_G.ResetRaceLockedMenuPosition = ResetRaceLockedMenuPosition
 settingsFrame:Hide()
 settingsFrame:SetFrameStrata('DIALOG')
 settingsFrame:SetFrameLevel(15)
@@ -89,7 +89,7 @@ titleBarBackground:SetTexture(TEXTURE_PATH .. '\\header.png')
 titleBarBackground:SetTexCoord(0, 1, 0, 1)
 local settingsTitleLabel = titleBar:CreateFontString(nil, 'OVERLAY', 'GameFontHighlightHuge')
 settingsTitleLabel:SetPoint('CENTER', titleBar, 'CENTER', 0, 4)
-settingsTitleLabel:SetText('Guild Wars')
+settingsTitleLabel:SetText('Race Locked')
 settingsTitleLabel:SetTextColor(0.922, 0.871, 0.761)
 
 local dividerFrame = CreateFrame('Frame', nil, settingsFrame)
@@ -112,8 +112,8 @@ local closeButton = CreateFrame('Button', nil, titleBar, 'UIPanelCloseButton')
 closeButton:SetPoint('RIGHT', titleBar, 'RIGHT', -15, 4)
 closeButton:SetSize(12, 12)
 closeButton:SetScript('OnClick', function()
-  if RaceWars_ResetTabState then
-    RaceWars_ResetTabState()
+  if RaceLocked_ResetTabState then
+    RaceLocked_ResetTabState()
   end
   if _G.HideConfirmationDialog then
     _G.HideConfirmationDialog()
@@ -132,10 +132,10 @@ if closeButtonPushed then
   closeButtonPushed:SetTexCoord(0, 1, 0, 1)
 end
 
-function ToggleRaceWarsSettings()
+function ToggleRaceLockedSettings()
   if settingsFrame:IsShown() then
-    if RaceWars_ResetTabState then
-      RaceWars_ResetTabState()
+    if RaceLocked_ResetTabState then
+      RaceLocked_ResetTabState()
     end
     if _G.HideConfirmationDialog then
       _G.HideConfirmationDialog()
@@ -143,60 +143,69 @@ function ToggleRaceWarsSettings()
     settingsFrame:Hide()
   else
     updateSettingsFrameBackdrop()
-    if RaceWars_InitializeTabs then
-      RaceWars_InitializeTabs(settingsFrame)
+    if RaceLocked_InitializeTabs then
+      RaceLocked_InitializeTabs(settingsFrame)
     end
-    if RaceWars_HideAllTabs and RaceWars_SetDefaultTab then
-      RaceWars_HideAllTabs()
-      RaceWars_SetDefaultTab()
-    elseif RaceWars_SwitchToTab then
-      RaceWars_SwitchToTab(1)
+    if RaceLocked_HideAllTabs and RaceLocked_SetDefaultTab then
+      RaceLocked_HideAllTabs()
+      RaceLocked_SetDefaultTab()
+    elseif RaceLocked_SwitchToTab then
+      RaceLocked_SwitchToTab(1)
     end
     settingsFrame:Show()
   end
 end
 
-function OpenRaceWarsSettingsToTab(tabIndex)
+function OpenRaceLockedSettingsToTab(tabIndex)
   if type(tabIndex) == 'number' then
-    if tabIndex == 5 then
-      tabIndex = 3
-    end
-    if tabIndex < 1 or tabIndex > 4 then
+    -- Legacy remap from older tab layouts.
+    if tabIndex == 2 then
       tabIndex = 1
     end
+    if tabIndex == 4 then
+      tabIndex = 3
+    end
+    if tabIndex == 5 then
+      tabIndex = 2
+    end
+    if tabIndex < 1 or tabIndex > 3 then
+      tabIndex = 1
+    end
+  else
+    tabIndex = 1
   end
   updateSettingsFrameBackdrop()
-  if RaceWars_InitializeTabs then
-    RaceWars_InitializeTabs(settingsFrame)
+  if RaceLocked_InitializeTabs then
+    RaceLocked_InitializeTabs(settingsFrame)
   end
-  if RaceWars_HideAllTabs and RaceWars_SwitchToTab then
-    RaceWars_HideAllTabs()
-    RaceWars_SwitchToTab(tabIndex)
+  if RaceLocked_HideAllTabs and RaceLocked_SwitchToTab then
+    RaceLocked_HideAllTabs()
+    RaceLocked_SwitchToTab(tabIndex)
   end
   settingsFrame:Show()
 end
 
-if not RaceWarsDB then RaceWarsDB = {} end
-if not RaceWarsDB.minimapButton then RaceWarsDB.minimapButton = { hide = false } end
+if not RaceLockedDB then RaceLockedDB = {} end
+if not RaceLockedDB.minimapButton then RaceLockedDB.minimapButton = { hide = false } end
 
-local addonLDB = LibStub('LibDataBroker-1.1'):NewDataObject('GuildWars', {
+local addonLDB = LibStub('LibDataBroker-1.1'):NewDataObject('RaceLocked', {
   type = 'data source',
-  text = 'Guild Wars',
+  text = 'Race Locked',
   icon = TEXTURE_PATH .. '\\bonnie-round.png',
   OnClick = function(self, btn)
     if btn == 'LeftButton' then
-      ToggleRaceWarsSettings()
+      ToggleRaceLockedSettings()
     end
   end,
   OnTooltipShow = function(tooltip)
     if not tooltip or not tooltip.AddLine then return end
-    tooltip:AddLine('|cffffffffGuild Wars|r\n\nLeft-click to open settings', nil, nil, nil, nil)
+    tooltip:AddLine('|cffffffffRace Locked|r\n\nLeft-click to open settings', nil, nil, nil, nil)
   end,
 })
 
 local addonIcon = LibStub('LibDBIcon-1.0')
-addonIcon:Register('GuildWars', addonLDB, RaceWarsDB.minimapButton)
+addonIcon:Register('RaceLocked', addonLDB, RaceLockedDB.minimapButton)
 
-SLASH_RACEWARS1 = '/racewars'
-SLASH_RACEWARS2 = '/rw'
-SlashCmdList['RACEWARS'] = ToggleRaceWarsSettings
+SLASH_RACELOCKED1 = '/racewars'
+SLASH_RACELOCKED2 = '/rw'
+SlashCmdList['RACELOCKED'] = ToggleRaceLockedSettings
