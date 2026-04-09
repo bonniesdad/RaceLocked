@@ -1,11 +1,11 @@
 ## Interface: 11508, 20505
-## Title: Guild Wars
+## Title: Race Locked
 ## Version: 1.0.0
 ## Author: BonniesDad
-## Notes: Guild Wars leaderboard and settings
-## SavedVariables: RaceWarsDB
+## Notes: Race Locked leaderboard and settings
+## SavedVariables: RaceLockedDB
 
-GuildWars.lua
+RaceLocked.lua
 
 ## Libs
 Libs/LibStub/LibStub.lua
@@ -13,10 +13,15 @@ Libs/CallbackHandler-1.0/CallbackHandler-1.0.lua
 Libs/LibDataBroker-1.1/LibDataBroker-1.1.lua
 Libs/LibDBIcon-1.0/LibDBIcon-1.0.lua
 
+Functions/GetAchievementPoints.lua
+Functions/GuildSync.lua
+
 LeaderboardData.lua
 MainScreenLeaderboard.lua
 
 Settings/Settings.lua
-Settings/RaceWarsLeaderboardTab.lua
+Settings/RaceLockedLeaderboardTab.lua
 Settings/PointsExplainedTab.lua
 Settings/TabManager.lua
+
+Functions/EnforceSameRaceInParty.lua

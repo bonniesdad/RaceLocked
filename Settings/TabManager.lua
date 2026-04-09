@@ -1,15 +1,14 @@
--- Use RaceWars_* globals only so we never collide with other addons' tab managers
+-- Use RaceLocked_* globals only so we never collide with other addons' tab managers
 local TAB_WIDTH = 107
 local TAB_HEIGHT = 32
 local TAB_SPACING = 3
-local TAB_COUNT = 4
-local TEXTURE_PATH = 'Interface\\AddOns\\GuildWars\\Textures'
+local TAB_COUNT = 3
+local TEXTURE_PATH = 'Interface\\AddOns\\RaceLocked\\Textures'
 
 local TAB_WIDTHS = {
-  [1] = TAB_WIDTH,
+  [1] = 140,
   [2] = TAB_WIDTH,
-  [3] = TAB_WIDTH,
-  [4] = 132,
+  [3] = 132,
 }
 
 local BASE_TEXT_COLOR = {
@@ -77,7 +76,7 @@ local function createTabButton(text, index, parentFrame)
   button.text = buttonText
 
   button:SetScript('OnClick', function()
-    RaceWars_SwitchToTab(index)
+    RaceLocked_SwitchToTab(index)
   end)
 
   button.backgroundTexture:SetVertexColor(0.6, 0.6, 0.6, 1)
@@ -102,21 +101,19 @@ local function createTabContent(index, parentFrame)
   return content
 end
 
-function RaceWars_InitializeTabs(settingsFrame)
+function RaceLocked_InitializeTabs(settingsFrame)
   if tabButtons[1] then return end
 
-  tabButtons[1] = createTabButton('Xaryu', 1, settingsFrame)
-  tabButtons[2] = createTabButton('Pikaboo', 2, settingsFrame)
-  tabButtons[3] = createTabButton('Settings', 3, settingsFrame)
-  tabButtons[4] = createTabButton('Points Explained', 4, settingsFrame)
+  tabButtons[1] = createTabButton('Leaderboard', 1, settingsFrame)
+  tabButtons[2] = createTabButton('Settings', 2, settingsFrame)
+  tabButtons[3] = createTabButton('Points Explained', 3, settingsFrame)
 
   tabContents[1] = createTabContent(1, settingsFrame)
   tabContents[2] = createTabContent(2, settingsFrame)
   tabContents[3] = createTabContent(3, settingsFrame)
-  tabContents[4] = createTabContent(4, settingsFrame)
 end
 
-function RaceWars_SwitchToTab(index)
+function RaceLocked_SwitchToTab(index)
   for i, content in ipairs(tabContents) do
     content:Hide()
   end
@@ -163,26 +160,32 @@ function RaceWars_SwitchToTab(index)
   tabButtons[index]:SetBackdropBorderColor(fadedR, fadedG, fadedB, 1)
   activeTab = index
 
-  if RaceWarsDB then
-    RaceWarsDB.lastOpenedSettingsTab = index
+  if RaceLockedDB then
+    RaceLockedDB.lastOpenedSettingsTab = index
   end
 
-  if index >= 1 and index <= 2 and RaceWars_InitializeGuildLeaderboardTab then
-    RaceWars_InitializeGuildLeaderboardTab(tabContents, index)
+  if index == 1 and RaceLocked_InitializeGuildLeaderboardTab then
+    RaceLocked_InitializeGuildLeaderboardTab(tabContents, index)
   end
-  if index == 4 and RaceWars_InitializePointsExplainedTab then
-    RaceWars_InitializePointsExplainedTab(tabContents, index)
+  if index == 3 and RaceLocked_InitializePointsExplainedTab then
+    RaceLocked_InitializePointsExplainedTab(tabContents, index)
   end
 end
 
-function RaceWars_SetDefaultTab()
+function RaceLocked_SetDefaultTab()
   local defaultIndex = 1
-  if RaceWarsDB and RaceWarsDB.lastOpenedSettingsTab then
-    local saved = RaceWarsDB.lastOpenedSettingsTab
+  if RaceLockedDB and RaceLockedDB.lastOpenedSettingsTab then
+    local saved = RaceLockedDB.lastOpenedSettingsTab
     if type(saved) == 'number' then
-      -- Legacy: five-tab layout used Settings on tab 5.
-      if saved == 5 then
+      -- Legacy index remap from older multi-leaderboard layouts.
+      if saved == 2 then
+        saved = 1
+      end
+      if saved == 4 then
         saved = 3
+      end
+      if saved == 5 then
+        saved = 2
       end
       if saved < 1 or saved > TAB_COUNT then
         saved = 1
@@ -192,22 +195,22 @@ function RaceWars_SetDefaultTab()
       end
     end
   end
-  RaceWars_SwitchToTab(defaultIndex)
+  RaceLocked_SwitchToTab(defaultIndex)
 end
 
-function RaceWars_GetActiveTab()
+function RaceLocked_GetActiveTab()
   return activeTab
 end
 
-function RaceWars_GetTabContent(index)
+function RaceLocked_GetTabContent(index)
   return tabContents[index]
 end
 
-function RaceWars_GetTabButton(index)
+function RaceLocked_GetTabButton(index)
   return tabButtons[index]
 end
 
-function RaceWars_HideAllTabs()
+function RaceLocked_HideAllTabs()
   for i, content in ipairs(tabContents) do
     content:Hide()
   end
@@ -231,7 +234,7 @@ function RaceWars_HideAllTabs()
   end
 end
 
-function RaceWars_ResetTabState()
+function RaceLocked_ResetTabState()
   activeTab = 1
   for i, content in ipairs(tabContents) do
     content:Hide()

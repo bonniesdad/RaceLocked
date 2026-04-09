@@ -7,25 +7,15 @@ local SECTIONS = {
   {
     title = 'Level',
     body = 'Lists are sorted by character level first: higher level ranks higher. '
-      .. 'When level is tied, Rivals Slain breaks the tie, then character name.',
+      .. 'When level is tied, Achievement Points breaks the tie, then character name.',
   },
   {
-    title = 'Rivals Defeated',
-    body = 'Rivals Defeated counts opposing guild members you have defeated in a duel. '
-      .. 'Each victory adds to this total. Until you have at least one recorded defeat, the column shows a dash.',
+    title = 'Achievement Points',
+    body = 'Achievement Points are earned by completing achievements from the Hardcore Achievements addon.'
   },
-  {
-    title = 'Rivals Slain',
-    body = 'Rivals Slain is the sum of Mak\'Gora\'s you have won against a rival guild member ',
-  },
-  {
-    title = 'Champion Mak\'Gora',
-    body = 'Each month, the guilds must put forward a champion to fight or die for the glory of their guild. '
-      .. 'The victor will earn their guild 1000 points.',
-  }
 }
 
-function RaceWars_InitializePointsExplainedTab(tabContents, index)
+function RaceLocked_InitializePointsExplainedTab(tabContents, index)
   local content = tabContents and tabContents[index]
   if not content or content.pointsExplainedInit then
     return
