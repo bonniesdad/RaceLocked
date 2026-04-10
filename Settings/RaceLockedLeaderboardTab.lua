@@ -408,12 +408,15 @@ local function applyGuildRosterSyncFromButton()
   end
 end
 
-function RaceLocked_InitializeGuildLeaderboardTab(tabContents, tabIndex)
+function RaceLocked_InitializeGuildLeaderboardTab(tabContents, tabIndex, forceRefresh)
   if not tabContents or not tabContents[tabIndex] then
     return
   end
   local content = tabContents[tabIndex]
   local container = content.leaderboardMount
+  if container and not forceRefresh then
+    return
+  end
   if not container then
     container = CreateFrame('Frame', nil, content)
     content.leaderboardMount = container
@@ -518,5 +521,5 @@ function RaceLocked_RefreshGuildLeaderboardTabUI()
   if not c then
     return
   end
-  RaceLocked_InitializeGuildLeaderboardTab({ [1] = c }, 1)
+  RaceLocked_InitializeGuildLeaderboardTab({ [1] = c }, 1, true)
 end
