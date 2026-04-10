@@ -1,0 +1,10 @@
+{
+  "scripts": {
+    "prettier": "prettier --write .",
+    "zip": "rsync -av --exclude='.*' Functions Libs Settings Textures RaceLocked.lua RaceLocked.toc LeaderboardData.lua MainScreenLeaderboard.lua ToBeZipped/RaceLocked && cd ToBeZipped && zip -r RaceLocked.zip RaceLocked  -x '*.DS_Store'"
+  },
+  "devDependencies": {
+    "@prettier/plugin-lua": "^0.0.3",
+    "prettier": "^3.4.2"
+  }
+}
