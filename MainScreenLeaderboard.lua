@@ -14,7 +14,7 @@ local BOTTOM_PAD = 5
 -- Inset for level header + values from the row right (beyond `rEdge` in layoutRowColumns).
 local LVL_PAD_RIGHT = 3
 
-local FALLBACK_ROW_BG = { r = 0.38, g = 0.22, b = 0.52, a = 0.92 }
+local FALLBACK_ROW_BG = { r = 0.40, g = 0.24, b = 0.26, a = 0.85 }
 local RACE_PRIMARY_ROW_BG = {
   ORC = { r = 0.22, g = 0.68, b = 0.28, a = 0.92 },
   TAUREN = { r = 0.62, g = 0.44, b = 0.22, a = 0.92 },
@@ -71,7 +71,7 @@ local innerW = contentWidth(FRAME_WIDTH)
 local function layoutRowColumns(w)
   w = math.max(80, math.floor(w + 0.5))
   local lEdge, rEdge, gapRN = 1, 2, 1
-  local colRankW = math.floor(math.min(28, math.max(16, w * 0.10)))
+  local colRankW = math.floor(math.min(28, math.max(16, w * 0.10))) + 5
   local xName = lEdge + colRankW + gapRN
   local colLvlW = math.floor(math.min(28, math.max(16, w * 0.10)))
   local mid = w - rEdge - xName - colLvlW - gapRN
@@ -254,7 +254,9 @@ local function styleDataRow(row, data, pos)
     row.lvlFs:SetTextColor(0.9, 0.86, 0.98)
   end
   row.rankFs:SetText(tostring(pos))
-  row.nameFs:SetText(data.name)
+  local displayName = RaceLocked_LeaderboardDisplayName and RaceLocked_LeaderboardDisplayName(data.name)
+    or data.name
+  row.nameFs:SetText(displayName)
   row.achievementFs:SetText(tostring(data.achievementPoints or 0))
   row.lvlFs:SetText(tostring(data.level))
 end

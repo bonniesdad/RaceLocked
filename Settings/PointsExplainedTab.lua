@@ -20,7 +20,7 @@ local SECTIONS = {
   {
     title = 'On Screen Leaderboard',
     body = 'The on screen leaderboard is a shortened version of the leaderboard. '
-      .. 'Only the closest 7 players are shown, centered on the your position.',
+      .. 'Only the closest 7 players are shown, centered on your position.',
   },
 }
 

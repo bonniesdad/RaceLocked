@@ -113,7 +113,9 @@ function RaceLocked_CreateGuildChampionSection(parent, sortedRows, rightInset)
   nameChampion:SetPoint('RIGHT', championTextHost, 'RIGHT', 0, 0)
   nameChampion:SetPoint('TOP', championTextHost, 'CENTER', 0, -5)
   if topRank and topRank.name and topRank.name ~= '' then
-    nameChampion:SetText(tostring(topRank.name))
+    local dn = RaceLocked_LeaderboardDisplayName and RaceLocked_LeaderboardDisplayName(topRank.name)
+      or topRank.name
+    nameChampion:SetText(tostring(dn))
     nameChampion:SetTextColor(NAME_COLOR[1], NAME_COLOR[2], NAME_COLOR[3])
   else
     nameChampion:SetText('—')
@@ -129,7 +131,9 @@ function RaceLocked_CreateGuildChampionSection(parent, sortedRows, rightInset)
   detailAp:SetJustifyH('CENTER')
   detailAp:SetWordWrap(true)
   if topAp and topAp.name and topAp.name ~= '' then
-    detailAp:SetText(string.format('%s  ·  %s', tostring(topAp.name), tostring(topAp.achievementPoints or 0)))
+    local dn = RaceLocked_LeaderboardDisplayName and RaceLocked_LeaderboardDisplayName(topAp.name)
+      or topAp.name
+    detailAp:SetText(string.format('%s  ·  %s', tostring(dn), tostring(topAp.achievementPoints or 0)))
     detailAp:SetTextColor(0.82, 0.8, 0.74)
   else
     detailAp:SetText('—')

@@ -22,6 +22,19 @@ function RaceLocked_GetPlayerLeaderboardRow()
   }
 end
 
+-- Guild roster / broadcast names are often "Name-Realm"; strip realm for UI labels.
+function RaceLocked_LeaderboardDisplayName(name)
+  if name == nil or name == '' then
+    return name
+  end
+  local s = tostring(name)
+  local dash = string.find(s, '-', 1, true)
+  if not dash or dash <= 1 then
+    return s
+  end
+  return string.sub(s, 1, dash - 1)
+end
+
 local function leaderboardCompare(a, b)
   local la, lb = a.level or 0, b.level or 0
   if la ~= lb then

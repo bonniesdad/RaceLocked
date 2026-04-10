@@ -9,7 +9,7 @@ local PANEL_PAD = 3
 local SCROLL_BAR_WIDTH = 26
 -- Shift UIPanelScrollFrameTemplate chrome left (negative x on TOPRIGHT/BOTTOMRIGHT to scroll).
 local SCROLL_BAR_NUDGE_LEFT = 21
-local FALLBACK_ROW_BG = { r = 0.38, g = 0.22, b = 0.52, a = 0.92 }
+local FALLBACK_ROW_BG = { r = 0.40, g = 0.24, b = 0.26, a = 0.85 }
 local RACE_PRIMARY_ROW_BG = {
   ORC = { r = 0.22, g = 0.68, b = 0.28, a = 0.92 },
   TAUREN = { r = 0.62, g = 0.44, b = 0.22, a = 0.92 },
@@ -41,7 +41,10 @@ local function getPrimaryRowTint()
   return { r = tint.r, g = tint.g, b = tint.b, a = tint.a }
 end
 
-local function createLeaderboardPanel(parent, rows, rowTint, panelWidth, anchorSide, panelTopInset)
+local SYNC_BAR_HEIGHT = 34
+
+local function createLeaderboardPanel(parent, rows, rowTint, panelWidth, anchorSide, panelTopInset, bottomInset)
+  bottomInset = bottomInset or 0
   local panel = CreateFrame('Frame', nil, parent, 'BackdropTemplate')
   panel:SetBackdrop(PANEL_BACKDROP)
   panel:SetBackdropColor(0.06, 0.05, 0.05, 0.92)
@@ -52,7 +55,7 @@ local function createLeaderboardPanel(parent, rows, rowTint, panelWidth, anchorS
   if anchorSide == 'FULL' then
     local topY = panelTopInset or 0
     panel:SetPoint('TOPLEFT', parent, 'TOPLEFT', 0, topY)
-    panel:SetPoint('BOTTOMRIGHT', parent, 'BOTTOMRIGHT', 0, 0)
+    panel:SetPoint('BOTTOMRIGHT', parent, 'BOTTOMRIGHT', 0, bottomInset)
   elseif anchorSide == 'LEFT' then
     panel:SetPoint('TOPLEFT', parent, 'TOPLEFT', 0, 0)
     panel:SetPoint('BOTTOMLEFT', parent, 'BOTTOMLEFT', 0, 0)
@@ -91,7 +94,7 @@ local function createLeaderboardPanel(parent, rows, rowTint, panelWidth, anchorS
   colApW = math.max(colApW, math.ceil(measureFs:GetStringWidth()) + AP_COLUMN_PAD)
   measureFs:Hide()
 
-  local colRankW = math.floor(math.min(32, math.max(22, dataInnerW * 0.065)))
+  local colRankW = math.floor(math.min(32, math.max(22, dataInnerW * 0.065))) + 5
   local colLevelW = math.floor(math.min(32, math.max(24, dataInnerW * 0.078)))
   colLevelW = colLevelW + NAME_TO_LEVEL_SHIFT
   local restW = math.max(40, dataInnerW - colRankW - colApW - colLevelW)
@@ -278,7 +281,9 @@ local function createLeaderboardPanel(parent, rows, rowTint, panelWidth, anchorS
     nameFs:SetPoint('LEFT', row, 'LEFT', colRankW + 2, 0)
     nameFs:SetWidth(colNameW - 4)
     nameFs:SetJustifyH('LEFT')
-    nameFs:SetText(data.name)
+    local displayName = RaceLocked_LeaderboardDisplayName and RaceLocked_LeaderboardDisplayName(data.name)
+      or data.name
+    nameFs:SetText(displayName)
     if isLocal then
       nameFs:SetTextColor(1, 0.95, 0.5)
     else
@@ -311,6 +316,24 @@ local function createLeaderboardPanel(parent, rows, rowTint, panelWidth, anchorS
   return panel
 end
 
+local function applyGuildRosterSyncFromButton()
+  if GuildRoster then
+    GuildRoster()
+  end
+  local function tryMerge()
+    if RaceLocked_MergeGuildRosterIntoLeaderboard and RaceLocked_MergeGuildRosterIntoLeaderboard() then
+      if RaceLocked_NotifyLeaderboardDataChanged then
+        RaceLocked_NotifyLeaderboardDataChanged()
+      end
+    end
+  end
+  tryMerge()
+  if C_Timer and C_Timer.After then
+    C_Timer.After(0.2, tryMerge)
+    C_Timer.After(0.75, tryMerge)
+  end
+end
+
 function RaceLocked_InitializeGuildLeaderboardTab(tabContents, tabIndex)
   if not tabContents or not tabContents[tabIndex] then
     return
@@ -340,7 +363,27 @@ function RaceLocked_InitializeGuildLeaderboardTab(tabContents, tabIndex)
     championH = RaceLocked_CreateGuildChampionSection(container, rows, 0) or 0
   end
   local panelTop = championH > 0 and -(championH + sectionGap) or 0
-  createLeaderboardPanel(container, rows, getPrimaryRowTint(), innerW, 'FULL', panelTop)
+
+  local syncBar = CreateFrame('Frame', nil, container)
+  syncBar:SetHeight(SYNC_BAR_HEIGHT)
+  syncBar:SetPoint('BOTTOMLEFT', container, 'BOTTOMLEFT', 0, 0)
+  syncBar:SetPoint('BOTTOMRIGHT', container, 'BOTTOMRIGHT', 0, 0)
+
+  local syncBtn = CreateFrame('Button', nil, syncBar)
+  syncBtn:SetSize(30, 30)
+  syncBtn:SetPoint('BOTTOMRIGHT', syncBar, 'BOTTOMRIGHT', -4, 2)
+  syncBtn:SetNormalTexture('Interface\\Buttons\\UI-RefreshButton')
+  syncBtn:SetHighlightTexture('Interface\\Buttons\\ButtonHilight-Square', 'ADD')
+  syncBtn:SetPushedTexture('Interface\\Buttons\\UI-RefreshButton')
+  syncBtn:SetScript('OnEnter', function(self)
+    GameTooltip:SetOwner(self, 'ANCHOR_LEFT')
+    GameTooltip:SetText('Refetch guild data', 1, 1, 1)
+    GameTooltip:Show()
+  end)
+  syncBtn:SetScript('OnLeave', GameTooltip_Hide)
+  syncBtn:SetScript('OnClick', applyGuildRosterSyncFromButton)
+
+  createLeaderboardPanel(container, rows, getPrimaryRowTint(), innerW, 'FULL', panelTop, SYNC_BAR_HEIGHT)
 end
 
 function RaceLocked_RefreshGuildLeaderboardTabUI()

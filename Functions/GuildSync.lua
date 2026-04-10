@@ -23,6 +23,69 @@ local function guildSyncLog(msg)
   print('|cfff44336[Race Locked]|r [GuildSync] ' .. tostring(msg))
 end
 
+-- Labels for GetGuildRosterInfo returns (Retail / modern); extra values are argN.
+-- Typical tuple: name, rankName, rankIndex, level, classDisplayName, zone, publicNote,
+-- officerNote, isOnline, status, classFileName, achievementPoints, achievementRank,
+-- isMobile, canSoR, repStanding, guid (Classic Era may omit trailing fields).
+local GUILD_ROSTER_FIELD_LABELS = {
+  'name',
+  'rankName',
+  'rankIndex',
+  'level',
+  'classDisplayName',
+  'zone',
+  'publicNote',
+  'officerNote',
+  'isOnline',
+  'status',
+  'classFileName',
+  'achievementPoints',
+  'achievementRank',
+  'isMobile',
+  'canSoR',
+  'repStanding',
+  'guid',
+}
+
+-- force: when true, print always (e.g. slash); when false, only if RaceLockedDB.debugGuildSync.
+local function debugPrintFullGuildRoster(context, force)
+  if not force and (not RaceLockedDB or not RaceLockedDB.debugGuildSync) then
+    return
+  end
+  local function rosterLog(msg)
+    msg = tostring(msg)
+    if force then
+      print('|cfff44336[Race Locked]|r [GuildSync] ' .. msg)
+    else
+      guildSyncLog(msg)
+    end
+  end
+  if not IsInGuild() then
+    rosterLog('roster dump: not in a guild' .. (context and (' (' .. context .. ')') or ''))
+    return
+  end
+  local total = select(1, GetNumGuildMembers(true))
+  if not total or total < 1 then
+    total = select(1, GetNumGuildMembers())
+  end
+  total = tonumber(total) or 0
+  rosterLog(string.format(
+    'roster dump%s: %d members (GetGuildRosterInfo 1..%d)',
+    context and (' (' .. context .. ')') or '',
+    total,
+    total
+  ))
+  for i = 1, total do
+    local vals = { GetGuildRosterInfo(i) }
+    local parts = {}
+    for j = 1, #vals do
+      local label = GUILD_ROSTER_FIELD_LABELS[j] or ('arg' .. j)
+      parts[j] = string.format('%s=%s', label, tostring(vals[j]))
+    end
+    rosterLog(string.format('  [%d] %s', i, table.concat(parts, ', ')))
+  end
+end
+
 -- Stable "Name-Realm" for guild roster / leaderboard parity (e.g. Notbonnie-SkullRock).
 local function guildBroadcastDisplayName()
   local fn, realm = UnitFullName and UnitFullName('player')
@@ -269,6 +332,7 @@ syncFrame:SetScript('OnEvent', function(_, event, ...)
       guildSyncLog(string.format('recv ignored: invalid payload (len=%d)', type(message) == 'string' and #message or 0))
     end
   elseif event == 'GUILD_ROSTER_UPDATE' then
+    debugPrintFullGuildRoster('GUILD_ROSTER_UPDATE')
     local now = inGuildNow()
     if now ~= wasInGuild then
       if now then
@@ -321,4 +385,9 @@ SlashCmdList['RACELOCKEDGUILDSYNC'] = function()
   else
     print('|cfff44336[Race Locked]|r Guild sync logging OFF.')
   end
+end
+
+SLASH_RACELOCKEDGUILDROSTER1 = '/rwguildroster'
+SlashCmdList['RACELOCKEDGUILDROSTER'] = function()
+  debugPrintFullGuildRoster('slash', true)
 end
