@@ -4,8 +4,7 @@ local TAB_SPACING = 3
 local TAB_COUNT = 3
 local TEXTURE_PATH = 'Interface\\AddOns\\RaceLocked\\Textures'
 
-
-local TAB_WIDTH = 125
+local TAB_WIDTH = 175
 local TAB_WIDTHS = {
   [1] = TAB_WIDTH,
   [2] = TAB_WIDTH,

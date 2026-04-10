@@ -18,12 +18,18 @@ local SECTIONS = {
   {
     title = 'On Screen Leaderboard',
     body = 'The on screen leaderboard is a shortened version of the leaderboard. '
-      .. '\nOnly the closest 7 players are shown, centered on your position.',
+      .. '\nOnly the closest 4 players are shown, with you in the middle.',
   },
   {
     title = 'Race Locked Grouping',
     body = 'The addon stops you from grouping with players of different races. '
-      .. '\nAs leader you will auto kick other races, whilst if not lead you will auto leave.',
+      .. '\nAs leader you will auto kick other races, whilst if not lead you will auto leave.'
+  },
+  {
+    title = 'Guild Sync',
+    body = 'Every 5 minutes, you send out data to your guildies. '
+      .. '\nThis is used to update the leaderboard for other online members.'
+      .. '\nIf your data seems to not be updating, do not panic, it is just a delayed update!',
   },
 }
 

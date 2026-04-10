@@ -6,6 +6,8 @@ local MSG_SEP = '\031'
 
 local broadcastTicker
 local fallbackElapsed = 0
+local lastGuildBroadcastAt = nil
+local GUILD_BROADCAST_INTERVAL_SEC = 300
 
 -- Coalesce CHAT_MSG_ADDON-driven UI refreshes (many guild peers × frequent pings).
 local GUILD_NOTIFY_DEBOUNCE_SEC = 0.25
@@ -179,6 +181,14 @@ function RaceLocked_BroadcastGuildPing()
   if not IsInGuild() then
     return
   end
+  local now = (GetTime and GetTime()) or (time and time()) or 0
+  if lastGuildBroadcastAt and (now - lastGuildBroadcastAt) < GUILD_BROADCAST_INTERVAL_SEC then
+    guildSyncLog(string.format(
+      'send skipped: throttled (%.1fs remaining)',
+      GUILD_BROADCAST_INTERVAL_SEC - (now - lastGuildBroadcastAt)
+    ))
+    return
+  end
   local name = guildBroadcastDisplayName()
   local guid = UnitGUID and UnitGUID('player')
   if not name or name == '' or not guid then
@@ -232,6 +242,7 @@ function RaceLocked_BroadcastGuildPing()
   if sendOk == false then
     guildSyncLog('send returned false (rejected, throttled, or not in guild on the server)')
   end
+  lastGuildBroadcastAt = now
   -- Same client never gets CHAT_MSG_ADDON for own GUILD send; merge locally so roster matches network shape.
   mergeGuildPeer({
     name = name,
@@ -260,7 +271,7 @@ local function startBroadcastTicker()
   end
   stopBroadcastTicker()
   if C_Timer and C_Timer.NewTicker then
-    broadcastTicker = C_Timer.NewTicker(60, RaceLocked_BroadcastGuildPing)
+    broadcastTicker = C_Timer.NewTicker(GUILD_BROADCAST_INTERVAL_SEC, RaceLocked_BroadcastGuildPing)
   end
 end
 
@@ -293,14 +304,13 @@ syncFrame:SetScript('OnEvent', function(_, event, ...)
         guildSyncLog('prefix RaceLocked registered: ' .. tostring(C_ChatInfo.IsAddonMessagePrefixRegistered(MSG_PREFIX)))
       end
       if IsInGuild() then
-        guildSyncLog('PLAYER_LOGIN: in guild — sends ~every 60s; recv only from other clients (+ local merge after own send)')
+        guildSyncLog('PLAYER_LOGIN: in guild — sends ~every 300s; recv only from other clients (+ local merge after own send)')
       else
         guildSyncLog('PLAYER_LOGIN: not in a guild — no guild addon messages will be sent')
       end
     end
   elseif event == 'PLAYER_LEVEL_UP' then
     if IsInGuild() then
-      RaceLocked_BroadcastGuildPing()
       notifyDataChanged()
     end
   elseif event == 'CHAT_MSG_ADDON' then
@@ -335,7 +345,7 @@ syncFrame:SetScript('OnUpdate', function(_, elapsed)
     return
   end
   fallbackElapsed = fallbackElapsed + elapsed
-  if fallbackElapsed >= 60 then
+  if fallbackElapsed >= GUILD_BROADCAST_INTERVAL_SEC then
     fallbackElapsed = 0
     RaceLocked_BroadcastGuildPing()
   end

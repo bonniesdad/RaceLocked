@@ -3,7 +3,7 @@
 local FRAME_WIDTH = 220
 local ROW_H = 18
 local ROW_GAP = 2
-local VISIBLE_ROWS = 7
+local VISIBLE_ROWS = 5
 -- Asymmetric: 1px tighter on the left so the table sits slightly left (inner width unchanged).
 local FRAME_PAD_LEFT = 5
 local FRAME_PAD_RIGHT = 5
