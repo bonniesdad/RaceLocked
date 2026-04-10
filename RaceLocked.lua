@@ -10,5 +10,8 @@ RaceLocked:SetScript('OnEvent', function(self, event, loadedAddonName)
     if RaceLockedDB.showOnScreenLeaderboard == nil then
       RaceLockedDB.showOnScreenLeaderboard = true
     end
+    if RaceLocked_EnsureLeaderboardRowColorDefaults then
+      RaceLocked_EnsureLeaderboardRowColorDefaults()
+    end
   end
 end)

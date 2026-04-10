@@ -9,17 +9,6 @@ local PANEL_PAD = 3
 local SCROLL_BAR_WIDTH = 26
 -- Shift UIPanelScrollFrameTemplate chrome left (negative x on TOPRIGHT/BOTTOMRIGHT to scroll).
 local SCROLL_BAR_NUDGE_LEFT = 21
-local FALLBACK_ROW_BG = { r = 0.40, g = 0.24, b = 0.26, a = 0.85 }
-local RACE_PRIMARY_ROW_BG = {
-  ORC = { r = 0.22, g = 0.68, b = 0.28, a = 0.92 },
-  TAUREN = { r = 0.62, g = 0.44, b = 0.22, a = 0.92 },
-  TROLL = { r = 0.18, g = 0.62, b = 0.78, a = 0.92 },
-  SCOURGE = { r = 0.55, g = 0.32, b = 0.68, a = 0.92 },
-  HUMAN = { r = 0.62, g = 0.46, b = 0.30, a = 0.92 },
-  DWARF = { r = 0.70, g = 0.52, b = 0.33, a = 0.92 },
-  NIGHTELF = { r = 0.47, g = 0.44, b = 0.76, a = 0.92 },
-  GNOME = { r = 0.72, g = 0.45, b = 0.65, a = 0.92 },
-}
 local HEADER_STRIP = { r = 0.12, g = 0.10, b = 0.08, a = 0.98 }
 
 local AP_COLUMN_PAD = 12
@@ -35,10 +24,10 @@ local PANEL_BACKDROP = {
 }
 
 local function getPrimaryRowTint()
-  local _, raceFile = UnitRace and UnitRace('player')
-  local raceKey = raceFile and string.upper(raceFile) or nil
-  local tint = raceKey and RACE_PRIMARY_ROW_BG[raceKey] or FALLBACK_ROW_BG
-  return { r = tint.r, g = tint.g, b = tint.b, a = tint.a }
+  if RaceLocked_GetLeaderboardRowTint then
+    return RaceLocked_GetLeaderboardRowTint()
+  end
+  return { r = 0.17, g = 0.24, b = 0.46, a = 0.85 }
 end
 
 local SYNC_BAR_HEIGHT = 34
@@ -371,7 +360,7 @@ function RaceLocked_InitializeGuildLeaderboardTab(tabContents, tabIndex)
 
   local syncBtn = CreateFrame('Button', nil, syncBar)
   syncBtn:SetSize(30, 30)
-  syncBtn:SetPoint('BOTTOMRIGHT', syncBar, 'BOTTOMRIGHT', -4, 2)
+  syncBtn:SetPoint('BOTTOMRIGHT', syncBar, 'BOTTOMRIGHT', -4, -5)
   syncBtn:SetNormalTexture('Interface\\Buttons\\UI-RefreshButton')
   syncBtn:SetHighlightTexture('Interface\\Buttons\\ButtonHilight-Square', 'ADD')
   syncBtn:SetPushedTexture('Interface\\Buttons\\UI-RefreshButton')

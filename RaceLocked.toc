@@ -17,9 +17,9 @@ Functions/GetAchievementPoints.lua
 Functions/ApplyGuildRosterRow.lua
 Functions/MergeGuildRosterIntoLeaderboard.lua
 Functions/GuildSync.lua
-Functions/MergeGuildRosterIntoLeaderboard.lua
 
 LeaderboardData.lua
+Functions/LeaderboardRowColor.lua
 MainScreenLeaderboard.lua
 
 Settings/Settings.lua

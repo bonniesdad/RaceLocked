@@ -145,4 +145,84 @@ function RaceLocked_InitializeSettingsTab(tabContents, tabIndex)
     end
     GameTooltip:Hide()
   end)
+
+  local colorRow = CreateFrame('Frame', nil, body)
+  colorRow:SetHeight(ROW_BUTTON_HEIGHT)
+  colorRow:SetPoint('TOPLEFT', leaderRow, 'BOTTOMLEFT', 0, -14)
+  colorRow:SetPoint('TOPRIGHT', leaderRow, 'BOTTOMRIGHT', 0, -14)
+
+  local resetBtn = CreateFrame('Button', nil, colorRow)
+  resetBtn:SetSize(24, 24)
+  resetBtn:SetPoint('RIGHT', colorRow, 'RIGHT', -ROW_BUTTON_PAD_H, 0)
+  resetBtn:SetNormalTexture('Interface\\Buttons\\UI-RefreshButton')
+  resetBtn:SetPushedTexture('Interface\\Buttons\\UI-RefreshButton')
+  resetBtn:SetHighlightTexture('Interface\\Buttons\\ButtonHilight-Square', 'ADD')
+  resetBtn:RegisterForClicks('LeftButtonUp')
+  resetBtn:SetScript('OnClick', function()
+    if RaceLocked_ResetLeaderboardRowColorToDefault then
+      RaceLocked_ResetLeaderboardRowColorToDefault()
+    end
+  end)
+  resetBtn:SetScript('OnEnter', function(self)
+    GameTooltip:SetOwner(self, 'ANCHOR_LEFT')
+    GameTooltip:SetText('Reset to default colour', 1, 1, 1)
+    GameTooltip:Show()
+  end)
+  resetBtn:SetScript('OnLeave', GameTooltip_Hide)
+
+  local swatchBtn = CreateFrame('Button', nil, colorRow, 'BackdropTemplate')
+  swatchBtn:SetSize(32, 32)
+  swatchBtn:SetPoint('RIGHT', resetBtn, 'LEFT', -8, 0)
+  swatchBtn:SetBackdrop({
+    bgFile = 'Interface\\Buttons\\WHITE8x8',
+    edgeFile = 'Interface\\Tooltips\\UI-Tooltip-Border',
+    tile = false,
+    edgeSize = 10,
+    insets = { left = 2, right = 2, top = 2, bottom = 2 },
+  })
+  swatchBtn:SetBackdropColor(0, 0, 0, 0)
+  swatchBtn:SetBackdropBorderColor(0.45, 0.42, 0.38, 0.95)
+  local swatchTex = swatchBtn:CreateTexture(nil, 'ARTWORK')
+  swatchTex:SetPoint('TOPLEFT', swatchBtn, 'TOPLEFT', 3, -3)
+  swatchTex:SetPoint('BOTTOMRIGHT', swatchBtn, 'BOTTOMRIGHT', -3, 3)
+
+  local function refreshLeaderboardRowSwatch()
+    if not RaceLocked_GetLeaderboardRowTint then
+      return
+    end
+    local tint = RaceLocked_GetLeaderboardRowTint()
+    swatchTex:SetColorTexture(tint.r, tint.g, tint.b, tint.a)
+  end
+  refreshLeaderboardRowSwatch()
+  if RaceLocked_RegisterLeaderboardRowColorSwatchRefresh then
+    RaceLocked_RegisterLeaderboardRowColorSwatchRefresh(refreshLeaderboardRowSwatch)
+  end
+
+  local colorTitle = colorRow:CreateFontString(nil, 'OVERLAY', 'GameFontHighlight')
+  colorTitle:SetPoint('TOPLEFT', colorRow, 'TOPLEFT', ROW_BUTTON_PAD_H, -6)
+  colorTitle:SetPoint('RIGHT', swatchBtn, 'LEFT', -10, 0)
+  colorTitle:SetJustifyH('LEFT')
+  colorTitle:SetText('Leaderboard row color')
+
+  local colorDesc = colorRow:CreateFontString(nil, 'OVERLAY', 'GameFontHighlightSmall')
+  colorDesc:SetPoint('TOPLEFT', colorTitle, 'BOTTOMLEFT', 0, -2)
+  colorDesc:SetPoint('RIGHT', swatchBtn, 'LEFT', -10, 0)
+  colorDesc:SetJustifyH('LEFT')
+  colorDesc:SetWordWrap(true)
+  colorDesc:SetTextColor(0.75, 0.72, 0.65, 1)
+  colorDesc:SetText('Background tint for leaderboard rows on the main screen and leaderboard tab.')
+
+  swatchBtn:RegisterForClicks('LeftButtonUp')
+  swatchBtn:SetScript('OnClick', function()
+    if RaceLocked_ShowLeaderboardRowColorPicker then
+      RaceLocked_ShowLeaderboardRowColorPicker()
+    end
+  end)
+  swatchBtn:SetScript('OnEnter', function(self)
+    GameTooltip:SetOwner(self, 'ANCHOR_LEFT')
+    GameTooltip:SetText('Click to choose row color', 1, 1, 1)
+    GameTooltip:Show()
+  end)
+  swatchBtn:SetScript('OnLeave', GameTooltip_Hide)
+
 end

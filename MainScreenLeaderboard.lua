@@ -14,25 +14,14 @@ local BOTTOM_PAD = 5
 -- Inset for level header + values from the row right (beyond `rEdge` in layoutRowColumns).
 local LVL_PAD_RIGHT = 3
 
-local FALLBACK_ROW_BG = { r = 0.40, g = 0.24, b = 0.26, a = 0.85 }
-local RACE_PRIMARY_ROW_BG = {
-  ORC = { r = 0.22, g = 0.68, b = 0.28, a = 0.92 },
-  TAUREN = { r = 0.62, g = 0.44, b = 0.22, a = 0.92 },
-  TROLL = { r = 0.18, g = 0.62, b = 0.78, a = 0.92 },
-  SCOURGE = { r = 0.55, g = 0.32, b = 0.68, a = 0.92 },
-  HUMAN = { r = 0.62, g = 0.46, b = 0.30, a = 0.92 },
-  DWARF = { r = 0.70, g = 0.52, b = 0.33, a = 0.92 },
-  NIGHTELF = { r = 0.47, g = 0.44, b = 0.76, a = 0.92 },
-  GNOME = { r = 0.72, g = 0.45, b = 0.65, a = 0.92 },
-}
 -- Same values as settings tab local-player row (`RaceLockedLeaderboardTab.lua`).
 local ROW_HIGHLIGHT_LOCAL = { bg = { r = 0.55, g = 0.38, b = 0.14, a = 1 }, border = { r = 1, g = 0.85, b = 0.25, a = 1 } }
 
 local function getPrimaryRowTint()
-  local _, raceFile = UnitRace and UnitRace('player')
-  local raceKey = raceFile and string.upper(raceFile) or nil
-  local tint = raceKey and RACE_PRIMARY_ROW_BG[raceKey] or FALLBACK_ROW_BG
-  return { r = tint.r, g = tint.g, b = tint.b, a = tint.a }
+  if RaceLocked_GetLeaderboardRowTint then
+    return RaceLocked_GetLeaderboardRowTint()
+  end
+  return { r = 0.17, g = 0.24, b = 0.46, a = 0.85 }
 end
 
 local function setRowBackdropPlain(row)
