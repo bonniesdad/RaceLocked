@@ -64,6 +64,7 @@ end
 --- @param parent Frame
 --- @param sortedRows table[]|nil same sort as leaderboard (#1 = top rank)
 --- @param rightInset number align with leaderboard panel (e.g. PANEL_RIGHT_INSET)
+--- @return Frame root container
 --- @return number total height including internal padding
 function RaceLocked_CreateGuildChampionSection(parent, sortedRows, rightInset)
   rightInset = rightInset or 0
@@ -186,5 +187,5 @@ function RaceLocked_CreateGuildChampionSection(parent, sortedRows, rightInset)
   root:SetScript('OnShow', layoutColumns)
   layoutColumns()
 
-  return OUTER_PAD_Y * 2 + innerH
+  return root, (OUTER_PAD_Y * 2 + innerH)
 end

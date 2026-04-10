@@ -1,5 +1,3 @@
--- "Points Explained" settings tab: how leaderboard metrics are earned.
-
 local SECTION_TITLE_COLOR = { r = 0.98, g = 0.86, b = 0.42 }
 local BODY_COLOR = { r = 0.85, g = 0.82, b = 0.76 }
 

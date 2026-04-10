@@ -126,7 +126,6 @@ local function createLeaderboardPanel(parent, rows, rowTint, panelWidth, anchorS
   hLvl:SetTextColor(1, 0.92, 0.62)
 
   local rowStep = ROW_HEIGHT + ROW_GAP
-  local scrollChildHeight = #rows * ROW_HEIGHT + math.max(0, #rows - 1) * ROW_GAP
 
   local scroll = CreateFrame('ScrollFrame', nil, tableTop, 'UIPanelScrollFrameTemplate')
   scroll:SetFrameStrata(panel:GetFrameStrata())
@@ -171,7 +170,7 @@ local function createLeaderboardPanel(parent, rows, rowTint, panelWidth, anchorS
   local scrollChild = CreateFrame('Frame', nil, scroll)
   scrollChild:SetFrameLevel(scroll:GetFrameLevel() + 1)
   scrollChild:SetWidth(math.max(1, listInnerW))
-  scrollChild:SetHeight(math.max(scrollChildHeight, 1))
+  scrollChild:SetHeight(1)
   scroll:SetScrollChild(scrollChild)
 
   local function raiseScrollChrome()
@@ -230,78 +229,92 @@ local function createLeaderboardPanel(parent, rows, rowTint, panelWidth, anchorS
     C_Timer.After(0, syncScrollChildWidth)
   end
 
-  for i = 1, #rows do
-    local y = -((i - 1) * rowStep)
-    local row = CreateFrame('Frame', nil, scrollChild, 'BackdropTemplate')
+  local rowPool = {}
+
+  local function ensureRow(i)
+    local row = rowPool[i]
+    if row then
+      return row
+    end
+    row = CreateFrame('Frame', nil, scrollChild, 'BackdropTemplate')
     row:SetHeight(ROW_HEIGHT)
-    row:SetPoint('TOPLEFT', scrollChild, 'TOPLEFT', 0, y)
-    row:SetPoint('TOPRIGHT', scrollChild, 'TOPRIGHT', 0, y)
+    row:SetPoint('TOPLEFT', scrollChild, 'TOPLEFT', 0, -((i - 1) * rowStep))
+    row:SetPoint('TOPRIGHT', scrollChild, 'TOPRIGHT', 0, -((i - 1) * rowStep))
 
-    local data = rows[i]
-    local isLocal = RaceLocked_IsLocalLeaderboardRow and RaceLocked_IsLocalLeaderboardRow(data)
-      or (RaceLocked_IsLocalLeaderboardName and RaceLocked_IsLocalLeaderboardName(data.name))
-    if isLocal then
-      row:SetBackdrop({
-        bgFile = 'Interface\\Buttons\\WHITE8x8',
-        edgeFile = 'Interface\\Buttons\\WHITE8x8',
-        tile = false,
-        edgeSize = 1,
-        insets = { left = 0, right = 0, top = 0, bottom = 0 },
-      })
-      row:SetBackdropColor(0.55, 0.38, 0.14, 1)
-      row:SetBackdropBorderColor(1, 0.85, 0.25, 1)
-    else
-      row:SetBackdrop({ bgFile = 'Interface\\Buttons\\WHITE8x8', edgeFile = nil, tile = false, edgeSize = 0 })
-      row:SetBackdropColor(rowTint.r, rowTint.g, rowTint.b, rowTint.a)
-    end
+    row.rankFs = row:CreateFontString(nil, 'OVERLAY', 'GameFontHighlightSmall')
+    row.rankFs:SetPoint('LEFT', row, 'LEFT', 2, 0)
+    row.rankFs:SetWidth(colRankW - 2)
+    row.rankFs:SetJustifyH('CENTER')
 
-    local rankFs = row:CreateFontString(nil, 'OVERLAY', 'GameFontHighlightSmall')
-    rankFs:SetPoint('LEFT', row, 'LEFT', 2, 0)
-    rankFs:SetWidth(colRankW - 2)
-    rankFs:SetJustifyH('CENTER')
-    rankFs:SetText(tostring(i))
-    if isLocal then
-      rankFs:SetTextColor(1, 0.95, 0.5)
-    else
-      rankFs:SetTextColor(0.85, 0.85, 0.78)
-    end
+    row.nameFs = row:CreateFontString(nil, 'OVERLAY', 'GameFontHighlightSmall')
+    row.nameFs:SetPoint('LEFT', row, 'LEFT', colRankW + 2, 0)
+    row.nameFs:SetWidth(colNameW - 4)
+    row.nameFs:SetJustifyH('LEFT')
 
-    local nameFs = row:CreateFontString(nil, 'OVERLAY', 'GameFontHighlightSmall')
-    nameFs:SetPoint('LEFT', row, 'LEFT', colRankW + 2, 0)
-    nameFs:SetWidth(colNameW - 4)
-    nameFs:SetJustifyH('LEFT')
-    local displayName = RaceLocked_LeaderboardDisplayName and RaceLocked_LeaderboardDisplayName(data.name)
-      or data.name
-    nameFs:SetText(displayName)
-    if isLocal then
-      nameFs:SetTextColor(1, 0.95, 0.5)
-    else
-      nameFs:SetTextColor(0.95, 0.95, 0.9)
-    end
+    row.apFs = row:CreateFontString(nil, 'OVERLAY', 'GameFontHighlightSmall')
+    row.apFs:SetPoint('LEFT', row, 'LEFT', xAp, 0)
+    row.apFs:SetWidth(colApW)
+    row.apFs:SetJustifyH('LEFT')
 
-    local apFs = row:CreateFontString(nil, 'OVERLAY', 'GameFontHighlightSmall')
-    apFs:SetPoint('LEFT', row, 'LEFT', xAp, 0)
-    apFs:SetWidth(colApW)
-    apFs:SetJustifyH('LEFT')
-    apFs:SetText(tostring(data.achievementPoints or 0))
-    if isLocal then
-      apFs:SetTextColor(1, 0.92, 0.55)
-    else
-      apFs:SetTextColor(0.9, 0.88, 0.82)
-    end
+    row.lvlFs = row:CreateFontString(nil, 'OVERLAY', 'GameFontHighlightSmall')
+    row.lvlFs:SetPoint('RIGHT', row, 'RIGHT', -(SCROLL_BAR_WIDTH + 4), 0)
+    row.lvlFs:SetWidth(colLevelW - 4)
+    row.lvlFs:SetJustifyH('RIGHT')
 
-    local lvlFs = row:CreateFontString(nil, 'OVERLAY', 'GameFontHighlightSmall')
-    lvlFs:SetPoint('RIGHT', row, 'RIGHT', -(SCROLL_BAR_WIDTH + 4), 0)
-    lvlFs:SetWidth(colLevelW - 4)
-    lvlFs:SetJustifyH('RIGHT')
-    lvlFs:SetText(tostring(data.level))
-    if isLocal then
-      lvlFs:SetTextColor(1, 0.92, 0.55)
-    else
-      lvlFs:SetTextColor(0.9, 0.88, 0.82)
-    end
+    rowPool[i] = row
+    return row
   end
 
+  function panel:UpdateRows(newRows, newRowTint)
+    if RaceLocked_SortLeaderboardInPlace then
+      RaceLocked_SortLeaderboardInPlace(newRows)
+    end
+    local n = #newRows
+    local scrollChildHeight = n * ROW_HEIGHT + math.max(0, n - 1) * ROW_GAP
+    scrollChild:SetHeight(math.max(scrollChildHeight, 1))
+
+    local tint = newRowTint or rowTint
+    for i = 1, n do
+      local data = newRows[i]
+      local row = ensureRow(i)
+      row:Show()
+      local isLocal = RaceLocked_IsLocalLeaderboardRow and RaceLocked_IsLocalLeaderboardRow(data)
+        or (RaceLocked_IsLocalLeaderboardName and RaceLocked_IsLocalLeaderboardName(data.name))
+      if isLocal then
+        row:SetBackdrop({
+          bgFile = 'Interface\\Buttons\\WHITE8x8',
+          edgeFile = 'Interface\\Buttons\\WHITE8x8',
+          tile = false,
+          edgeSize = 1,
+          insets = { left = 0, right = 0, top = 0, bottom = 0 },
+        })
+        row:SetBackdropColor(0.55, 0.38, 0.14, 1)
+        row:SetBackdropBorderColor(1, 0.85, 0.25, 1)
+        row.rankFs:SetTextColor(1, 0.95, 0.5)
+        row.nameFs:SetTextColor(1, 0.95, 0.5)
+        row.apFs:SetTextColor(1, 0.92, 0.55)
+        row.lvlFs:SetTextColor(1, 0.92, 0.55)
+      else
+        row:SetBackdrop({ bgFile = 'Interface\\Buttons\\WHITE8x8', edgeFile = nil, tile = false, edgeSize = 0 })
+        row:SetBackdropColor(tint.r, tint.g, tint.b, tint.a)
+        row.rankFs:SetTextColor(0.85, 0.85, 0.78)
+        row.nameFs:SetTextColor(0.95, 0.95, 0.9)
+        row.apFs:SetTextColor(0.9, 0.88, 0.82)
+        row.lvlFs:SetTextColor(0.9, 0.88, 0.82)
+      end
+      local displayName = RaceLocked_LeaderboardDisplayName and RaceLocked_LeaderboardDisplayName(data.name) or data.name
+      row.rankFs:SetText(tostring(i))
+      row.nameFs:SetText(displayName)
+      row.apFs:SetText(tostring(data.achievementPoints or 0))
+      row.lvlFs:SetText(tostring(data.level))
+    end
+    for i = n + 1, #rowPool do
+      rowPool[i]:Hide()
+    end
+    syncScrollChildWidth()
+  end
+
+  panel:UpdateRows(rows, rowTint)
   return panel
 end
 
@@ -328,16 +341,13 @@ function RaceLocked_InitializeGuildLeaderboardTab(tabContents, tabIndex)
     return
   end
   local content = tabContents[tabIndex]
-  if content.leaderboardMount then
-    content.leaderboardMount:Hide()
-    content.leaderboardMount:SetParent(nil)
-    content.leaderboardMount = nil
+  local container = content.leaderboardMount
+  if not container then
+    container = CreateFrame('Frame', nil, content)
+    content.leaderboardMount = container
+    container:SetPoint('TOPLEFT', content, 'TOPLEFT', PANEL_SIDE_MARGIN, -12)
+    container:SetPoint('BOTTOMRIGHT', content, 'BOTTOMRIGHT', -PANEL_SIDE_MARGIN, 12)
   end
-
-  local container = CreateFrame('Frame', nil, content)
-  content.leaderboardMount = container
-  container:SetPoint('TOPLEFT', content, 'TOPLEFT', PANEL_SIDE_MARGIN, -12)
-  container:SetPoint('BOTTOMRIGHT', content, 'BOTTOMRIGHT', -PANEL_SIDE_MARGIN, 12)
 
   local contentW = content:GetWidth()
   if not contentW or contentW < 100 then
@@ -348,31 +358,56 @@ function RaceLocked_InitializeGuildLeaderboardTab(tabContents, tabIndex)
   local rows = (RaceLocked_GetSortedGuildLeaderboardCopy and RaceLocked_GetSortedGuildLeaderboardCopy()) or {}
   local sectionGap = 8
   local championH = 0
+  if container.championRoot then
+    container.championRoot:Hide()
+    container.championRoot:SetParent(nil)
+    container.championRoot = nil
+  end
   if RaceLocked_CreateGuildChampionSection then
-    championH = RaceLocked_CreateGuildChampionSection(container, rows, 0) or 0
+    local championRoot, championHeight = RaceLocked_CreateGuildChampionSection(container, rows, 0)
+    container.championRoot = championRoot
+    championH = championHeight or 0
   end
   local panelTop = championH > 0 and -(championH + sectionGap) or 0
 
-  local syncBar = CreateFrame('Frame', nil, container)
-  syncBar:SetHeight(SYNC_BAR_HEIGHT)
-  syncBar:SetPoint('BOTTOMLEFT', container, 'BOTTOMLEFT', 0, 0)
-  syncBar:SetPoint('BOTTOMRIGHT', container, 'BOTTOMRIGHT', 0, 0)
+  if not container.syncBar then
+    local syncBar = CreateFrame('Frame', nil, container)
+    container.syncBar = syncBar
+    syncBar:SetHeight(SYNC_BAR_HEIGHT)
+    syncBar:SetPoint('BOTTOMLEFT', container, 'BOTTOMLEFT', 0, 0)
+    syncBar:SetPoint('BOTTOMRIGHT', container, 'BOTTOMRIGHT', 0, 0)
 
-  local syncBtn = CreateFrame('Button', nil, syncBar)
-  syncBtn:SetSize(30, 30)
-  syncBtn:SetPoint('BOTTOMRIGHT', syncBar, 'BOTTOMRIGHT', -4, -5)
-  syncBtn:SetNormalTexture('Interface\\Buttons\\UI-RefreshButton')
-  syncBtn:SetHighlightTexture('Interface\\Buttons\\ButtonHilight-Square', 'ADD')
-  syncBtn:SetPushedTexture('Interface\\Buttons\\UI-RefreshButton')
-  syncBtn:SetScript('OnEnter', function(self)
-    GameTooltip:SetOwner(self, 'ANCHOR_LEFT')
-    GameTooltip:SetText('Refetch guild data', 1, 1, 1)
-    GameTooltip:Show()
-  end)
-  syncBtn:SetScript('OnLeave', GameTooltip_Hide)
-  syncBtn:SetScript('OnClick', applyGuildRosterSyncFromButton)
+    local syncBtn = CreateFrame('Button', nil, syncBar)
+    syncBtn:SetSize(30, 30)
+    syncBtn:SetPoint('BOTTOMRIGHT', syncBar, 'BOTTOMRIGHT', -4, -5)
+    syncBtn:SetNormalTexture('Interface\\Buttons\\UI-RefreshButton')
+    syncBtn:SetHighlightTexture('Interface\\Buttons\\ButtonHilight-Square', 'ADD')
+    syncBtn:SetPushedTexture('Interface\\Buttons\\UI-RefreshButton')
+    syncBtn:SetScript('OnEnter', function(self)
+      GameTooltip:SetOwner(self, 'ANCHOR_LEFT')
+      GameTooltip:SetText('Refetch guild data', 1, 1, 1)
+      GameTooltip:Show()
+    end)
+    syncBtn:SetScript('OnLeave', GameTooltip_Hide)
+    syncBtn:SetScript('OnClick', applyGuildRosterSyncFromButton)
+  end
 
-  createLeaderboardPanel(container, rows, getPrimaryRowTint(), innerW, 'FULL', panelTop, SYNC_BAR_HEIGHT)
+  if not container.leaderboardPanel then
+    container.leaderboardPanel = createLeaderboardPanel(
+      container,
+      rows,
+      getPrimaryRowTint(),
+      innerW,
+      'FULL',
+      panelTop,
+      SYNC_BAR_HEIGHT
+    )
+  else
+    container.leaderboardPanel:ClearAllPoints()
+    container.leaderboardPanel:SetPoint('TOPLEFT', container, 'TOPLEFT', 0, panelTop)
+    container.leaderboardPanel:SetPoint('BOTTOMRIGHT', container, 'BOTTOMRIGHT', 0, SYNC_BAR_HEIGHT)
+    container.leaderboardPanel:UpdateRows(rows, getPrimaryRowTint())
+  end
 end
 
 function RaceLocked_RefreshGuildLeaderboardTabUI()
