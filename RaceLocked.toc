@@ -22,6 +22,9 @@ Display/MainMenu/DisposeRaceRoot.lua
 Display/MainMenu/AttachFactionRaceGrid.lua
 Display/MainMenu/InitializeMainPanel.lua
 
+Display/MainMenu/GuildVerification/GuildRoster.lua
+Display/MainMenu/GuildVerification/GuildVerificationTab.lua
+
 Display/MainMenu/Window/Constants.lua
 Display/MainMenu/Window/EnsureMinimapSavedVars.lua
 Display/MainMenu/Window/GetClassBackgroundTexture.lua

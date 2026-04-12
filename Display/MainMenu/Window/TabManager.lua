@@ -210,6 +210,10 @@ function RaceLocked_SwitchToTab(index)
       RaceLocked_InitializeMainPanel(f)
     end
   end
+
+  if index == 3 and RaceLocked_InitializeGuildVerificationTab then
+    RaceLocked_InitializeGuildVerificationTab(tabContents[index])
+  end
 end
 
 function RaceLocked_SetDefaultTab()
