@@ -1,13 +1,12 @@
 -- Tab strip for the settings frame (matches UltraStatistics Settings/TabManager.lua visuals).
 -- Use RaceLocked_* globals only so we do not collide with other addons' TabManager state.
 
-local TAB_WIDTH = 86
+local TAB_WIDTH = 155
 local TAB_HEIGHT = 32
 local TAB_SPACING = 3
 local MAX_TABS = 3
 -- Tab tops align with UltraStatistics (-57). Content starts below tab row (incl. active tab +6 height) + gap.
 local TAB_TOP_Y = -57
-local CONTENT_GAP_BELOW_TABS = 10
 local CONTENT_TOP_Y = -(57 + TAB_HEIGHT)
 local CONTENT_BOTTOM_INSET = 8
 
@@ -16,7 +15,7 @@ local TAB_TEXTURE = (S and S.TEXTURE_PATH or 'Interface\\AddOns\\RaceLocked\\Tex
 local TAB_WIDTHS = {
   [1] = TAB_WIDTH, -- Main
   [2] = TAB_WIDTH, -- Settings
-  [3] = 132, -- Guild Verification
+  [3] = TAB_WIDTH, -- Guild Verification
 }
 
 local BASE_TEXT_COLOR = {

@@ -1,90 +1,11 @@
 -- Guild Verification tab: roster table (Character Name, Race).
 
-local ROW_HEIGHT = 20
-local ROW_GAP = 1
-local HEADER_ROW_HEIGHT = 20
-local PANEL_SIDE_MARGIN = 0
-local CONTAINER_TOP_INSET = -24
-local PANEL_PAD = 3
-local SCROLL_BAR_WIDTH = 26
-local SCROLL_BAR_NUDGE_LEFT = 21
-local HEADER_STRIP = { r = 0.12, g = 0.10, b = 0.08, a = 0.98 }
-local SYNC_BAR_HEIGHT = 34
-
-local PANEL_BACKDROP = {
-  bgFile = 'Interface\\DialogFrame\\UI-DialogBox-Background',
-  edgeFile = 'Interface\\Tooltips\\UI-Tooltip-Border',
-  tile = true,
-  tileSize = 64,
-  edgeSize = 12,
-  insets = { left = 3, right = 3, top = 3, bottom = 3 },
-}
-
-local function getPrimaryRowTint()
-  if RaceLocked_GetLeaderboardRowTint then
-    return RaceLocked_GetLeaderboardRowTint()
-  end
-  return { r = 0.13, g = 0.19, b = 0.40, a = 0.30 }
-end
-
-local function stripRealmFromName(name)
-  if name == nil or name == '' then
-    return name
-  end
-  local s = tostring(name)
-  local dash = string.find(s, '-', 1, true)
-  if not dash or dash <= 1 then
-    return s
-  end
-  return string.sub(s, 1, dash - 1)
-end
-
-local function isLocalGuildRow(row)
-  if not row then
-    return false
-  end
-  local myGuid = UnitGUID and UnitGUID('player')
-  if myGuid and row.playerId and row.playerId == myGuid then
-    return true
-  end
-  local un = UnitName and UnitName('player')
-  if un and row.name then
-    local nm = stripRealmFromName(row.name)
-    if string.lower(nm) == string.lower(un) then
-      return true
-    end
-  end
-  return false
-end
-
-local COL_EDGE = 2
-local COL_GAP_NAME_RACE = 6
-
-local function computeGuildTableColumns(innerW)
-  innerW = math.max(innerW or 0, 120)
-  local sbReserve = SCROLL_BAR_WIDTH + 6
-  local usableText = innerW - COL_EDGE * 2 - sbReserve
-  if usableText < 48 then
-    usableText = 48
-  end
-  local nameW = math.floor(usableText * 0.55)
-  local raceW = usableText - nameW - COL_GAP_NAME_RACE
-  if raceW < 28 then
-    raceW = 28
-    nameW = math.max(usableText - raceW - COL_GAP_NAME_RACE, 36)
-  end
-  return {
-    edge = COL_EDGE,
-    nameW = nameW,
-    raceW = raceW,
-    gapNr = COL_GAP_NAME_RACE,
-  }
-end
+local V = RaceLocked_GuildVerification
 
 local function createNameOnlyPanel(parent, rows, rowTint, panelWidth, panelTopInset, bottomInset)
   bottomInset = bottomInset or 0
   local panel = CreateFrame('Frame', nil, parent, 'BackdropTemplate')
-  panel:SetBackdrop(PANEL_BACKDROP)
+  panel:SetBackdrop(V.PANEL_BACKDROP)
   panel:SetBackdropColor(0.06, 0.05, 0.05, 0.92)
   panel:SetBackdropBorderColor(0.45, 0.4, 0.3, 0.9)
   local topY = panelTopInset or 0
@@ -93,12 +14,12 @@ local function createNameOnlyPanel(parent, rows, rowTint, panelWidth, panelTopIn
 
   local tableTopY = -3
   local tableTop = CreateFrame('Frame', nil, panel)
-  tableTop:SetPoint('TOPLEFT', panel, 'TOPLEFT', PANEL_PAD, tableTopY)
-  tableTop:SetPoint('TOPRIGHT', panel, 'TOPRIGHT', -PANEL_PAD, tableTopY)
-  tableTop:SetPoint('BOTTOMLEFT', panel, 'BOTTOMLEFT', PANEL_PAD, PANEL_PAD)
-  tableTop:SetPoint('BOTTOMRIGHT', panel, 'BOTTOMRIGHT', -PANEL_PAD, PANEL_PAD)
+  tableTop:SetPoint('TOPLEFT', panel, 'TOPLEFT', V.PANEL_PAD, tableTopY)
+  tableTop:SetPoint('TOPRIGHT', panel, 'TOPRIGHT', -V.PANEL_PAD, tableTopY)
+  tableTop:SetPoint('BOTTOMLEFT', panel, 'BOTTOMLEFT', V.PANEL_PAD, V.PANEL_PAD)
+  tableTop:SetPoint('BOTTOMRIGHT', panel, 'BOTTOMRIGHT', -V.PANEL_PAD, V.PANEL_PAD)
 
-  local tableInnerWidth = panelWidth - (PANEL_PAD * 2)
+  local tableInnerWidth = panelWidth - (V.PANEL_PAD * 2)
   if tableInnerWidth < 80 then
     tableInnerWidth = 200
   end
@@ -108,11 +29,11 @@ local function createNameOnlyPanel(parent, rows, rowTint, panelWidth, panelTopIn
   end
 
   local headerBg = CreateFrame('Frame', nil, tableTop, 'BackdropTemplate')
-  headerBg:SetHeight(HEADER_ROW_HEIGHT)
+  headerBg:SetHeight(V.HEADER_ROW_HEIGHT)
   headerBg:SetPoint('TOPLEFT', tableTop, 'TOPLEFT', 0, 0)
   headerBg:SetPoint('TOPRIGHT', tableTop, 'TOPRIGHT', 0, 0)
   headerBg:SetBackdrop({ bgFile = 'Interface\\Buttons\\WHITE8x8', edgeFile = nil, tile = false, edgeSize = 0 })
-  headerBg:SetBackdropColor(HEADER_STRIP.r, HEADER_STRIP.g, HEADER_STRIP.b, HEADER_STRIP.a)
+  headerBg:SetBackdropColor(V.HEADER_STRIP.r, V.HEADER_STRIP.g, V.HEADER_STRIP.b, V.HEADER_STRIP.a)
 
   local hName = headerBg:CreateFontString(nil, 'OVERLAY', 'GameFontHighlightSmall')
   hName:SetJustifyH('LEFT')
@@ -124,12 +45,12 @@ local function createNameOnlyPanel(parent, rows, rowTint, panelWidth, panelTopIn
   hRace:SetText('Race')
   hRace:SetTextColor(1, 0.92, 0.62)
 
-  local rowStep = ROW_HEIGHT + ROW_GAP
+  local rowStep = V.ROW_HEIGHT + V.ROW_GAP
 
   local scroll = CreateFrame('ScrollFrame', nil, tableTop, 'UIPanelScrollFrameTemplate')
   scroll:SetFrameStrata(panel:GetFrameStrata())
   scroll:SetFrameLevel(tableTop:GetFrameLevel() + 5)
-  scroll:SetPoint('TOPLEFT', headerBg, 'BOTTOMLEFT', 0, -ROW_GAP)
+  scroll:SetPoint('TOPLEFT', headerBg, 'BOTTOMLEFT', 0, -V.ROW_GAP)
   scroll:SetPoint('BOTTOMRIGHT', tableTop, 'BOTTOMRIGHT', 0, 0)
   scroll:EnableMouseWheel(true)
 
@@ -164,7 +85,7 @@ local function createNameOnlyPanel(parent, rows, rowTint, panelWidth, panelTopIn
     nudgeAnchorsToScroll(scroll.ScrollDownButton)
     nudgeAnchorsToScroll(scroll.ScrollBar)
   end
-  nudgeScrollChromeLeft(SCROLL_BAR_NUDGE_LEFT)
+  nudgeScrollChromeLeft(V.SCROLL_BAR_NUDGE_LEFT)
 
   local scrollChild = CreateFrame('Frame', nil, scroll)
   scrollChild:SetFrameLevel(scroll:GetFrameLevel() + 1)
@@ -173,7 +94,7 @@ local function createNameOnlyPanel(parent, rows, rowTint, panelWidth, panelTopIn
   scroll:SetScrollChild(scrollChild)
 
   local rowPool = {}
-  panel._colLayout = computeGuildTableColumns(listInnerW)
+  panel._colLayout = RaceLocked_GuildVerification_ComputeGuildTableColumns(listInnerW)
 
   local function applyHeaderLayout(L)
     hName:ClearAllPoints()
@@ -225,7 +146,7 @@ local function createNameOnlyPanel(parent, rows, rowTint, panelWidth, panelTopIn
     end
     w = math.max(w or 0, 160)
     scrollChild:SetWidth(w)
-    panel._colLayout = computeGuildTableColumns(w)
+    panel._colLayout = RaceLocked_GuildVerification_ComputeGuildTableColumns(w)
     applyHeaderLayout(panel._colLayout)
     for j = 1, #rowPool do
       local r = rowPool[j]
@@ -262,7 +183,7 @@ local function createNameOnlyPanel(parent, rows, rowTint, panelWidth, panelTopIn
       return row
     end
     row = CreateFrame('Frame', nil, scrollChild, 'BackdropTemplate')
-    row:SetHeight(ROW_HEIGHT)
+    row:SetHeight(V.ROW_HEIGHT)
     row:SetPoint('TOPLEFT', scrollChild, 'TOPLEFT', 0, -((i - 1) * rowStep))
     row:SetPoint('TOPRIGHT', scrollChild, 'TOPRIGHT', 0, -((i - 1) * rowStep))
 
@@ -281,7 +202,7 @@ local function createNameOnlyPanel(parent, rows, rowTint, panelWidth, panelTopIn
 
   function panel:UpdateRows(newRows, newRowTint)
     local n = #newRows
-    local scrollChildHeight = n * ROW_HEIGHT + math.max(0, n - 1) * ROW_GAP
+    local scrollChildHeight = n * V.ROW_HEIGHT + math.max(0, n - 1) * V.ROW_GAP
     scrollChild:SetHeight(math.max(scrollChildHeight, 1))
 
     local tint = newRowTint or rowTint
@@ -290,7 +211,7 @@ local function createNameOnlyPanel(parent, rows, rowTint, panelWidth, panelTopIn
       local row = ensureRow(i)
       row:Show()
       applyRowLayout(row, panel._colLayout)
-      local isLocal = isLocalGuildRow(data)
+      local isLocal = RaceLocked_GuildVerification_IsLocalGuildRow(data)
       if isLocal then
         row:SetBackdrop({
           bgFile = 'Interface\\Buttons\\WHITE8x8',
@@ -309,7 +230,7 @@ local function createNameOnlyPanel(parent, rows, rowTint, panelWidth, panelTopIn
         row.nameFs:SetTextColor(0.95, 0.95, 0.9)
         row.raceFs:SetTextColor(0.95, 0.95, 0.9)
       end
-      local displayName = stripRealmFromName(data.name)
+      local displayName = RaceLocked_GuildVerification_StripRealmFromName(data.name)
       row.nameFs:SetText(displayName)
       local raceLabel = (data.race and data.race ~= '') and data.race or '—'
       row.raceFs:SetText(raceLabel)
@@ -365,7 +286,7 @@ function RaceLocked_GuildVerificationTab_Refresh()
     rows, allSameRaceAsPlayer = RaceLocked_GetGuildVerificationRosterRows()
   end
   rows = rows or {}
-  panel:UpdateRows(rows, getPrimaryRowTint())
+  panel:UpdateRows(rows, RaceLocked_GuildVerification_GetPrimaryRowTint())
   local emptyFs = container.guildRosterEmptyLabel
   if emptyFs then
     if allSameRaceAsPlayer then
@@ -386,16 +307,16 @@ function RaceLocked_InitializeGuildVerificationTab(content)
   local container = content.guildVerificationContainer
   if container and content.guildVerificationBuilt then
     container:ClearAllPoints()
-    container:SetPoint('TOPLEFT', content, 'TOPLEFT', PANEL_SIDE_MARGIN, CONTAINER_TOP_INSET)
-    container:SetPoint('BOTTOMRIGHT', content, 'BOTTOMRIGHT', -PANEL_SIDE_MARGIN, 4)
+    container:SetPoint('TOPLEFT', content, 'TOPLEFT', V.PANEL_SIDE_MARGIN, V.CONTAINER_TOP_INSET)
+    container:SetPoint('BOTTOMRIGHT', content, 'BOTTOMRIGHT', -V.PANEL_SIDE_MARGIN, 4)
     return
   end
 
   if not container then
     container = CreateFrame('Frame', nil, content)
     content.guildVerificationContainer = container
-    container:SetPoint('TOPLEFT', content, 'TOPLEFT', PANEL_SIDE_MARGIN, CONTAINER_TOP_INSET)
-    container:SetPoint('BOTTOMRIGHT', content, 'BOTTOMRIGHT', -PANEL_SIDE_MARGIN, 4)
+    container:SetPoint('TOPLEFT', content, 'TOPLEFT', V.PANEL_SIDE_MARGIN, V.CONTAINER_TOP_INSET)
+    container:SetPoint('BOTTOMRIGHT', content, 'BOTTOMRIGHT', -V.PANEL_SIDE_MARGIN, 4)
   end
 
   local contentW = content:GetWidth()
@@ -407,7 +328,7 @@ function RaceLocked_InitializeGuildVerificationTab(content)
   if not container.syncBar then
     local syncBar = CreateFrame('Frame', nil, container)
     container.syncBar = syncBar
-    syncBar:SetHeight(SYNC_BAR_HEIGHT)
+    syncBar:SetHeight(V.SYNC_BAR_HEIGHT)
     syncBar:SetPoint('BOTTOMLEFT', container, 'BOTTOMLEFT', 0, 0)
     syncBar:SetPoint('BOTTOMRIGHT', container, 'BOTTOMRIGHT', 0, 0)
 
@@ -455,15 +376,15 @@ function RaceLocked_InitializeGuildVerificationTab(content)
     container.leaderboardPanel = createNameOnlyPanel(
       container,
       {},
-      getPrimaryRowTint(),
+      RaceLocked_GuildVerification_GetPrimaryRowTint(),
       innerW,
       0,
-      SYNC_BAR_HEIGHT
+      V.SYNC_BAR_HEIGHT
     )
   else
     container.leaderboardPanel:ClearAllPoints()
     container.leaderboardPanel:SetPoint('TOPLEFT', container, 'TOPLEFT', 0, 0)
-    container.leaderboardPanel:SetPoint('BOTTOMRIGHT', container, 'BOTTOMRIGHT', 0, SYNC_BAR_HEIGHT)
+    container.leaderboardPanel:SetPoint('BOTTOMRIGHT', container, 'BOTTOMRIGHT', 0, V.SYNC_BAR_HEIGHT)
   end
 
   if not container.guildRosterEmptyLabel then

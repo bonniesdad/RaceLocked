@@ -6,7 +6,6 @@
 ## SavedVariablesPerCharacter: RaceLockedDB
 
 RaceLocked.lua
-Display/MainMenu/Window/RaceLockedOptions.lua
 
 ## Libs
 Libs/LibStub/LibStub.lua
@@ -18,35 +17,41 @@ Functions/EnforceSameRaceInParty/EnforceSameRaceInParty.lua
 Functions/EnforceRaceLanguage/EnforceRaceLanguage.lua
 
 Display/MainMenu/Constants.lua
-Display/MainMenu/GetOrCreateMainMount.lua
-Display/MainMenu/DisposeRaceRoot.lua
-Display/MainMenu/AttachFactionRaceGrid.lua
+
+Display/MainMenu/FactionRaceGrid/Utils/Constants.lua
+Display/MainMenu/FactionRaceGrid/Utils/RaceGridStoredGuildReports.lua
+Display/MainMenu/FactionRaceGrid/Utils/AllowedRaceGridGuildNames.lua
+Display/MainMenu/FactionRaceGrid/Utils/GetPlayerGuildRaceGridReport.lua
+Display/MainMenu/FactionRaceGrid/Utils/AggregateRaceGuildReports.lua
+Display/MainMenu/FactionRaceGrid/Utils/RaceIconTexture.lua
+Display/MainMenu/FactionRaceGrid/Utils/Guild.lua
+Display/MainMenu/FactionRaceGrid/View.lua
 Display/MainMenu/InitializeMainPanel.lua
 
-Display/MainMenu/GuildVerification/GuildRoster.lua
-Display/MainMenu/GuildVerification/GuildVerificationTab.lua
+Display/MainMenu/GuildVerification/Utils/Constants.lua
+Display/MainMenu/GuildVerification/Utils/StripRealmFromName.lua
+Display/MainMenu/GuildVerification/Utils/IsLocalGuildRow.lua
+Display/MainMenu/GuildVerification/Utils/ComputeGuildTableColumns.lua
+Display/MainMenu/GuildVerification/Utils/GetPrimaryRowTint.lua
+Display/MainMenu/GuildVerification/Utils/GetGuildVerificationRosterRows.lua
+Display/MainMenu/GuildVerification/View.lua
 
-Display/MainMenu/Window/Constants.lua
-Display/MainMenu/Window/EnsureMinimapSavedVars.lua
-Display/MainMenu/Window/GetClassBackgroundTexture.lua
-Display/MainMenu/Window/UpdateFrameBackdrop.lua
-Display/MainMenu/Window/CreateRootFrame.lua
-Display/MainMenu/Window/RegisterResetMenuPosition.lua
-Display/MainMenu/Window/AttachBackgroundTexture.lua
-Display/MainMenu/Window/CreateTitleChrome.lua
-Display/MainMenu/Window/RaceLockedMainMenuSettingsTab.lua
-Display/MainMenu/Window/TabManager.lua
-Display/MainMenu/Window/BuildSettingsWindow.lua
-Display/MainMenu/Window/ToggleRaceLockedSettings.lua
-Display/MainMenu/Window/RegisterDataBroker.lua
-Display/MainMenu/Window/RegisterSlashCommands.lua
+Display/MainMenu/SettingsWindow/Utils/Constants.lua
+Display/MainMenu/SettingsWindow/Utils/GetClassBackgroundTexture.lua
+Display/MainMenu/SettingsWindow/Utils/UpdateFrameBackdrop.lua
+Display/MainMenu/SettingsWindow/Utils/AttachBackgroundTexture.lua
+Display/MainMenu/SettingsWindow/Utils/RegisterResetMenuPosition.lua
+Display/MainMenu/SettingsWindow/Utils/CreateRootFrame.lua
+Display/MainMenu/SettingsWindow/Utils/CreateTitleChrome.lua
 
-Display/MainMenu/FactionRaceGrid/Constants.lua
-Display/MainMenu/FactionRaceGrid/RaceIconTexture.lua
-Display/MainMenu/FactionRaceGrid/TextLeftOffset.lua
-Display/MainMenu/FactionRaceGrid/GetGuildAverageLevel.lua
-Display/MainMenu/FactionRaceGrid/PrintGuildAverageAfterRefresh.lua
-Display/MainMenu/FactionRaceGrid/LayoutStatPane.lua
-Display/MainMenu/FactionRaceGrid/RefreshRaceDetails.lua
-Display/MainMenu/FactionRaceGrid/LayoutGrid.lua
-Display/MainMenu/FactionRaceGrid/CreateFactionRaceGrid.lua
+Display/MainMenu/SettingsTabs/Utils/InitializeMainMenuSettingsTab.lua
+Display/MainMenu/SettingsTabs/View.lua
+
+Display/MainMenu/SettingsWindow/View.lua
+
+Display/MainMenu/MinimapBroker/Utils/EnsureMinimapSavedVars.lua
+Display/MainMenu/MinimapBroker/View.lua
+
+Display/MainMenu/SlashCommands/Index.lua
+
+Display/MainMenu/RaceLockedOptions/Index.lua

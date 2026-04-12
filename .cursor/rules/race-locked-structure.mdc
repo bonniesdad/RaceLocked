@@ -1,0 +1,42 @@
+---
+description: Race Locked addon — folder layout, file naming, and where to put new code
+alwaysApply: true
+---
+
+# Race Locked — project structure (Lua / WoW Classic)
+
+## Goals
+
+- Keep folders shallow and readable: **location + filename** should explain responsibility.
+- Prefer **one top-level function per file** (or one small, cohesive group) so diffs stay focused and search stays easy.
+- Match existing naming (`RaceLocked_*`, `RaceLocked_GuildChampion_*`, etc.) and TOC load order in `RaceLocked.toc`.
+
+## Display UI (`Display/...`)
+
+Use a **feature section** folder named after the UI area:
+
+```text
+SectionName/
+  Utils/          # shared constants, pure helpers, data/formatting used by the view
+  View.lua        # entry: builds frames, wires events, orchestrates Utils
+```
+
+- Put **frame creation, layout, and handlers** in `View.lua` unless a block is large and cohesive enough to justify extraction.
+- If something is **large or self-contained** (many files or a clear subdomain), add a **sibling folder** next to `Utils/` and `View.lua`, named for what it does (e.g. `GuildVerification/`), and list those files in `RaceLocked.toc` **before** `View.lua` when they define symbols `View.lua` calls.
+
+## Functional / non-UI code (`Functions/...`)
+
+Use a **capability** folder:
+
+```text
+FunctionalityName/
+  Index.lua       # public entry / orchestration
+  Utils/          # helpers used only by this functionality
+```
+
+## Agent checklist when adding code
+
+1. Pick **Display** vs **Functions** and the correct **SectionName** / **FunctionalityName** folder.
+2. Add a **new file** with a **specific name** rather than growing an unrelated file.
+3. Register new Lua files in **`RaceLocked.toc`** in dependency order (dependencies first).
+4. Do not introduce extra top-level folders under a section unless the new subtree is clearly scoped and named.
