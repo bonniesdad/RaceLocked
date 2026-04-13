@@ -1,4 +1,4 @@
--- Race grid secret-message service over HardcoreDeaths chat channel.
+-- Race grid secret-message service over a hidden custom chat channel.
 -- Sends your own guild race reports and applies received reports into stored guild rows.
 
 RaceLocked_GuildChampion = RaceLocked_GuildChampion or {}
@@ -6,7 +6,8 @@ local G = RaceLocked_GuildChampion
 local thisAddonName = ...
 
 local PREFIX = 'RLRaceGridV1'
-local CHANNEL_NAME = 'HardcoreDeaths'
+local CHANNEL_NAME = 'RaceLockedDataBus'
+local channelFiltersInstalled = false
 
 local function emptyClasses()
   return {
@@ -125,13 +126,66 @@ local function applyIncomingReport(report)
   end
 end
 
-local function getHardcoreDeathsChannelId()
+local function getDataChannelId()
   if not GetChannelName then
     return 0
   end
   local id = GetChannelName(CHANNEL_NAME)
   id = tonumber(id) or 0
   return id
+end
+
+local function hideChannelFromChatWindows()
+  if not ChatFrame_RemoveChannel or not NUM_CHAT_WINDOWS then
+    return
+  end
+  for i = 1, NUM_CHAT_WINDOWS do
+    local frame = _G['ChatFrame' .. i]
+    if frame then
+      ChatFrame_RemoveChannel(frame, CHANNEL_NAME)
+    end
+  end
+end
+
+local function installChannelNoticeFilters()
+  if channelFiltersInstalled or not ChatFrame_AddMessageEventFilter then
+    return
+  end
+  channelFiltersInstalled = true
+  local function filterFn(_, _, ...)
+    local arg1 = select(1, ...)
+    local arg2 = select(2, ...)
+    local arg3 = select(3, ...)
+    if tostring(arg1 or '') == CHANNEL_NAME then
+      return true
+    end
+    if tostring(arg2 or '') == CHANNEL_NAME then
+      return true
+    end
+    if tostring(arg3 or '') == CHANNEL_NAME then
+      return true
+    end
+    return false
+  end
+  ChatFrame_AddMessageEventFilter('CHAT_MSG_CHANNEL_NOTICE', filterFn)
+  ChatFrame_AddMessageEventFilter('CHAT_MSG_CHANNEL_NOTICE_USER', filterFn)
+end
+
+local function ensureDataChannelJoined()
+  local id = getDataChannelId()
+  if id > 0 then
+    hideChannelFromChatWindows()
+    return id
+  end
+  if JoinTemporaryChannel then
+    JoinTemporaryChannel(CHANNEL_NAME)
+    id = getDataChannelId()
+    if id > 0 then
+      hideChannelFromChatWindows()
+      return id
+    end
+  end
+  return 0
 end
 
 function RaceLocked_GuildChampion_BroadcastOwnGuildRaceGridReports()
@@ -141,7 +195,7 @@ function RaceLocked_GuildChampion_BroadcastOwnGuildRaceGridReports()
   if not RaceLocked_GetGuildRaceGridReportForRaceToken then
     return
   end
-  local channelId = getHardcoreDeathsChannelId()
+  local channelId = ensureDataChannelJoined()
   if channelId <= 0 then
     return
   end
@@ -162,12 +216,19 @@ end
 local service = CreateFrame('Frame')
 service:RegisterEvent('ADDON_LOADED')
 service:RegisterEvent('CHAT_MSG_ADDON')
+service:RegisterEvent('CHANNEL_UI_UPDATE')
 service:SetScript('OnEvent', function(_, event, a1, a2, a3)
   if event == 'ADDON_LOADED' then
     local loadedAddonName = a1
     if loadedAddonName == thisAddonName and C_ChatInfo and C_ChatInfo.RegisterAddonMessagePrefix then
       C_ChatInfo.RegisterAddonMessagePrefix(PREFIX)
+      installChannelNoticeFilters()
+      ensureDataChannelJoined()
     end
+    return
+  end
+  if event == 'CHANNEL_UI_UPDATE' then
+    ensureDataChannelJoined()
     return
   end
   if event == 'CHAT_MSG_ADDON' then
