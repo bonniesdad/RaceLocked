@@ -428,9 +428,27 @@ function RaceLocked_CreateFactionRaceGrid(parent, rightInset)
     local inGuild = IsInGuild and IsInGuild()
     local rosterRequested = false
 
+    --- Must not depend on RaceLocked_GuildChampion_GetGuildRosterMemberCount existing; if that global is nil the old
+    --- `if inGuild and RaceLocked_...` skipped the whole gate and the UI always refreshed.
+    local function readGuildRosterMemberCountForGate()
+      if RaceLocked_GuildChampion_GetGuildRosterMemberCount then
+        return RaceLocked_GuildChampion_GetGuildRosterMemberCount()
+      end
+      if not GetNumGuildMembers then
+        return 0
+      end
+      local n = GetNumGuildMembers(true)
+      n = tonumber(n) or 0
+      if n < 1 then
+        n = GetNumGuildMembers()
+        n = tonumber(n) or 0
+      end
+      return n
+    end
+
     local function captureSnapshotAndRedraw()
-      if inGuild and RaceLocked_GuildChampion_GetGuildRosterMemberCount then
-        local n = RaceLocked_GuildChampion_GetGuildRosterMemberCount()
+      if inGuild then
+        local n = readGuildRosterMemberCountForGate()
         local minN = tonumber(G.MIN_GUILD_MEMBERS_FOR_RACE_GRID) or 100
         if rosterRequested and n < 1 then
           print('|cffffffffRace Locked|r: Roster is not yet loaded, please try again.')
