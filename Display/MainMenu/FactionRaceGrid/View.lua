@@ -7,10 +7,16 @@ local function createChrome(root)
 
   local refreshRow = CreateFrame('Frame', nil, root)
   refreshRow:SetHeight(G.REFRESH_ROW_H)
-  local refreshBtn = CreateFrame('Button', nil, refreshRow, 'UIPanelButtonTemplate')
-  refreshBtn:SetText('Refresh')
-  refreshBtn:SetSize(120, G.REFRESH_ROW_H - 2)
-  refreshBtn:SetPoint('CENTER', refreshRow, 'CENTER', 0, 0)
+  local refreshBtn = CreateFrame('Button', nil, refreshRow)
+  refreshBtn:SetSize(30, 30)
+  refreshBtn:SetPoint('BOTTOMRIGHT', refreshRow, 'BOTTOMRIGHT', -4, -5)
+  local refreshTex = 'Interface\\Buttons\\UI-RefreshButton'
+  local loadingTex = 'Interface\\Buttons\\UI-GroupLoot-Pass-Down'
+  refreshBtn._refreshTex = refreshTex
+  refreshBtn._loadingTex = loadingTex
+  refreshBtn:SetNormalTexture(refreshTex)
+  refreshBtn:SetHighlightTexture('Interface\\Buttons\\ButtonHilight-Square', 'ADD')
+  refreshBtn:SetPushedTexture(refreshTex)
 
   return refreshRow, refreshBtn
 end
@@ -49,24 +55,32 @@ local function createRaceStatPane(root, raceToken, raceAccent)
   f._rankFs:SetTextColor(G.LABEL_GOLD[1] * 0.85, G.LABEL_GOLD[2] * 0.85, G.LABEL_GOLD[3] * 0.85)
 
   local det = f:CreateFontString(nil, 'OVERLAY', 'GameFontHighlight')
-  det:SetJustifyH('LEFT')
+  det:SetJustifyH('CENTER')
   det:SetText('—')
   det:SetTextColor(G.MUTED[1], G.MUTED[2], G.MUTED[3])
   f._detailFs = det
 
   f._guildSectionTitle = f:CreateFontString(nil, 'OVERLAY', 'GameFontDisableSmall')
-  f._guildSectionTitle:SetJustifyH('LEFT')
+  f._guildSectionTitle:SetJustifyH('CENTER')
 
   f._guildNames = f:CreateFontString(nil, 'OVERLAY', 'GameFontHighlightSmall')
-  f._guildNames:SetJustifyH('LEFT')
+  f._guildNames:SetJustifyH('CENTER')
   f._guildNames:SetJustifyV('TOP')
   f._guildNames:SetWordWrap(true)
 
   f._avgSubtitle = f:CreateFontString(nil, 'OVERLAY', 'GameFontDisableSmall')
-  f._avgSubtitle:SetJustifyH('LEFT')
+  f._avgSubtitle:SetJustifyH('CENTER')
+
+  f._totalPlayersSubtitle = f:CreateFontString(nil, 'OVERLAY', 'GameFontDisableSmall')
+  f._totalPlayersSubtitle:SetJustifyH('CENTER')
+
+  f._totalPlayersFs = f:CreateFontString(nil, 'OVERLAY', 'GameFontHighlight')
+  f._totalPlayersFs:SetJustifyH('CENTER')
+  f._totalPlayersFs:SetText('0')
+  f._totalPlayersFs:SetTextColor(G.MUTED[1], G.MUTED[2], G.MUTED[3])
 
   f._classSubtitle = f:CreateFontString(nil, 'OVERLAY', 'GameFontDisableSmall')
-  f._classSubtitle:SetJustifyH('LEFT')
+  f._classSubtitle:SetJustifyH('CENTER')
 
   f._classBarHost = CreateFrame('Frame', nil, f)
   f._classBarHost:SetHeight(G.CLASS_BAR_HOST_H)
@@ -144,13 +158,13 @@ local function layoutRaceGridPane(pane, labelFs, detailFs, tx, raceToken)
   barW = math.max(barW, 48)
 
   labelFs:ClearAllPoints()
-  labelFs:SetPoint('TOPLEFT', pane, 'TOPLEFT', tx, -4)
+  labelFs:SetPoint('TOPLEFT', pane, 'TOPLEFT', tx, -6)
   local labelW = pane._rankFs and math.max(40, w - 40) or w
   labelFs:SetWidth(labelW)
 
   local guildH = pane._guildSectionTitle
   guildH:ClearAllPoints()
-  guildH:SetPoint('TOPLEFT', labelFs, 'BOTTOMLEFT', barLeft - tx, -(20 + lg))
+  guildH:SetPoint('TOPLEFT', labelFs, 'BOTTOMLEFT', barLeft - tx, -(10 + lg))
   guildH:SetWidth(barW)
 
   local gNames = pane._guildNames
@@ -159,17 +173,30 @@ local function layoutRaceGridPane(pane, labelFs, detailFs, tx, raceToken)
   gNames:SetWidth(barW)
 
   local avgSub = pane._avgSubtitle
+  local totalSub = pane._totalPlayersSubtitle
+  local totalFs = pane._totalPlayersFs
+  local statsGap = 8
+  local avgW = math.max(24, math.floor((barW - statsGap) / 2))
+  local totalW = math.max(24, barW - avgW - statsGap)
   avgSub:ClearAllPoints()
   avgSub:SetPoint('TOPLEFT', gNames, 'BOTTOMLEFT', 0, -(5 + lg))
-  avgSub:SetWidth(barW)
+  avgSub:SetWidth(avgW)
+
+  totalSub:ClearAllPoints()
+  totalSub:SetPoint('TOPLEFT', avgSub, 'TOPRIGHT', statsGap, 0)
+  totalSub:SetWidth(totalW)
 
   detailFs:ClearAllPoints()
   detailFs:SetPoint('TOPLEFT', avgSub, 'BOTTOMLEFT', 0, -2)
-  detailFs:SetWidth(barW)
+  detailFs:SetWidth(avgW)
+
+  totalFs:ClearAllPoints()
+  totalFs:SetPoint('TOPLEFT', totalSub, 'BOTTOMLEFT', 0, -2)
+  totalFs:SetWidth(totalW)
 
   local cSub = pane._classSubtitle
   cSub:ClearAllPoints()
-  cSub:SetPoint('TOPLEFT', detailFs, 'BOTTOMLEFT', 0, -(6 + lg))
+  cSub:SetPoint('TOPLEFT', detailFs, 'BOTTOMLEFT', 0, -(11 + lg))
   cSub:SetWidth(barW)
 
   local host = pane._classBarHost
@@ -193,8 +220,8 @@ local function layoutRaceGridPane(pane, labelFs, detailFs, tx, raceToken)
   local pad = G.CLASS_BAR_BORDER_PAD
   local row = pane._classBarRow
   row:ClearAllPoints()
-  row:SetPoint('TOPLEFT', well, 'TOPLEFT', 0, -pad)
-  row:SetPoint('TOPRIGHT', well, 'TOPRIGHT', 0, -pad)
+  row:SetPoint('TOPLEFT', well, 'TOPLEFT', pad, -pad)
+  row:SetPoint('TOPRIGHT', well, 'TOPRIGHT', -pad, -pad)
   row:SetHeight(G.CLASS_BAR_HEIGHT)
 
   if pane._rankFs then
@@ -388,19 +415,52 @@ function RaceLocked_CreateFactionRaceGrid(parent, rightInset)
   end
 
   refreshBtn:SetScript('OnClick', function()
+    if refreshBtn._isLoading then
+      return
+    end
+    refreshBtn._isLoading = true
+    refreshBtn:SetNormalTexture(refreshBtn._loadingTex or 'Interface\\Buttons\\UI-GroupLoot-Pass-Down')
+    refreshBtn:SetPushedTexture(refreshBtn._loadingTex or 'Interface\\Buttons\\UI-GroupLoot-Pass-Down')
+    refreshBtn:SetDisabledTexture(refreshBtn._loadingTex or 'Interface\\Buttons\\UI-GroupLoot-Pass-Down')
+    refreshBtn:Disable()
+    refreshBtn:SetAlpha(0.75)
+
+    local inGuild = IsInGuild and IsInGuild()
+    local rosterRequested = false
+
     local function captureSnapshotAndRedraw()
       if RaceLocked_GuildChampion_SaveRaceGridGuildSnapshotFromRoster then
         RaceLocked_GuildChampion_SaveRaceGridGuildSnapshotFromRoster(raceTokens)
       end
-      RaceLocked_GuildChampion_RefreshRaceGridDisplay(panes, raceTokens)
+      if rosterRequested and inGuild and RaceLocked_GuildChampion_BroadcastOwnGuildRaceGridReports then
+        RaceLocked_GuildChampion_BroadcastOwnGuildRaceGridReports()
+      end
+      runLayout()
     end
-    if GuildRoster then
+    if inGuild and GuildRoster then
       GuildRoster()
+      rosterRequested = true
     end
     if C_Timer and C_Timer.After then
-      C_Timer.After(0.2, function()
+      local waitSeconds = rosterRequested and 5.0 or 0
+      C_Timer.After(waitSeconds, function()
         captureSnapshotAndRedraw()
       end)
+      C_Timer.After(waitSeconds, function()
+        refreshBtn:SetNormalTexture(refreshBtn._refreshTex or 'Interface\\Buttons\\UI-RefreshButton')
+        refreshBtn:SetPushedTexture(refreshBtn._refreshTex or 'Interface\\Buttons\\UI-RefreshButton')
+        refreshBtn:SetDisabledTexture(refreshBtn._refreshTex or 'Interface\\Buttons\\UI-RefreshButton')
+        refreshBtn:Enable()
+        refreshBtn:SetAlpha(1)
+        refreshBtn._isLoading = false
+      end)
+    else
+      refreshBtn:SetNormalTexture(refreshBtn._refreshTex or 'Interface\\Buttons\\UI-RefreshButton')
+      refreshBtn:SetPushedTexture(refreshBtn._refreshTex or 'Interface\\Buttons\\UI-RefreshButton')
+      refreshBtn:SetDisabledTexture(refreshBtn._refreshTex or 'Interface\\Buttons\\UI-RefreshButton')
+      refreshBtn:Enable()
+      refreshBtn:SetAlpha(1)
+      refreshBtn._isLoading = false
     end
   end)
 

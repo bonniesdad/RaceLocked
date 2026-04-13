@@ -13,7 +13,7 @@ G.GRID_TOP_OFFSET = 10
 G.CLASS_BAR_BORDER_PAD = 2
 -- Extra inset for the class bar only (full-width bar vs text column); added to INNER_PAD on the left.
 G.CLASS_BAR_EXTRA_LEFT_PAD = 4
-G.CLASS_BAR_HEIGHT = 12
+G.CLASS_BAR_HEIGHT = 4
 G.CLASS_BAR_LABEL_ROW = 14
 G.CLASS_BAR_PCT_GAP = 2
 -- Vertical lines between stacked class colours (drawn in OVERLAY on the bar row).
@@ -28,7 +28,7 @@ G.CLASS_BAR_HOST_H = G.CLASS_BAR_HEIGHT
 G.RACE_GRID_PANE_SECTION_GAP = 5
 -- Pane height: chart + bar border; +6 for race title; +3 section gaps (see layoutRaceGridPane).
 -- Base (147) includes a little room below the class bar; trim here to tighten bottom padding.
-G.STATS_ROW_H = 147 + 2 * G.CLASS_BAR_BORDER_PAD + 6 + 3 * G.RACE_GRID_PANE_SECTION_GAP
+G.STATS_ROW_H = 127 + 2 * G.CLASS_BAR_BORDER_PAD + 6 + 3 * G.RACE_GRID_PANE_SECTION_GAP
 G.ROW_GAP = 6
 G.GAP_AFTER_GRID = 11
 G.REFRESH_ROW_H = 26
@@ -100,6 +100,7 @@ G.HORDE_RACE_ACCENT = {
 -- Section copy for each race cell (guild names come from aggregated data).
 G.RACE_GRID_GUILD_SECTION_TITLE = 'Guilds'
 G.RACE_GRID_AVG_SUBTITLE = 'Average level'
+G.RACE_GRID_TOTAL_PLAYERS_SUBTITLE = 'Total players'
 G.RACE_GRID_CLASS_SUBTITLE = 'Class breakdown'
 G.RACE_GRID_TRUSTED_GUILDS_TITLE = 'Guild names accepted for addon-reported data:'
 G.TRUSTED_GUILDS_TITLE_TOP_GAP = 6

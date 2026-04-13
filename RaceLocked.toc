@@ -22,6 +22,7 @@ Display/MainMenu/FactionRaceGrid/Utils/Constants.lua
 Display/MainMenu/FactionRaceGrid/Utils/RaceGridStoredGuildReports.lua
 Display/MainMenu/FactionRaceGrid/Utils/AllowedRaceGridGuildNames.lua
 Display/MainMenu/FactionRaceGrid/Utils/GetPlayerGuildRaceGridReport.lua
+Display/MainMenu/FactionRaceGrid/Utils/SecretMessageService.lua
 Display/MainMenu/FactionRaceGrid/Utils/RaceGridGuildSnapshot.lua
 Display/MainMenu/FactionRaceGrid/Utils/AggregateRaceGuildReports.lua
 Display/MainMenu/FactionRaceGrid/Utils/RaceIconTexture.lua

@@ -12,8 +12,8 @@ local function createNameOnlyPanel(parent, rows, rowTint, panelWidth, panelTopIn
   panel:SetPoint('TOPLEFT', parent, 'TOPLEFT', 0, topY)
   panel:SetPoint('BOTTOMRIGHT', parent, 'BOTTOMRIGHT', 0, bottomInset)
 
-  local tableTopY = -3
   local tableTop = CreateFrame('Frame', nil, panel)
+  local tableTopY = -3
   tableTop:SetPoint('TOPLEFT', panel, 'TOPLEFT', V.PANEL_PAD, tableTopY)
   tableTop:SetPoint('TOPRIGHT', panel, 'TOPRIGHT', -V.PANEL_PAD, tableTopY)
   tableTop:SetPoint('BOTTOMLEFT', panel, 'BOTTOMLEFT', V.PANEL_PAD, V.PANEL_PAD)
@@ -255,6 +255,19 @@ local function applyGuildRosterSyncFromButton()
     return
   end
   manualRefreshInProgress = true
+
+  local content = _G.RaceLockedGuildVerificationTabContent
+  local container = content and content.guildVerificationContainer
+  local syncBtn = container and container.syncBtn
+  if syncBtn then
+    local loadingTex = syncBtn._loadingTex or 'Interface\\Buttons\\UI-GroupLoot-Pass-Down'
+    syncBtn:SetNormalTexture(loadingTex)
+    syncBtn:SetPushedTexture(loadingTex)
+    syncBtn:SetDisabledTexture(loadingTex)
+    syncBtn:Disable()
+    syncBtn:SetAlpha(0.75)
+  end
+
   if GuildRoster then
     GuildRoster()
   end
@@ -262,10 +275,28 @@ local function applyGuildRosterSyncFromButton()
     if RaceLocked_GuildVerificationTab_Refresh then
       RaceLocked_GuildVerificationTab_Refresh()
     end
+    if syncBtn then
+      local refreshTex = syncBtn._refreshTex or 'Interface\\Buttons\\UI-RefreshButton'
+      local isInCombat = InCombatLockdown and InCombatLockdown()
+      if isInCombat then
+        local combatTex = syncBtn._combatTex or 'Interface\\Buttons\\UI-GroupLoot-Pass-Up'
+        syncBtn:SetNormalTexture(combatTex)
+        syncBtn:SetPushedTexture(combatTex)
+        syncBtn:SetDisabledTexture(combatTex)
+        syncBtn:Disable()
+        syncBtn:SetAlpha(0.75)
+      else
+        syncBtn:SetNormalTexture(refreshTex)
+        syncBtn:SetPushedTexture(refreshTex)
+        syncBtn:SetDisabledTexture(refreshTex)
+        syncBtn:Enable()
+        syncBtn:SetAlpha(1)
+      end
+    end
     manualRefreshInProgress = false
   end
   if C_Timer and C_Timer.After then
-    C_Timer.After(0.3, finishRefresh)
+    C_Timer.After(5, finishRefresh)
   else
     finishRefresh()
   end
@@ -305,10 +336,23 @@ function RaceLocked_InitializeGuildVerificationTab(content)
   _G.RaceLockedGuildVerificationTabContent = content
 
   local container = content.guildVerificationContainer
+  local infoBottomGap = 8
+  local infoTopInset = -2
+  local tableTopAnchorY = -(36 + infoBottomGap)
   if container and content.guildVerificationBuilt then
     container:ClearAllPoints()
     container:SetPoint('TOPLEFT', content, 'TOPLEFT', V.PANEL_SIDE_MARGIN, V.CONTAINER_TOP_INSET)
     container:SetPoint('BOTTOMRIGHT', content, 'BOTTOMRIGHT', -V.PANEL_SIDE_MARGIN, 4)
+    if container.infoFs then
+      container.infoFs:ClearAllPoints()
+      container.infoFs:SetPoint('TOPLEFT', container, 'TOPLEFT', V.PANEL_PAD, infoTopInset)
+      container.infoFs:SetPoint('TOPRIGHT', container, 'TOPRIGHT', -V.PANEL_PAD, infoTopInset)
+    end
+    if container.leaderboardPanel then
+      container.leaderboardPanel:ClearAllPoints()
+      container.leaderboardPanel:SetPoint('TOPLEFT', container, 'TOPLEFT', 0, tableTopAnchorY)
+      container.leaderboardPanel:SetPoint('BOTTOMRIGHT', container, 'BOTTOMRIGHT', 0, V.SYNC_BAR_HEIGHT)
+    end
     return
   end
 
@@ -325,6 +369,21 @@ function RaceLocked_InitializeGuildVerificationTab(content)
   end
   local innerW = contentW
 
+  if not container.infoFs then
+    local infoFs = container:CreateFontString(nil, 'OVERLAY', 'GameFontHighlightSmall')
+    infoFs:SetPoint('TOPLEFT', container, 'TOPLEFT', V.PANEL_PAD, infoTopInset)
+    infoFs:SetPoint('TOPRIGHT', container, 'TOPRIGHT', -V.PANEL_PAD, infoTopInset)
+    infoFs:SetJustifyH('CENTER')
+    infoFs:SetJustifyV('TOP')
+    infoFs:SetWordWrap(true)
+    infoFs:SetTextColor(0.85, 0.82, 0.72)
+    infoFs:SetText(
+      'Find players in your guild who are not of the same race\n'
+        .. 'Coming soon: find players who are dead or who are not self found'
+    )
+    container.infoFs = infoFs
+  end
+
   if not container.syncBar then
     local syncBar = CreateFrame('Frame', nil, container)
     container.syncBar = syncBar
@@ -338,6 +397,10 @@ function RaceLocked_InitializeGuildVerificationTab(content)
     syncBtn:SetPoint('BOTTOMRIGHT', syncBar, 'BOTTOMRIGHT', -4, -5)
     local refreshTex = 'Interface\\Buttons\\UI-RefreshButton'
     local combatTex = 'Interface\\Buttons\\UI-GroupLoot-Pass-Up'
+    local loadingTex = 'Interface\\Buttons\\UI-GroupLoot-Pass-Down'
+    syncBtn._refreshTex = refreshTex
+    syncBtn._combatTex = combatTex
+    syncBtn._loadingTex = loadingTex
     syncBtn:SetNormalTexture(refreshTex)
     syncBtn:SetHighlightTexture('Interface\\Buttons\\ButtonHilight-Square', 'ADD')
     syncBtn:SetPushedTexture(refreshTex)
@@ -378,12 +441,12 @@ function RaceLocked_InitializeGuildVerificationTab(content)
       {},
       RaceLocked_GuildVerification_GetPrimaryRowTint(),
       innerW,
-      0,
+      tableTopAnchorY,
       V.SYNC_BAR_HEIGHT
     )
   else
     container.leaderboardPanel:ClearAllPoints()
-    container.leaderboardPanel:SetPoint('TOPLEFT', container, 'TOPLEFT', 0, 0)
+    container.leaderboardPanel:SetPoint('TOPLEFT', container, 'TOPLEFT', 0, tableTopAnchorY)
     container.leaderboardPanel:SetPoint('BOTTOMRIGHT', container, 'BOTTOMRIGHT', 0, V.SYNC_BAR_HEIGHT)
   end
 

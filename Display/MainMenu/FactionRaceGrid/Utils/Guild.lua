@@ -48,7 +48,7 @@ function RaceLocked_GuildChampion_OnClassBarCellEnter(self)
   GameTooltip:ClearLines()
   if cell._rlEmptyTip then
     GameTooltip:AddLine(G.RACE_GRID_CLASS_SUBTITLE, G.LABEL_GOLD[1], G.LABEL_GOLD[2], G.LABEL_GOLD[3])
-    GameTooltip:AddLine('No character counts for this race.', G.MUTED[1], G.MUTED[2], G.MUTED[3])
+    GameTooltip:AddLine('No character counts for this race.', 1, 1, 1)
   else
     local key = cell._rlClassKey
     local count = cell._rlCount or 0
@@ -62,9 +62,9 @@ function RaceLocked_GuildChampion_OnClassBarCellEnter(self)
     end
     GameTooltip:AddLine(
       string.format('%d of %d characters (%d%%)', count, total, pct),
-      G.MUTED[1],
-      G.MUTED[2],
-      G.MUTED[3]
+      1,
+      1,
+      1
     )
   end
   GameTooltip:Show()
@@ -167,20 +167,34 @@ function RaceLocked_GuildChampion_RefreshRaceGridDisplay(panes, raceTokens)
 
     pane._avgSubtitle:SetText(G.RACE_GRID_AVG_SUBTITLE)
     pane._avgSubtitle:SetTextColor(subR, subG, subB)
+    pane._totalPlayersSubtitle:SetText(G.RACE_GRID_TOTAL_PLAYERS_SUBTITLE or 'Total players')
+    pane._totalPlayersSubtitle:SetTextColor(subR, subG, subB)
 
     local det = pane._detailFs
-    if agg and agg.averageLevel then
+    if agg and agg.averageLevel and agg.averageLevel > 0 then
       det:SetText(tostring(math.floor(agg.averageLevel + 0.5)))
       det:SetTextColor(0.82, 0.8, 0.74)
     else
-      det:SetText('—')
+      det:SetText('-')
       det:SetTextColor(G.MUTED[1], G.MUTED[2], G.MUTED[3])
+    end
+
+    local classes = (agg and agg.classes) or {}
+    local totalPlayers = 0
+    for _, n in pairs(classes) do
+      totalPlayers = totalPlayers + (tonumber(n) or 0)
+    end
+    if totalPlayers > 0 then
+      pane._totalPlayersFs:SetText(tostring(totalPlayers))
+      pane._totalPlayersFs:SetTextColor(0.82, 0.8, 0.74)
+    else
+      pane._totalPlayersFs:SetText('-')
+      pane._totalPlayersFs:SetTextColor(G.MUTED[1], G.MUTED[2], G.MUTED[3])
     end
 
     pane._classSubtitle:SetText(G.RACE_GRID_CLASS_SUBTITLE)
     pane._classSubtitle:SetTextColor(subR, subG, subB)
 
-    local classes = (agg and agg.classes) or {}
     local keys = G.RACE_TOKEN_TO_CLASS_KEYS[token] or {}
     local nKeys = #keys
     local total = 0
@@ -239,7 +253,7 @@ function RaceLocked_GuildChampion_RefreshRaceGridDisplay(panes, raceTokens)
             cell.pct:ClearAllPoints()
             cell.pct:SetPoint('BOTTOMLEFT', pctRow, 'BOTTOMLEFT', 0, 0)
             cell.pct:SetSize(hostW, G.CLASS_BAR_LABEL_ROW)
-            cell.pct:SetText('—')
+            cell.pct:SetText('-')
             cell.pct:SetTextColor(G.MUTED[1], G.MUTED[2], G.MUTED[3])
             cell._rlHasTip = true
             cell._rlEmptyTip = true

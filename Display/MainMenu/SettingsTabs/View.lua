@@ -1,7 +1,7 @@
 -- Tab strip for the settings frame (matches UltraStatistics Settings/TabManager.lua visuals).
 -- Use RaceLocked_* globals only so we do not collide with other addons' TabManager state.
 
-local TAB_WIDTH = 155
+local TAB_WIDTH = 190
 local TAB_HEIGHT = 32
 local TAB_SPACING = 3
 local MAX_TABS = 3
