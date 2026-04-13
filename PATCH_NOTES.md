@@ -1,12 +1,14 @@
 ### PATCH NOTES
 
-**1.0.3 (12-04-2026)**
+**1.0.3 (14-04-2026)**
 
 ### Features
 
 - Send/recieve data with other guilds in faction with average race level
+- Class Breakdown for all Races
 - Auto select race language as communication language (with option to disable)
-- Reimplement options tab
+- Implement options tab
+- Implement Guild Verification tab
 
 ### Bug Fixes
 

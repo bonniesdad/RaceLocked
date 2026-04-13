@@ -19,3 +19,11 @@ Class average also seems solid
 - - Not sure about this one but a creative suggestion regardless
 
 No buffs from other races is probably a bit too much in my opinion
+
+### Death Counter by Race
+
+Record total deaths in guild/race
+
+### Ear Counter by Race
+
+Record total mak'gora's won in guild/race

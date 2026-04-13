@@ -1,16 +1,12 @@
-# Combined average (weighted mean)
+## Snitch SF
 
-When you merge two groups that each have a size and an average level, the overall average is:
+Any time you party with a guildie who is NOT self found, store the guuid/name (including yourself).
+Send those names to other guildies to populate the verification table with the column Self Found having the X failed.png icon.
 
-```
-(n1 × a1 + n2 × a2) / (n1 + n2)
-```
+## Guild Avhievement Points Average
 
-Same idea with subscripts: **(n₁×a₁ + n₂×a₂) / (n₁ + n₂)** — total level sum divided by total headcount.
+How can we make this reliable?
 
-**Where**
+## Guild Deaths
 
-- **n1, n2** — number of members in each group  
-- **a1, a2** — average level in each group  
-
-This is the standard weighted average: each group’s average is weighted by how many members it has.
+Again, how can we reliably keep this number up to date?
