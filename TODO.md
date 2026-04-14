@@ -10,3 +10,7 @@ How can we make this reliable?
 ## Guild Deaths
 
 Again, how can we reliably keep this number up to date?
+
+
+Join channel as is done in UHC
+Ensure GuildRoster updated. On login and then on menu open?
