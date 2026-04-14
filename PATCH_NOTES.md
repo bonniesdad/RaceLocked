@@ -7,7 +7,7 @@
 - Send/recieve data with other guilds in faction with average race level
 - Class Breakdown for all Races
 - Auto select race language as communication language (with option to disable)
-- Implement options tab
+- Implement Options tab
 - Implement Guild Verification tab
 
 ### Bug Fixes
