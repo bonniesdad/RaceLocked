@@ -169,6 +169,11 @@ local function applyIncomingReport(report)
   if not report then
     return false
   end
+  print(report.guildSize)
+  local minN = tonumber(G.MIN_GUILD_MEMBERS_FOR_RACE_GRID) or 100
+  if (tonumber(report.guildSize) or 0) < minN then
+    return false
+  end
   if RaceLocked_GuildChampion_EnsureStoredGuildReportsDB then
     RaceLocked_GuildChampion_EnsureStoredGuildReportsDB()
   end
@@ -190,6 +195,16 @@ local function applyIncomingReport(report)
   local incomingNorm = RaceLocked_GuildChampion_NormalizeGuildNameForRaceGrid(report.guildName)
   if incomingNorm == '' then
     return false
+  end
+  if RaceLocked_GuildChampion_GetNormalizedPlayerGuildName
+    and RaceLocked_GuildChampion_MeetsMinGuildMembersForRaceGrid
+  then
+    local ownGuildNorm = RaceLocked_GuildChampion_GetNormalizedPlayerGuildName()
+    if ownGuildNorm ~= '' and incomingNorm == ownGuildNorm
+      and not RaceLocked_GuildChampion_MeetsMinGuildMembersForRaceGrid()
+    then
+      return false
+    end
   end
 
   for _, row in ipairs(rows) do

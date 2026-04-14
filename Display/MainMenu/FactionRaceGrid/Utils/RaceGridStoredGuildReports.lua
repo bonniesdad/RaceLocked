@@ -67,13 +67,25 @@ local function copyClasses(classes)
   return c
 end
 
+local function minGuildMembersForStore()
+  return tonumber(G.MIN_GUILD_MEMBERS_FOR_RACE_GRID) or 100
+end
+
 local function coerceGuildRow(row, defaultRow)
   local src = type(row) == 'table' and row or {}
+  local guildSize = tonumber(src.guildSize) or 0
+  local averageLevel = tonumber(src.averageLevel) or 0
+  local classes = copyClasses(src.classes)
+  if guildSize > 0 and guildSize < minGuildMembersForStore() then
+    guildSize = 0
+    averageLevel = 0
+    classes = zeroClasses()
+  end
   return {
     guildName = defaultRow.guildName,
-    guildSize = tonumber(src.guildSize) or 0,
-    averageLevel = tonumber(src.averageLevel) or 0,
-    classes = copyClasses(src.classes),
+    guildSize = guildSize,
+    averageLevel = averageLevel,
+    classes = classes,
   }
 end
 
@@ -123,11 +135,16 @@ end
 
 local function applyRowReport(targetRow, report)
   if type(targetRow) ~= 'table' then
-    return
+    return false
   end
-  targetRow.guildSize = tonumber(report and report.guildSize) or 0
+  local guildSize = tonumber(report and report.guildSize) or 0
+  if guildSize < minGuildMembersForStore() then
+    return false
+  end
+  targetRow.guildSize = guildSize
   targetRow.averageLevel = tonumber(report and report.averageLevel) or 0
   targetRow.classes = copyClasses(report and report.classes)
+  return true
 end
 
 --- Refresh your guild's stored rows from live roster data for each race token.
@@ -155,8 +172,9 @@ function RaceLocked_GuildChampion_UpdateOwnStoredGuildReportsFromRoster(raceToke
       local report = RaceLocked_GetGuildRaceGridReportForRaceToken(raceToken)
       for _, row in ipairs(rows) do
         if type(row) == 'table' and normalizeGuildName(row.guildName) == ownGuildNorm then
-          applyRowReport(row, report)
-          changed = true
+          if applyRowReport(row, report) then
+            changed = true
+          end
         end
       end
     end

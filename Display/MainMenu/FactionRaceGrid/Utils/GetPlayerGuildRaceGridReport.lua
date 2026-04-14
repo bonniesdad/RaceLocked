@@ -90,8 +90,12 @@ function RaceLocked_GetGuildRaceGridReportForRaceToken(raceToken)
     total = GetNumGuildMembers()
   end
   total = tonumber(total) or 0
-  local playerShort = UnitName('player') and stripRealmFromRosterName(UnitName('player')) or ''
+print(total)
+  if total < 100 then
+    return nil
+  end
 
+  local playerShort = UnitName('player') and stripRealmFromRosterName(UnitName('player')) or ''
   for i = 1, total do
     -- Returns (warcraft.wiki.gg): … class (11), …, guid (17) — not an 18th slot.
     local name, _, _, level, _, _, _, _, _, _, classFile, _, _, _, _, guid17 = GetGuildRosterInfo(i)
