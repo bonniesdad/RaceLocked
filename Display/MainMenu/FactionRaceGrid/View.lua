@@ -454,17 +454,7 @@ function RaceLocked_CreateFactionRaceGrid(parent, rightInset)
       refreshBtn:SetDisabledTexture(refreshBtn._loadingTex or 'Interface\\Buttons\\UI-GroupLoot-Pass-Down')
       refreshBtn:Disable()
       refreshBtn:SetAlpha(0.75)
-      if inGuild and GuildRoster then
-        GuildRoster()
-        if C_Timer and C_Timer.After then
-          C_Timer.After(0.5, function()
-            GuildRoster()
-          end)
-          C_Timer.After(0.5, function()
-            GuildRoster()
-          end)
-        end
-      end
+      RaceLocked_RefreshGuildRoster()
       local function finishPrepare()
         refreshBtn._isPreparing = false
         refreshBtn._isPrepared = true

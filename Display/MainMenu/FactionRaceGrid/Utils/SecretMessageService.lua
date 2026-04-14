@@ -10,6 +10,7 @@ local CHANNEL_NAME = 'RaceLockedDataBus'
 -- Internal field separator inside the payload (before hex encoding for chat).
 local WIRE_FIELD_SEP = '\001'
 local channelFiltersInstalled = false
+local delayedJoinScheduled = false
 
 local function bytesToHex(s)
   if type(s) ~= 'string' or s == '' then
@@ -273,6 +274,14 @@ local function ensureDataChannelJoined()
     hideChannelFromChatWindows()
     return id
   end
+  if JoinChannelByName then
+    JoinChannelByName(CHANNEL_NAME)
+    id = getDataChannelId()
+    if id > 0 then
+      hideChannelFromChatWindows()
+      return id
+    end
+  end
   if JoinTemporaryChannel then
     JoinTemporaryChannel(CHANNEL_NAME)
     id = getDataChannelId()
@@ -282,6 +291,32 @@ local function ensureDataChannelJoined()
     end
   end
   return 0
+end
+
+local function scheduleDelayedDataChannelJoin()
+  if delayedJoinScheduled then
+    return
+  end
+  delayedJoinScheduled = true
+  if not C_Timer or not C_Timer.After then
+    ensureDataChannelJoined()
+    delayedJoinScheduled = false
+    return
+  end
+
+  local delays = { 0.5, 1.5, 3.0 }
+  local idx = 1
+  local function attemptJoin()
+    local id = ensureDataChannelJoined()
+    if id > 0 or idx >= #delays then
+      delayedJoinScheduled = false
+      return
+    end
+    idx = idx + 1
+    C_Timer.After(delays[idx], attemptJoin)
+  end
+
+  C_Timer.After(delays[idx], attemptJoin)
 end
 
 --- Classic does not support C_ChatInfo.SendAddonMessage(..., "CHANNEL", ...). Use SendChatMessage(..., "CHANNEL", channelIndex); there is no separate SendChannelMessage in this API.
@@ -344,6 +379,7 @@ end
 local service = CreateFrame('Frame')
 service:RegisterEvent('ADDON_LOADED')
 service:RegisterEvent('PLAYER_LOGIN')
+service:RegisterEvent('PLAYER_ENTERING_WORLD')
 service:RegisterEvent('CHAT_MSG_CHANNEL')
 service:RegisterEvent('CHANNEL_UI_UPDATE')
 service:SetScript('OnEvent', function(_, event, ...)
@@ -354,12 +390,16 @@ service:SetScript('OnEvent', function(_, event, ...)
         RaceLocked_GuildChampion_EnsureStoredGuildReportsDB()
       end
       installChannelNoticeFilters()
-      ensureDataChannelJoined()
+      scheduleDelayedDataChannelJoin()
     end
     return
   end
   if event == 'PLAYER_LOGIN' then
-    ensureDataChannelJoined()
+    scheduleDelayedDataChannelJoin()
+    return
+  end
+  if event == 'PLAYER_ENTERING_WORLD' then
+    scheduleDelayedDataChannelJoin()
     return
   end
   if event == 'CHANNEL_UI_UPDATE' then

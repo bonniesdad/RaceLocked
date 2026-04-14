@@ -26,6 +26,7 @@ function ToggleRaceLockedSettings()
     end
     settingsFrame:Hide()
   else
+    RaceLocked_RefreshGuildRoster()
     RaceLocked_Settings_UpdateFrameBackdrop(settingsFrame)
     if RaceLocked_InitializeTabs then
       RaceLocked_InitializeTabs(settingsFrame)
