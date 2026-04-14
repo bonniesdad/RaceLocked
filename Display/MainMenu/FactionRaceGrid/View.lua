@@ -456,8 +456,14 @@ function RaceLocked_CreateFactionRaceGrid(parent, rightInset)
       refreshBtn:SetAlpha(0.75)
       if inGuild and GuildRoster then
         GuildRoster()
-        GuildRoster()
-        GuildRoster()
+        if C_Timer and C_Timer.After then
+          C_Timer.After(0.5, function()
+            GuildRoster()
+          end)
+          C_Timer.After(0.5, function()
+            GuildRoster()
+          end)
+        end
       end
       local function finishPrepare()
         refreshBtn._isPreparing = false
