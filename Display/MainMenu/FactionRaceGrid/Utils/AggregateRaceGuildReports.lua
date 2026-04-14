@@ -75,26 +75,13 @@ function RaceLocked_GuildChampion_AggregateGuildsForRace(entries)
   }
 end
 
---- Merge hardcoded stored guild rows with the last manual roster snapshot (`RaceLockedDB.raceGridGuildSnapshot`)
---- for your guild (see `RaceLocked_GuildChampion_SaveRaceGridGuildSnapshotFromRoster`).
+--- Aggregate directly from stored guild rows (DB-backed source of truth).
 --- @param raceToken string
 --- @return table|nil
 function RaceLocked_GuildChampion_GetAggregatedMockForRace(raceToken)
   RaceLocked_GuildChampion_EnsureRaceGridAllowedGuildNamesBuilt()
-  local merged = {}
   local stored = G.RACE_GRID_STORED_GUILD_REPORTS_BY_RACE and G.RACE_GRID_STORED_GUILD_REPORTS_BY_RACE[raceToken]
-  if type(stored) == 'table' then
-    for _, e in ipairs(stored) do
-      if type(e) == 'table' and not RaceLocked_GuildChampion_IsCurrentPlayerGuildName(e.guildName) then
-        merged[#merged + 1] = e
-      end
-    end
-  end
-  local snapRow = RaceLocked_GuildChampion_GetSnapshotGuildRowForRace and RaceLocked_GuildChampion_GetSnapshotGuildRowForRace(raceToken)
-  if snapRow then
-    merged[#merged + 1] = snapRow
-  end
-  local agg = RaceLocked_GuildChampion_AggregateGuildsForRace(merged)
+  local agg = RaceLocked_GuildChampion_AggregateGuildsForRace(type(stored) == 'table' and stored or nil)
   local namesText = RaceLocked_GuildChampion_HardcodedGuildNamesTextForRace(raceToken)
   if not agg then
     return {

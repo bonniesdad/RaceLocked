@@ -99,6 +99,13 @@ local function layoutClassBarColumns(pane, widths)
     end
   end
   local colH = row:GetHeight()
+  local rightGap = math.max(0, tonumber(G.CLASS_BAR_SECTION_RIGHT_GAP) or 0)
+  local lastVisibleIdx = 0
+  for i = 1, 9 do
+    if (widths[i] or 0) > 0 then
+      lastVisibleIdx = i
+    end
+  end
   local x = 0
   local sepIdx = 1
   local sawVisible = false
@@ -125,11 +132,15 @@ local function layoutClassBarColumns(pane, widths)
         sepIdx = sepIdx + 1
       end
       sawVisible = true
+      local renderW = wpx
+      if idx ~= lastVisibleIdx then
+        renderW = math.max(0, wpx - rightGap)
+      end
       cell.frame:Show()
       cell.frame:ClearAllPoints()
       cell.frame:SetPoint('TOPLEFT', row, 'TOPLEFT', x, 0)
-      cell.frame:SetSize(wpx, colH)
-      cell.tex:SetWidth(math.max(1, wpx))
+      cell.frame:SetSize(renderW, colH)
+      cell.tex:SetWidth(math.max(1, renderW))
       cell.pct:Show()
       cell.pct:ClearAllPoints()
       cell.pct:SetPoint('BOTTOMLEFT', pctRow, 'BOTTOMLEFT', x, 0)
@@ -138,7 +149,7 @@ local function layoutClassBarColumns(pane, widths)
         cell.pctHit:Show()
         cell.pctHit:ClearAllPoints()
         cell.pctHit:SetPoint('BOTTOMLEFT', pctRow, 'BOTTOMLEFT', x, 0)
-        cell.pctHit:SetSize(wpx, G.CLASS_BAR_LABEL_ROW)
+        cell.pctHit:SetSize(renderW, G.CLASS_BAR_LABEL_ROW)
       end
       x = x + wpx
     end

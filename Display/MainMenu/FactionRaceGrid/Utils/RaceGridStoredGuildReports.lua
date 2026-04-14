@@ -98,4 +98,74 @@ local function ensureStoredGuildReportsDB()
   G.RACE_GRID_STORED_GUILD_REPORTS_BY_RACE = RaceLockedDB.raceGridStoredGuildReportsByRace
 end
 
+--- Ensure the race-grid stored rows are present and linked to RaceLockedDB.
+function RaceLocked_GuildChampion_EnsureStoredGuildReportsDB()
+  ensureStoredGuildReportsDB()
+end
+
+--- Persist current in-memory stored rows back to RaceLockedDB.
+--- Useful after mutating rows from incoming race-grid channel reports.
+function RaceLocked_GuildChampion_PersistStoredGuildReportsByRace()
+  RaceLocked_GuildChampion_EnsureStoredGuildReportsDB()
+  RaceLockedDB.raceGridStoredGuildReportsByRace = G.RACE_GRID_STORED_GUILD_REPORTS_BY_RACE
+end
+
+local function normalizeGuildName(name)
+  if RaceLocked_GuildChampion_NormalizeGuildNameForRaceGrid then
+    return RaceLocked_GuildChampion_NormalizeGuildNameForRaceGrid(name)
+  end
+  local s = tostring(name or ''):match('^%s*(.-)%s*$') or ''
+  if s == '' then
+    return ''
+  end
+  return string.lower(s)
+end
+
+local function applyRowReport(targetRow, report)
+  if type(targetRow) ~= 'table' then
+    return
+  end
+  targetRow.guildSize = tonumber(report and report.guildSize) or 0
+  targetRow.averageLevel = tonumber(report and report.averageLevel) or 0
+  targetRow.classes = copyClasses(report and report.classes)
+end
+
+--- Refresh your guild's stored rows from live roster data for each race token.
+--- Only rows whose guild name matches your current guild are updated.
+--- @param raceTokens string[]
+--- @return boolean true when at least one row was updated
+function RaceLocked_GuildChampion_UpdateOwnStoredGuildReportsFromRoster(raceTokens)
+  RaceLocked_GuildChampion_EnsureStoredGuildReportsDB()
+  if not raceTokens or #raceTokens < 1 then
+    return false
+  end
+  if not RaceLocked_GetGuildRaceGridReportForRaceToken or not RaceLocked_GuildChampion_GetNormalizedPlayerGuildName then
+    return false
+  end
+  local ownGuildNorm = RaceLocked_GuildChampion_GetNormalizedPlayerGuildName()
+  if ownGuildNorm == '' then
+    return false
+  end
+
+  local changed = false
+  for i = 1, #raceTokens do
+    local raceToken = raceTokens[i]
+    local rows = G.RACE_GRID_STORED_GUILD_REPORTS_BY_RACE and G.RACE_GRID_STORED_GUILD_REPORTS_BY_RACE[raceToken]
+    if type(rows) == 'table' then
+      local report = RaceLocked_GetGuildRaceGridReportForRaceToken(raceToken)
+      for _, row in ipairs(rows) do
+        if type(row) == 'table' and normalizeGuildName(row.guildName) == ownGuildNorm then
+          applyRowReport(row, report)
+          changed = true
+        end
+      end
+    end
+  end
+
+  if changed then
+    RaceLocked_GuildChampion_PersistStoredGuildReportsByRace()
+  end
+  return changed
+end
+
 ensureStoredGuildReportsDB()

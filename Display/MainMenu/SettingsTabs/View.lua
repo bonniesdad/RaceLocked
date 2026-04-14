@@ -123,7 +123,7 @@ function RaceLocked_InitializeTabs(settingsFrame)
     return
   end
 
-  tabButtons[1] = createTabButton('Main', 1, settingsFrame)
+  tabButtons[1] = createTabButton('Overview', 1, settingsFrame)
   tabContents[1] = createTabContent(1, settingsFrame)
   tabButtons[2] = createTabButton('Settings', 2, settingsFrame)
   tabContents[2] = createTabContent(2, settingsFrame)

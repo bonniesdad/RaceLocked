@@ -10,13 +10,39 @@ local function createChrome(root)
   local refreshBtn = CreateFrame('Button', nil, refreshRow)
   refreshBtn:SetSize(30, 30)
   refreshBtn:SetPoint('BOTTOMRIGHT', refreshRow, 'BOTTOMRIGHT', -4, -5)
+  
   local refreshTex = 'Interface\\Buttons\\UI-RefreshButton'
+  local prepareTex = 'Interface\\Buttons\\UI-SpellbookIcon-NextPage-Up'
   local loadingTex = 'Interface\\Buttons\\UI-GroupLoot-Pass-Down'
   refreshBtn._refreshTex = refreshTex
+  refreshBtn._prepareTex = prepareTex
   refreshBtn._loadingTex = loadingTex
   refreshBtn:SetNormalTexture(refreshTex)
   refreshBtn:SetHighlightTexture('Interface\\Buttons\\ButtonHilight-Square', 'ADD')
   refreshBtn:SetPushedTexture(refreshTex)
+  refreshBtn:EnableMouse(true)
+  refreshBtn:SetScript('OnEnter', function(self)
+    if not GameTooltip then
+      return
+    end
+    GameTooltip:SetOwner(self, 'ANCHOR_RIGHT')
+    if self._isLoading or self._isPreparing then
+      GameTooltip:AddLine('Prepare', 1, 0.92, 0.62)
+      GameTooltip:AddLine('Prepare guild roster data.', 1, 1, 1)
+    elseif self._isPrepared then
+      GameTooltip:AddLine('Apply Update', 1, 0.92, 0.62)
+      GameTooltip:AddLine('Apply your guild data, rerender, and broadcast.', 1, 1, 1)
+    else
+      GameTooltip:AddLine('Prepare', 1, 0.92, 0.62)
+      GameTooltip:AddLine('Prepare guild roster data.', 1, 1, 1)
+    end
+    GameTooltip:Show()
+  end)
+  refreshBtn:SetScript('OnLeave', function()
+    if GameTooltip then
+      GameTooltip:Hide()
+    end
+  end)
 
   return refreshRow, refreshBtn
 end
@@ -413,11 +439,43 @@ function RaceLocked_CreateFactionRaceGrid(parent, rightInset)
   local function runLayout()
     layoutGrid(layoutCtx)
   end
+  RaceLocked_GuildChampion_RequestRaceGridRerender = runLayout
 
   refreshBtn:SetScript('OnClick', function()
-    if refreshBtn._isLoading then
+    if refreshBtn._isLoading or refreshBtn._isPreparing then
       return
     end
+
+    local inGuild = IsInGuild and IsInGuild()
+    if not refreshBtn._isPrepared then
+      refreshBtn._isPreparing = true
+      refreshBtn:SetNormalTexture(refreshBtn._loadingTex or 'Interface\\Buttons\\UI-GroupLoot-Pass-Down')
+      refreshBtn:SetPushedTexture(refreshBtn._loadingTex or 'Interface\\Buttons\\UI-GroupLoot-Pass-Down')
+      refreshBtn:SetDisabledTexture(refreshBtn._loadingTex or 'Interface\\Buttons\\UI-GroupLoot-Pass-Down')
+      refreshBtn:Disable()
+      refreshBtn:SetAlpha(0.75)
+      if inGuild and GuildRoster then
+        GuildRoster()
+        GuildRoster()
+        GuildRoster()
+      end
+      local function finishPrepare()
+        refreshBtn._isPreparing = false
+        refreshBtn._isPrepared = true
+        refreshBtn:SetNormalTexture(refreshBtn._prepareTex or 'Interface\\Buttons\\UI-GroupLoot-Pass-Up')
+        refreshBtn:SetPushedTexture(refreshBtn._prepareTex or 'Interface\\Buttons\\UI-GroupLoot-Pass-Up')
+        refreshBtn:SetDisabledTexture(refreshBtn._prepareTex or 'Interface\\Buttons\\UI-GroupLoot-Pass-Up')
+        refreshBtn:Enable()
+        refreshBtn:SetAlpha(1)
+      end
+      if C_Timer and C_Timer.After then
+        C_Timer.After(1.0, finishPrepare)
+      else
+        finishPrepare()
+      end
+      return
+    end
+
     refreshBtn._isLoading = true
     refreshBtn:SetNormalTexture(refreshBtn._loadingTex or 'Interface\\Buttons\\UI-GroupLoot-Pass-Down')
     refreshBtn:SetPushedTexture(refreshBtn._loadingTex or 'Interface\\Buttons\\UI-GroupLoot-Pass-Down')
@@ -425,7 +483,6 @@ function RaceLocked_CreateFactionRaceGrid(parent, rightInset)
     refreshBtn:Disable()
     refreshBtn:SetAlpha(0.75)
 
-    local inGuild = IsInGuild and IsInGuild()
     local rosterRequested = false
 
     --- Must not depend on RaceLocked_GuildChampion_GetGuildRosterMemberCount existing; if that global is nil the old
@@ -446,7 +503,7 @@ function RaceLocked_CreateFactionRaceGrid(parent, rightInset)
       return n
     end
 
-    local function captureSnapshotAndRedraw()
+    local function refreshOwnStoredRowsAndRedraw()
       if inGuild then
         local n = readGuildRosterMemberCountForGate()
         local minN = tonumber(G.MIN_GUILD_MEMBERS_FOR_RACE_GRID) or 100
@@ -457,7 +514,7 @@ function RaceLocked_CreateFactionRaceGrid(parent, rightInset)
         if n < minN then
           print(
             string.format(
-              '|cffffffffRace Locked|r: Race grid refresh and data bus need at least %d guild members (current: %d).',
+              '|cffffffffRace Locked|r: Your guild needs at least %d guild members (current: %d) to show here.',
               minN,
               n
             )
@@ -465,8 +522,8 @@ function RaceLocked_CreateFactionRaceGrid(parent, rightInset)
           return false
         end
       end
-      if RaceLocked_GuildChampion_SaveRaceGridGuildSnapshotFromRoster then
-        RaceLocked_GuildChampion_SaveRaceGridGuildSnapshotFromRoster(raceTokens)
+      if RaceLocked_GuildChampion_UpdateOwnStoredGuildReportsFromRoster then
+        RaceLocked_GuildChampion_UpdateOwnStoredGuildReportsFromRoster(raceTokens)
       end
       runLayout()
       return true
@@ -479,6 +536,7 @@ function RaceLocked_CreateFactionRaceGrid(parent, rightInset)
       refreshBtn:Enable()
       refreshBtn:SetAlpha(1)
       refreshBtn._isLoading = false
+      refreshBtn._isPrepared = false
     end
 
     if inGuild and GuildRoster then
@@ -488,7 +546,7 @@ function RaceLocked_CreateFactionRaceGrid(parent, rightInset)
 
     -- No refresh timer: roster still loading or under min size skips save/UI/broadcast; user clicks again when ready.
     -- SendChatMessage to CHANNEL is protected — broadcast only runs here on the same stack as this click.
-    local ok = captureSnapshotAndRedraw()
+    local ok = refreshOwnStoredRowsAndRedraw()
     if ok and RaceLocked_GuildChampion_BroadcastOwnGuildRaceGridReports then
       RaceLocked_GuildChampion_BroadcastOwnGuildRaceGridReports()
     end

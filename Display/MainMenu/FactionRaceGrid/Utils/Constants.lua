@@ -16,6 +16,8 @@ G.CLASS_BAR_EXTRA_LEFT_PAD = 4
 G.CLASS_BAR_HEIGHT = 4
 G.CLASS_BAR_LABEL_ROW = 14
 G.CLASS_BAR_PCT_GAP = 2
+G.CLASS_BAR_SEGMENT_GAP = 2
+G.CLASS_BAR_SECTION_RIGHT_GAP = 2
 -- Vertical lines between stacked class colours (drawn in OVERLAY on the bar row).
 G.CLASS_BAR_SEP_W = 1
 G.CLASS_BAR_SEP = { 0.22, 0.22, 0.24 }
@@ -139,12 +141,12 @@ G.CLASS_KEY_TO_FILE = {
 --- Which classes can roll this race (WoW Classic–style; API race tokens).
 --- Order is display order in the grid. Edit if your ruleset differs.
 G.RACE_TOKEN_TO_CLASS_KEYS = {
-  Human = { 'warriors', 'paladins', 'rogues', 'priests', 'mages', 'warlocks' },
-  Dwarf = { 'warriors', 'paladins', 'hunters', 'rogues', 'priests' },
-  NightElf = { 'warriors', 'hunters', 'rogues', 'priests', 'druids' },
-  Gnome = { 'warriors', 'rogues', 'mages', 'warlocks' },
-  Orc = { 'warriors', 'hunters', 'rogues', 'shamans', 'warlocks' },
-  Troll = { 'warriors', 'hunters', 'rogues', 'priests', 'shamans', 'mages' },
+  Human = { 'rogues', 'warriors', 'paladins', 'mages', 'warlocks', 'priests' },
+  Dwarf = { 'rogues', 'warriors', 'paladins', 'hunters', 'priests' },
+  NightElf = { 'rogues', 'warriors', 'hunters', 'druids', 'priests' },
+  Gnome = { 'rogues', 'warriors', 'mages', 'warlocks' },
+  Orc = { 'rogues', 'warriors', 'hunters', 'shamans', 'warlocks' },
+  Troll = { 'rogues', 'warriors', 'hunters', 'shamans', 'mages', 'priests' },
   Tauren = { 'warriors', 'hunters', 'druids', 'shamans' },
-  Scourge = { 'warriors', 'rogues', 'priests', 'mages', 'warlocks' },
+  Scourge = { 'rogues', 'warriors', 'mages', 'warlocks', 'priests' },
 }

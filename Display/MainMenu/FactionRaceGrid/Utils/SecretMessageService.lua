@@ -166,26 +166,29 @@ end
 
 local function applyIncomingReport(report)
   if not report then
-    return
+    return false
+  end
+  if RaceLocked_GuildChampion_EnsureStoredGuildReportsDB then
+    RaceLocked_GuildChampion_EnsureStoredGuildReportsDB()
   end
   if not RaceLocked_GuildChampion_IsGuildNameAllowedForRaceGrid then
-    return
+    return false
   end
   if not RaceLocked_GuildChampion_NormalizeGuildNameForRaceGrid then
-    return
+    return false
   end
   if not RaceLocked_GuildChampion_IsGuildNameAllowedForRaceGrid(report.guildName) then
-    return
+    return false
   end
 
   local rows = G.RACE_GRID_STORED_GUILD_REPORTS_BY_RACE and G.RACE_GRID_STORED_GUILD_REPORTS_BY_RACE[report.raceToken]
   if type(rows) ~= 'table' then
-    return
+    return false
   end
 
   local incomingNorm = RaceLocked_GuildChampion_NormalizeGuildNameForRaceGrid(report.guildName)
   if incomingNorm == '' then
-    return
+    return false
   end
 
   for _, row in ipairs(rows) do
@@ -195,10 +198,14 @@ local function applyIncomingReport(report)
         row.guildSize = report.guildSize
         row.averageLevel = report.averageLevel
         row.classes = report.classes or emptyClasses()
-        return
+        if RaceLocked_GuildChampion_PersistStoredGuildReportsByRace then
+          RaceLocked_GuildChampion_PersistStoredGuildReportsByRace()
+        end
+        return true
       end
     end
   end
+  return false
 end
 
 local function getDataChannelId()
@@ -288,15 +295,6 @@ local function sendRaceGridChannelLine(channelId, payload, raceToken, classes)
   if #wire > 255 then
     return
   end
-  print(
-    string.format(
-      '|cffffffffRace Locked|r: race grid bus send race=%s channel=%d wireLen=%d classes %s',
-      tostring(raceToken or '?'),
-      channelId,
-      #wire,
-      formatClassesOneLine(classes)
-    )
-  )
   SendChatMessage(wire, 'CHANNEL', nil, channelId)
 end
 
@@ -311,7 +309,7 @@ local function isOurDataChannelMessage(...)
 end
 
 function RaceLocked_GuildChampion_BroadcastOwnGuildRaceGridReports()
-  if not RaceLocked_GetGuildRaceGridReportForRaceToken then
+  if not RaceLocked_GuildChampion_GetNormalizedPlayerGuildName or not RaceLocked_GuildChampion_NormalizeGuildNameForRaceGrid then
     return
   end
   if RaceLocked_GuildChampion_MeetsMinGuildMembersForRaceGrid and not RaceLocked_GuildChampion_MeetsMinGuildMembersForRaceGrid() then
@@ -321,13 +319,23 @@ function RaceLocked_GuildChampion_BroadcastOwnGuildRaceGridReports()
   if channelId <= 0 then
     return
   end
+  local ownGuildNorm = RaceLocked_GuildChampion_GetNormalizedPlayerGuildName()
+  if ownGuildNorm == '' then
+    return
+  end
 
-  for raceToken, _ in pairs(G.RACE_GRID_STORED_GUILD_REPORTS_BY_RACE or {}) do
-    local row = RaceLocked_GetGuildRaceGridReportForRaceToken(raceToken)
-    if row and row.guildName and row.guildName ~= '' then
-      local payload = buildPayload(raceToken, row)
-      if payload and payload ~= '' then
-        sendRaceGridChannelLine(channelId, payload, raceToken, row.classes)
+  for raceToken, rows in pairs(G.RACE_GRID_STORED_GUILD_REPORTS_BY_RACE or {}) do
+    if type(rows) == 'table' then
+      for _, row in ipairs(rows) do
+        if type(row) == 'table' then
+          local rowNorm = RaceLocked_GuildChampion_NormalizeGuildNameForRaceGrid(row.guildName)
+          if rowNorm ~= '' and rowNorm == ownGuildNorm then
+            local payload = buildPayload(raceToken, row)
+            if payload and payload ~= '' then
+              sendRaceGridChannelLine(channelId, payload, raceToken, row.classes)
+            end
+          end
+        end
       end
     end
   end
@@ -335,15 +343,23 @@ end
 
 local service = CreateFrame('Frame')
 service:RegisterEvent('ADDON_LOADED')
+service:RegisterEvent('PLAYER_LOGIN')
 service:RegisterEvent('CHAT_MSG_CHANNEL')
 service:RegisterEvent('CHANNEL_UI_UPDATE')
 service:SetScript('OnEvent', function(_, event, ...)
   if event == 'ADDON_LOADED' then
     local loadedAddonName = ...
     if loadedAddonName == thisAddonName then
+      if RaceLocked_GuildChampion_EnsureStoredGuildReportsDB then
+        RaceLocked_GuildChampion_EnsureStoredGuildReportsDB()
+      end
       installChannelNoticeFilters()
       ensureDataChannelJoined()
     end
+    return
+  end
+  if event == 'PLAYER_LOGIN' then
+    ensureDataChannelJoined()
     return
   end
   if event == 'CHANNEL_UI_UPDATE' then
@@ -360,17 +376,8 @@ service:SetScript('OnEvent', function(_, event, ...)
     if not report then
       return
     end
-    print(
-      string.format(
-        '|cffffffffRace Locked|r: race grid bus recv from=%s race=%s guild=%s size=%d avg=%.2f classes %s',
-        tostring(sender or '?'),
-        tostring(report.raceToken or '?'),
-        tostring(report.guildName or '?'),
-        tonumber(report.guildSize) or 0,
-        tonumber(report.averageLevel) or 0,
-        formatClassesOneLine(report.classes)
-      )
-    )
+    -- Keep incoming reports persisted, but do not force live UI rerenders;
+    -- the race grid redraw is user-driven from Apply Update.
     applyIncomingReport(report)
   end
 end)
