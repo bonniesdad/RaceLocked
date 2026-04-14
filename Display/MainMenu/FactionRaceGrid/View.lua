@@ -38,13 +38,13 @@ local function createChrome(root)
     GameTooltip:SetOwner(self, 'ANCHOR_RIGHT')
     if self._isLoading or self._isPreparing then
       GameTooltip:AddLine('Prepare', 1, 0.92, 0.62)
-      GameTooltip:AddLine('Prepare guild roster data.', 1, 1, 1)
-    elseif self._isPrepared then
+      GameTooltip:AddLine('Prepare Race Data', 1, 1, 1)
+    elseif self._isPrepared then  
       GameTooltip:AddLine('Apply Update', 1, 0.92, 0.62)
-      GameTooltip:AddLine('Apply your guild data, rerender, and broadcast.', 1, 1, 1)
+      GameTooltip:AddLine('Apply the newly collected data and publish to other players', 1, 1, 1)
     else
       GameTooltip:AddLine('Prepare', 1, 0.92, 0.62)
-      GameTooltip:AddLine('Prepare guild roster data.', 1, 1, 1)
+      GameTooltip:AddLine('Prepare Race Data', 1, 1, 1)
     end
     GameTooltip:Show()
   end)

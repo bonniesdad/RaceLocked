@@ -124,20 +124,4 @@ function RaceLocked_InitializeMainMenuSettingsTab(content)
       RaceLocked_ApplyNativeLanguageOption()
     end
   end)
-
-  local rowHoverOnEnter, rowHoverOnLeave = langRow:GetScript('OnEnter'), langRow:GetScript('OnLeave')
-  langRow:SetScript('OnEnter', function(self)
-    if rowHoverOnEnter then
-      rowHoverOnEnter(self)
-    end
-    GameTooltip:SetOwner(self, 'ANCHOR_RIGHT')
-    GameTooltip:SetText('Restrict chat language to your race native tongue.', nil, nil, nil, nil, true)
-    GameTooltip:Show()
-  end)
-  langRow:SetScript('OnLeave', function(self)
-    if rowHoverOnLeave then
-      rowHoverOnLeave(self)
-    end
-    GameTooltip:Hide()
-  end)
 end
