@@ -11,6 +11,8 @@ How can we make this reliable?
 
 Again, how can we reliably keep this number up to date?
 
+## Snitching System
 
-Join channel as is done in UHC
-Ensure GuildRoster updated. On login and then on menu open?
+When a party member is in your guild and is NOT self found, store that player in the snitch table.
+Button to send out snitch table data to mods.
+On rec data, show those players in the Guild Verification table with a @failed.png in the Self Found column.
