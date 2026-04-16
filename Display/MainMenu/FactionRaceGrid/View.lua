@@ -23,8 +23,10 @@ local function createChrome(root)
 
   local refreshTex = 'Interface\\Buttons\\UI-RefreshButton'
   local loadingTex = 'Interface\\Buttons\\UI-GroupLoot-Pass-Down'
+  local validTex = 'Interface\\AddOns\\RaceLocked\\Textures\\valid.png'
   refreshBtn._refreshTex = refreshTex
   refreshBtn._loadingTex = loadingTex
+  refreshBtn._validTex = validTex
   refreshBtn:SetNormalTexture(refreshTex)
   refreshBtn:SetHighlightTexture('Interface\\Buttons\\ButtonHilight-Square', 'ADD')
   refreshBtn:SetPushedTexture(refreshTex)
@@ -473,7 +475,7 @@ function RaceLocked_CreateFactionRaceGrid(parent)
   RaceLocked_GuildChampion_RequestRaceGridRerender = runLayout
 
   refreshBtn:SetScript('OnClick', function()
-    if refreshBtn._isLoading then
+    if refreshBtn._isLoading or refreshBtn._isAppliedAndBroadcasted then
       return
     end
 
@@ -558,6 +560,15 @@ function RaceLocked_CreateFactionRaceGrid(parent)
     end
 
     local function finishRefreshButton()
+      if refreshBtn._isAppliedAndBroadcasted then
+        refreshBtn:SetNormalTexture(refreshBtn._validTex or 'Interface\\AddOns\\RaceLocked\\Textures\\valid.png')
+        refreshBtn:SetPushedTexture(refreshBtn._validTex or 'Interface\\AddOns\\RaceLocked\\Textures\\valid.png')
+        refreshBtn:SetDisabledTexture(refreshBtn._validTex or 'Interface\\AddOns\\RaceLocked\\Textures\\valid.png')
+        refreshBtn:Disable()
+        refreshBtn:SetAlpha(1)
+        refreshBtn._isLoading = false
+        return
+      end
       refreshBtn:SetNormalTexture(refreshBtn._refreshTex or 'Interface\\Buttons\\UI-RefreshButton')
       refreshBtn:SetPushedTexture(refreshBtn._refreshTex or 'Interface\\Buttons\\UI-RefreshButton')
       refreshBtn:SetDisabledTexture(refreshBtn._refreshTex or 'Interface\\Buttons\\UI-RefreshButton')
@@ -574,9 +585,23 @@ function RaceLocked_CreateFactionRaceGrid(parent)
       if RaceLocked_GuildChampion_BroadcastOwnGuildRaceGridReports then
         RaceLocked_GuildChampion_BroadcastOwnGuildRaceGridReports()
       end
+      refreshBtn._isAppliedAndBroadcasted = true
     end
     finishRefreshButton()
   end)
+
+  local settingsFrame = _G.RaceLockedSettingsFrame
+  if settingsFrame and settingsFrame.HookScript then
+    settingsFrame:HookScript('OnHide', function()
+      refreshBtn._isAppliedAndBroadcasted = false
+      refreshBtn._isLoading = false
+      refreshBtn:SetNormalTexture(refreshBtn._refreshTex or 'Interface\\Buttons\\UI-RefreshButton')
+      refreshBtn:SetPushedTexture(refreshBtn._refreshTex or 'Interface\\Buttons\\UI-RefreshButton')
+      refreshBtn:SetDisabledTexture(refreshBtn._refreshTex or 'Interface\\Buttons\\UI-RefreshButton')
+      refreshBtn:Enable()
+      refreshBtn:SetAlpha(1)
+    end)
+  end
 
   root:SetScript('OnSizeChanged', runLayout)
   root:SetScript('OnShow', function()
