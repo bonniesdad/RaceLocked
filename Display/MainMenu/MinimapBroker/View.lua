@@ -20,6 +20,12 @@ function RaceLocked_Settings_RegisterDataBroker()
 
   local addonIcon = LibStub('LibDBIcon-1.0')
   addonIcon:Register('RaceLocked', addonLDB, RaceLockedDB.minimapButton)
+
+  local minimapButton = addonIcon:GetMinimapButton('RaceLocked')
+  if minimapButton and minimapButton.icon then
+    minimapButton.icon:ClearAllPoints()
+    minimapButton.icon:SetPoint('CENTER', minimapButton, 'CENTER', 0.5, 0)
+  end
 end
 
 RaceLocked_Settings_RegisterDataBroker()
