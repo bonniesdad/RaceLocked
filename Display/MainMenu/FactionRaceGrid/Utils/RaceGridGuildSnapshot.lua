@@ -15,6 +15,7 @@ local function copyGuildReportRow(e)
   return {
     guildName = e.guildName,
     guildSize = e.guildSize,
+    guildMembersLevel60 = tonumber(e.guildMembersLevel60) or 0,
     averageLevel = e.averageLevel,
     classes = c,
   }

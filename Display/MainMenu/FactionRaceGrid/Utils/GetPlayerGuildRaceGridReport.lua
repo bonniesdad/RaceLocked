@@ -73,7 +73,7 @@ end
 
 --- Guild roster slice for one API race token (all guild members of that race in your guild).
 --- @param raceToken string e.g. Human, NightElf, Scourge
---- @return table|nil row { guildName, guildSize, averageLevel, classes, guildAchievementsAverage } or nil if not in a guild / no members of that race
+--- @return table|nil row { guildName, guildSize, guildMembersLevel60, averageLevel, classes, guildAchievementsAverage } or nil if not in a guild / no members of that race
 function RaceLocked_GetGuildRaceGridReportForRaceToken(raceToken)
   if not raceToken or raceToken == '' then
     return nil
@@ -89,6 +89,7 @@ function RaceLocked_GetGuildRaceGridReportForRaceToken(raceToken)
   local classes = emptyClasses()
   local sumLevel = 0
   local n = 0
+  local membersLevel60 = 0
   local total = GetNumGuildMembers(true)
   if not total or tonumber(total) < 1 then
     total = GetNumGuildMembers()
@@ -132,6 +133,9 @@ function RaceLocked_GetGuildRaceGridReportForRaceToken(raceToken)
 
     if engRace and raceTokensMatch(engRace, raceToken) then
       n = n + 1
+      if levelNum == 60 then
+        membersLevel60 = membersLevel60 + 1
+      end
       if levelNum > 0 then
         sumLevel = sumLevel + levelNum
       end
@@ -173,6 +177,7 @@ function RaceLocked_GetGuildRaceGridReportForRaceToken(raceToken)
   return {
     guildName = guildName:match('^%s*(.-)%s*$') or guildName,
     guildSize = n,
+    guildMembersLevel60 = membersLevel60,
     -- Always a number when n > 0 so merge/weighting can show a level (even if roster levels read as 0).
     averageLevel = n > 0 and (sumLevel / n) or nil,
     classes = classes,

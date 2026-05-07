@@ -198,6 +198,14 @@ local function createRaceStatPane(root, raceToken, raceAccent)
   f._totalPlayersFs:SetText('0')
   f._totalPlayersFs:SetTextColor(G.MUTED[1], G.MUTED[2], G.MUTED[3])
 
+  f._total60sSubtitle = f:CreateFontString(nil, 'OVERLAY', 'GameFontDisableSmall')
+  f._total60sSubtitle:SetJustifyH('CENTER')
+
+  f._total60sFs = f:CreateFontString(nil, 'OVERLAY', 'GameFontHighlight')
+  f._total60sFs:SetJustifyH('CENTER')
+  f._total60sFs:SetText('0')
+  f._total60sFs:SetTextColor(G.MUTED[1], G.MUTED[2], G.MUTED[3])
+
   f._classSubtitle = f:CreateFontString(nil, 'OVERLAY', 'GameFontDisableSmall')
   f._classSubtitle:SetJustifyH('CENTER')
 
@@ -294,9 +302,14 @@ local function layoutRaceGridPane(pane, labelFs, detailFs, tx, raceToken)
   local avgSub = pane._avgSubtitle
   local totalSub = pane._totalPlayersSubtitle
   local totalFs = pane._totalPlayersFs
+  local sixtySub = pane._total60sSubtitle
+  local sixtyFs = pane._total60sFs
   local statsGap = 8
-  local avgW = math.max(24, math.floor((panelW - statsGap) / 2))
-  local totalW = math.max(24, panelW - avgW - statsGap)
+  local nGaps = 2
+  local segment = math.max(24, math.floor((panelW - nGaps * statsGap) / 3))
+  local avgW = segment
+  local totalW = segment
+  local sixtyW = math.max(24, panelW - nGaps * statsGap - avgW - totalW)
   avgSub:ClearAllPoints()
   avgSub:SetPoint('TOPLEFT', gNames, 'BOTTOMLEFT', panelLeft - tx, -(10 + lg))
   avgSub:SetWidth(avgW)
@@ -305,6 +318,10 @@ local function layoutRaceGridPane(pane, labelFs, detailFs, tx, raceToken)
   totalSub:SetPoint('TOPLEFT', avgSub, 'TOPRIGHT', statsGap, 0)
   totalSub:SetWidth(totalW)
 
+  sixtySub:ClearAllPoints()
+  sixtySub:SetPoint('TOPLEFT', totalSub, 'TOPRIGHT', statsGap, 0)
+  sixtySub:SetWidth(sixtyW)
+
   detailFs:ClearAllPoints()
   detailFs:SetPoint('TOPLEFT', avgSub, 'BOTTOMLEFT', 0, -2)
   detailFs:SetWidth(avgW)
@@ -312,6 +329,10 @@ local function layoutRaceGridPane(pane, labelFs, detailFs, tx, raceToken)
   totalFs:ClearAllPoints()
   totalFs:SetPoint('TOPLEFT', totalSub, 'BOTTOMLEFT', 0, -2)
   totalFs:SetWidth(totalW)
+
+  sixtyFs:ClearAllPoints()
+  sixtyFs:SetPoint('TOPLEFT', sixtySub, 'BOTTOMLEFT', 0, -2)
+  sixtyFs:SetWidth(sixtyW)
 
   local cSub = pane._classSubtitle
   cSub:ClearAllPoints()

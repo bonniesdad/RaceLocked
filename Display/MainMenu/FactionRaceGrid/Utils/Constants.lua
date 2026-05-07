@@ -134,8 +134,9 @@ G.RACE_LABEL = {
 
 -- Section copy for each race cell (guild names come from aggregated data).
 G.RACE_GRID_GUILD_SECTION_TITLE = 'Guilds'
-G.RACE_GRID_AVG_SUBTITLE = 'Average level'
-G.RACE_GRID_TOTAL_PLAYERS_SUBTITLE = 'Total players'
+G.RACE_GRID_AVG_SUBTITLE = 'Avg Level'
+G.RACE_GRID_TOTAL_PLAYERS_SUBTITLE = 'Total Players'
+G.RACE_GRID_TOTAL_60S_SUBTITLE = 'Total 60s'
 G.RACE_GRID_CLASS_SUBTITLE = 'Class breakdown'
 G.RACE_GRID_TRUSTED_GUILDS_TITLE = 'Guild names accepted for addon-reported data:'
 G.TRUSTED_GUILDS_TITLE_TOP_GAP = 6

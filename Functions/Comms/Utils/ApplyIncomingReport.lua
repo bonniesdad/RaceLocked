@@ -96,6 +96,7 @@ function Comms.ApplyIncomingReport(report)
           row.guildSize = report.guildSize
           row.averageLevel = report.averageLevel
           row.classes = report.classes or Comms.EmptyClasses()
+          row.guildMembersLevel60 = tonumber(report.guildMembersLevel60) or 0
           local incomingAch = tonumber(report.guildAchievementsAverage) or 0
           if incomingAch > 0 then
             row.guildAchievementsAverage = incomingAch

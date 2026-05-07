@@ -38,6 +38,7 @@ function RaceLocked_GuildChampion_AggregateGuildsForRace(entries)
     return nil
   end
   local totalMembers = 0
+  local totalLevel60Members = 0
   local weightedSum = 0
   local names = {}
   local classes = {
@@ -54,9 +55,11 @@ function RaceLocked_GuildChampion_AggregateGuildsForRace(entries)
   for _, e in ipairs(entries) do
     local sz = tonumber(e.guildSize) or 0
     local av = tonumber(e.averageLevel) or 0
+    local lv60 = tonumber(e.guildMembersLevel60) or 0
     if sz > 0 then
       totalMembers = totalMembers + sz
       weightedSum = weightedSum + av * sz
+      totalLevel60Members = totalLevel60Members + lv60
     end
     if e.guildName and e.guildName ~= '' then
       names[#names + 1] = e.guildName
@@ -90,6 +93,8 @@ function RaceLocked_GuildChampion_AggregateGuildsForRace(entries)
     classes = classes,
     --- Sum of each row’s `guildSize` (full roster) for this race’s slots. Used for the “Total players” label; class rows may be incomplete for some guilds.
     totalRosterMembers = totalMembers,
+    --- Sum of `guildMembersLevel60` across guild rows with data (same slice as guildSize).
+    totalLevel60Members = totalLevel60Members,
   }
 end
 
@@ -107,6 +112,7 @@ function RaceLocked_GuildChampion_GetAggregatedMockForRace(raceToken)
       averageLevel = nil,
       classes = zeroClassesAggregate(),
       totalRosterMembers = 0,
+      totalLevel60Members = 0,
     }
   end
   agg.guildNamesText = namesText

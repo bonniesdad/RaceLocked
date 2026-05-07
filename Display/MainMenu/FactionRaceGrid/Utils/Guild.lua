@@ -378,6 +378,10 @@ function RaceLocked_GuildChampion_RefreshRaceGridDisplay(panes, raceTokens)
     pane._avgSubtitle:SetTextColor(subR, subG, subB)
     pane._totalPlayersSubtitle:SetText(G.RACE_GRID_TOTAL_PLAYERS_SUBTITLE or 'Total players')
     pane._totalPlayersSubtitle:SetTextColor(subR, subG, subB)
+    if pane._total60sSubtitle then
+      pane._total60sSubtitle:SetText(G.RACE_GRID_TOTAL_60S_SUBTITLE or 'Total 60s')
+      pane._total60sSubtitle:SetTextColor(subR, subG, subB)
+    end
 
     local det = pane._detailFs
     if agg and agg.averageLevel and agg.averageLevel > 0 then
@@ -403,6 +407,17 @@ function RaceLocked_GuildChampion_RefreshRaceGridDisplay(panes, raceTokens)
     else
       pane._totalPlayersFs:SetText('-')
       pane._totalPlayersFs:SetTextColor(G.MUTED[1], G.MUTED[2], G.MUTED[3])
+    end
+
+    local total60s = (agg and tonumber(agg.totalLevel60Members)) or 0
+    if pane._total60sFs then
+      if total60s > 0 then
+        pane._total60sFs:SetText(tostring(math.floor(total60s + 0.5)))
+        pane._total60sFs:SetTextColor(0.82, 0.8, 0.74)
+      else
+        pane._total60sFs:SetText('-')
+        pane._total60sFs:SetTextColor(G.MUTED[1], G.MUTED[2], G.MUTED[3])
+      end
     end
 
     pane._classSubtitle:SetText(G.RACE_GRID_CLASS_SUBTITLE)

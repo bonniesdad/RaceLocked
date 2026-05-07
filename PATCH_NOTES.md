@@ -1,5 +1,15 @@
 ### PATCH NOTES
 
+**1.0.6 (07-05-2026)**
+
+### Features
+
+- Move RaceLockedDataBus channel to the back, so it does not take up slot 1.
+- Race total 60s
+
+### Bug Fixes
+- Options that are off showing as ticked on reload 
+
 **1.0.5 (24-04-2026)**
 
 ### Features

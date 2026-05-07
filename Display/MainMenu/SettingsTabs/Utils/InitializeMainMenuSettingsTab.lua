@@ -112,7 +112,13 @@ function RaceLocked_InitializeMainMenuSettingsTab(content)
   langRow:SetPoint('TOPRIGHT', body, 'TOPRIGHT', -ROW_BUTTON_PAD_H, -10)
   langRow.Text:SetText('Native language only')
   langRow:SetDescription('When enabled, chat input is set to your race native language.')
-  langRow:SetChecked(RaceLocked_Options_GetNativeLanguageOnly and RaceLocked_Options_GetNativeLanguageOnly() or true)
+  -- Don't use `getter and getter() or default` here: that pattern collapses a
+  -- legitimate `false` result to the default, leaving the checkbox stuck on.
+  local nativeOnly = true
+  if RaceLocked_Options_GetNativeLanguageOnly then
+    nativeOnly = RaceLocked_Options_GetNativeLanguageOnly()
+  end
+  langRow:SetChecked(nativeOnly)
 
   langRow.Check:SetScript('OnClick', function(btn)
     local newVal = btn:GetChecked() and true or false
@@ -130,7 +136,11 @@ function RaceLocked_InitializeMainMenuSettingsTab(content)
   forceRaceOnlyGroupingRow:SetPoint('TOPRIGHT', langRow, 'BOTTOMRIGHT', 0, -10)
   forceRaceOnlyGroupingRow.Text:SetText('Force race only grouping')
   forceRaceOnlyGroupingRow:SetDescription('When enabled, players will only be able to group with other players of the same race.')
-  forceRaceOnlyGroupingRow:SetChecked(RaceLocked_Options_GetForceRaceOnlyGrouping and RaceLocked_Options_GetForceRaceOnlyGrouping() or false)
+  local forceRaceOnly = true
+  if RaceLocked_Options_GetForceRaceOnlyGrouping then
+    forceRaceOnly = RaceLocked_Options_GetForceRaceOnlyGrouping()
+  end
+  forceRaceOnlyGroupingRow:SetChecked(forceRaceOnly)
 
   forceRaceOnlyGroupingRow.Check:SetScript('OnClick', function(btn)
     local newVal = btn:GetChecked() and true or false

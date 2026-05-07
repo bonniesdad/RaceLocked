@@ -23,6 +23,7 @@ local function guildRow(guildName)
   return {
     guildName = guildName,
     guildSize = 0,
+    guildMembersLevel60 = 0,
     guildDeaths = 0,
     guildAchievementsAverage = 0,
     averageLevel = 0,
@@ -104,18 +105,25 @@ local function coerceGuildRow(row, defaultRow)
   if guildAchievementsAverage == nil then
     guildAchievementsAverage = tonumber(defaultRow.guildAchievementsAverage) or 0
   end
+  local guildMembersLevel60 = tonumber(src.guildMembersLevel60)
+  if guildMembersLevel60 == nil then
+    guildMembersLevel60 = tonumber(defaultRow.guildMembersLevel60) or 0
+  end
   if guildSize > 0 and guildSize < minGuildMembersForStore() then
     guildSize = 0
     averageLevel = 0
     classes = zeroClasses()
     timestamp = 0
+    guildMembersLevel60 = 0
   end
   if guildSize == 0 then
     timestamp = 0
+    guildMembersLevel60 = 0
   end
   return {
     guildName = defaultRow.guildName,
     guildSize = guildSize,
+    guildMembersLevel60 = guildMembersLevel60,
     guildDeaths = guildDeaths,
     guildAchievementsAverage = guildAchievementsAverage,
     averageLevel = averageLevel,
@@ -180,6 +188,7 @@ local function applyRowReport(targetRow, report)
   targetRow.guildSize = guildSize
   targetRow.averageLevel = tonumber(report and report.averageLevel) or 0
   targetRow.classes = copyClasses(report and report.classes)
+  targetRow.guildMembersLevel60 = tonumber(report and report.guildMembersLevel60) or 0
   -- Roster refresh does not imply a broadcast stamp; timestamp is owned by comms apply / own broadcast.
   targetRow.guildAchievementsAverage = tonumber(report and report.guildAchievementsAverage) or targetRow.guildAchievementsAverage or 0
   return true
