@@ -16,7 +16,7 @@ function Comms.GetDataChannelId()
   return id
 end
 
-local function hideChannelFromChatWindows()
+function Comms.HideDataChannelFromChatWindows()
   if not ChatFrame_RemoveChannel or not NUM_CHAT_WINDOWS then
     return
   end
@@ -26,6 +26,22 @@ local function hideChannelFromChatWindows()
       ChatFrame_RemoveChannel(frame, Comms.CHANNEL_NAME)
     end
   end
+end
+
+function Comms.LeaveDataChannel()
+  local id = Comms.GetDataChannelId()
+  if id <= 0 then
+    return false
+  end
+  if LeaveChannelByName then
+    LeaveChannelByName(Comms.CHANNEL_NAME)
+    return true
+  end
+  if LeaveChannelByLocalID then
+    LeaveChannelByLocalID(id)
+    return true
+  end
+  return false
 end
 
 function Comms.InstallChannelNoticeFilters()
@@ -69,26 +85,48 @@ end
 function Comms.EnsureDataChannelJoined()
   local id = Comms.GetDataChannelId()
   if id > 0 then
-    hideChannelFromChatWindows()
+    Comms.HideDataChannelFromChatWindows()
     return id
+  end
+  -- Keep the addon bus out of the client's persisted chat-channel order.
+  if JoinTemporaryChannel then
+    JoinTemporaryChannel(Comms.CHANNEL_NAME)
+    id = Comms.GetDataChannelId()
+    if id > 0 then
+      Comms.HideDataChannelFromChatWindows()
+      return id
+    end
   end
   if JoinChannelByName then
     JoinChannelByName(Comms.CHANNEL_NAME)
     id = Comms.GetDataChannelId()
     if id > 0 then
-      hideChannelFromChatWindows()
-      return id
-    end
-  end
-  if JoinTemporaryChannel then
-    JoinTemporaryChannel(Comms.CHANNEL_NAME)
-    id = Comms.GetDataChannelId()
-    if id > 0 then
-      hideChannelFromChatWindows()
+      Comms.HideDataChannelFromChatWindows()
       return id
     end
   end
   return 0
+end
+
+function Comms.HasNonDataChannelJoined()
+  if not GetChannelList then
+    return true
+  end
+
+  local channels = { GetChannelList() }
+  for _, value in ipairs(channels) do
+    if type(value) == 'string' and value ~= '' and value ~= Comms.CHANNEL_NAME then
+      return true
+    end
+  end
+  return false
+end
+
+function Comms.LeaveDataChannelIfAlone()
+  if Comms.GetDataChannelId() <= 0 or Comms.HasNonDataChannelJoined() then
+    return false
+  end
+  return Comms.LeaveDataChannel()
 end
 
 function Comms.ScheduleDelayedDataChannelJoin()
@@ -97,21 +135,39 @@ function Comms.ScheduleDelayedDataChannelJoin()
   end
   delayedJoinScheduled = true
   if not C_Timer or not C_Timer.After then
-    Comms.EnsureDataChannelJoined()
+    if Comms.HasNonDataChannelJoined() then
+      Comms.EnsureDataChannelJoined()
+    else
+      Comms.LeaveDataChannelIfAlone()
+    end
     delayedJoinScheduled = false
     return
   end
 
-  local delays = { 0.5, 1.5, 3.0 }
+  local delays = { 1.0, 3.0, 7.0, 15.0 }
   local idx = 1
-  local function attemptJoin()
-    local id = Comms.EnsureDataChannelJoined()
-    if id > 0 or idx >= #delays then
+  local attemptJoin
+  local function scheduleNextAttempt()
+    if idx >= #delays then
       delayedJoinScheduled = false
       return
     end
     idx = idx + 1
     C_Timer.After(delays[idx], attemptJoin)
+  end
+
+  attemptJoin = function()
+    if not Comms.HasNonDataChannelJoined() then
+      Comms.LeaveDataChannelIfAlone()
+      scheduleNextAttempt()
+      return
+    end
+    local id = Comms.EnsureDataChannelJoined()
+    if id > 0 then
+      delayedJoinScheduled = false
+      return
+    end
+    scheduleNextAttempt()
   end
 
   C_Timer.After(delays[idx], attemptJoin)

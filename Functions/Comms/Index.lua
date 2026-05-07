@@ -78,8 +78,9 @@ function RaceLocked_GuildChampion_BroadcastOwnGuildRaceGridReports()
 end
 
 local service = CreateFrame('Frame')
+local hasEnteredWorld = false
+
 service:RegisterEvent('ADDON_LOADED')
-service:RegisterEvent('PLAYER_LOGIN')
 service:RegisterEvent('PLAYER_ENTERING_WORLD')
 service:RegisterEvent('CHAT_MSG_CHANNEL')
 service:RegisterEvent('CHAT_MSG_ADDON')
@@ -96,20 +97,30 @@ service:SetScript('OnEvent', function(_, event, ...)
         RaceLocked_GuildChampion_EnsureGuildDeathAddonPrefixRegistered()
       end
       Comms.InstallChannelNoticeFilters()
-      Comms.ScheduleDelayedDataChannelJoin()
+      -- Drop any client-restored persistent bus before normal channels claim their slots.
+      Comms.LeaveDataChannel()
     end
     return
   end
-  if event == 'PLAYER_LOGIN' then
-    Comms.ScheduleDelayedDataChannelJoin()
-    return
-  end
   if event == 'PLAYER_ENTERING_WORLD' then
+    hasEnteredWorld = true
     Comms.ScheduleDelayedDataChannelJoin()
     return
   end
   if event == 'CHANNEL_UI_UPDATE' then
-    Comms.EnsureDataChannelJoined()
+    if not hasEnteredWorld then
+      -- Pre-world: any restored data bus is stale, regardless of channel-list state.
+      Comms.LeaveDataChannel()
+      return
+    end
+    if Comms.GetDataChannelId() > 0 then
+      if Comms.LeaveDataChannelIfAlone() then
+        return
+      end
+      Comms.HideDataChannelFromChatWindows()
+      return
+    end
+    Comms.ScheduleDelayedDataChannelJoin()
     return
   end
   if event == 'CHAT_MSG_ADDON' then

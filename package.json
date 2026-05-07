@@ -1,6 +1,8 @@
 {
   "scripts": {
     "prettier": "prettier --write .",
+    "test": "npm run test:lua",
+    "test:lua": "luajit tests/comms_channel_connection_spec.lua",
     "zip": "rsync -av --exclude='.*' Libs Functions Display Textures RaceLocked.lua RaceLocked.toc ToBeZipped/RaceLocked && cd ToBeZipped && zip -r RaceLocked.zip RaceLocked  -x '*.DS_Store'"
   },
   "devDependencies": {
