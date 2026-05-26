@@ -1,497 +1,312 @@
--- Guild Verification tab: roster table (Character Name, Race).
+local TITLE_TOP_OFFSET = -30
 
-local V = RaceLocked_GuildVerification
+local LIST_LEFT_OFFSET = 10
 
-local function createNameOnlyPanel(parent, rows, rowTint, panelWidth, panelTopInset, bottomInset)
-  bottomInset = bottomInset or 0
-  local panel = CreateFrame('Frame', nil, parent, 'BackdropTemplate')
-  panel:SetBackdrop(V.PANEL_BACKDROP)
-  panel:SetBackdropColor(0.06, 0.05, 0.05, 0.92)
-  panel:SetBackdropBorderColor(0.45, 0.4, 0.3, 0.9)
-  local topY = panelTopInset or 0
-  panel:SetPoint('TOPLEFT', parent, 'TOPLEFT', 0, topY)
-  panel:SetPoint('BOTTOMRIGHT', parent, 'BOTTOMRIGHT', 0, bottomInset)
+local TITLE_BOTTOM_GAP = 16
 
-  local tableTop = CreateFrame('Frame', nil, panel)
-  local tableTopY = -3
-  tableTop:SetPoint('TOPLEFT', panel, 'TOPLEFT', V.PANEL_PAD, tableTopY)
-  tableTop:SetPoint('TOPRIGHT', panel, 'TOPRIGHT', -V.PANEL_PAD, tableTopY)
-  tableTop:SetPoint('BOTTOMLEFT', panel, 'BOTTOMLEFT', V.PANEL_PAD, V.PANEL_PAD)
-  tableTop:SetPoint('BOTTOMRIGHT', panel, 'BOTTOMRIGHT', -V.PANEL_PAD, V.PANEL_PAD)
+local ROW_GAP = 12
 
-  local tableInnerWidth = panelWidth - (V.PANEL_PAD * 2)
-  if tableInnerWidth < 80 then
-    tableInnerWidth = 200
-  end
-  local listInnerW = tableInnerWidth
-  if listInnerW < 60 then
-    listInnerW = tableInnerWidth * 0.88
-  end
+local HELPER_INDENT = 12
 
-  local headerBg = CreateFrame('Frame', nil, tableTop, 'BackdropTemplate')
-  headerBg:SetHeight(V.HEADER_ROW_HEIGHT)
-  headerBg:SetPoint('TOPLEFT', tableTop, 'TOPLEFT', 0, 0)
-  headerBg:SetPoint('TOPRIGHT', tableTop, 'TOPRIGHT', 0, 0)
-  headerBg:SetBackdrop({ bgFile = 'Interface\\Buttons\\WHITE8x8', edgeFile = nil, tile = false, edgeSize = 0 })
-  headerBg:SetBackdropColor(V.HEADER_STRIP.r, V.HEADER_STRIP.g, V.HEADER_STRIP.b, V.HEADER_STRIP.a)
+local HELPER_TOP_GAP = 4
 
-  local hName = headerBg:CreateFontString(nil, 'OVERLAY', 'GameFontHighlightSmall')
-  hName:SetJustifyH('LEFT')
-  hName:SetText('Character Name')
-  hName:SetTextColor(1, 0.92, 0.62)
 
-  local hRace = headerBg:CreateFontString(nil, 'OVERLAY', 'GameFontHighlightSmall')
-  hRace:SetJustifyH('LEFT')
-  hRace:SetText('Race')
-  hRace:SetTextColor(1, 0.92, 0.62)
 
-  local rowStep = V.ROW_HEIGHT + V.ROW_GAP
+local STATUS_TITLE = {
 
-  local scroll = CreateFrame('ScrollFrame', nil, tableTop, 'UIPanelScrollFrameTemplate')
-  scroll:SetFrameStrata(panel:GetFrameStrata())
-  scroll:SetFrameLevel(tableTop:GetFrameLevel() + 5)
-  scroll:SetPoint('TOPLEFT', headerBg, 'BOTTOMLEFT', 0, -V.ROW_GAP)
-  scroll:SetPoint('BOTTOMRIGHT', tableTop, 'BOTTOMRIGHT', 0, 0)
-  scroll:EnableMouseWheel(true)
+  valid = { text = 'Guild Found Trading is unlocked', r = 0.35, g = 0.8, b = 0.35 },
 
-  local function nudgeScrollChromeLeft(px)
-    if not px or px == 0 then
-      return
-    end
-    local function nudgeAnchorsToScroll(f)
-      if not f or not f.GetNumPoints or not f.ClearAllPoints then
-        return
-      end
-      local n = f:GetNumPoints()
-      if not n or n < 1 then
-        return
-      end
-      local pts = {}
-      for i = 1, n do
-        pts[i] = { f:GetPoint(i) }
-      end
-      f:ClearAllPoints()
-      for _, p in ipairs(pts) do
-        local point, rel, relPoint, x, y = p[1], p[2], p[3], p[4], p[5]
-        x = x or 0
-        y = y or 0
-        if rel == scroll then
-          x = x - px
-        end
-        f:SetPoint(point, rel, relPoint, x, y)
-      end
-    end
-    nudgeAnchorsToScroll(scroll.ScrollUpButton)
-    nudgeAnchorsToScroll(scroll.ScrollDownButton)
-    nudgeAnchorsToScroll(scroll.ScrollBar)
-  end
-  nudgeScrollChromeLeft(V.SCROLL_BAR_NUDGE_LEFT)
+  invalid = { text = 'Guild Found Trading is locked', r = 0.82, g = 0.33, b = 0.33 },
 
-  local scrollChild = CreateFrame('Frame', nil, scroll)
-  scrollChild:SetFrameLevel(scroll:GetFrameLevel() + 1)
-  scrollChild:SetWidth(math.max(1, listInnerW))
-  scrollChild:SetHeight(1)
-  scroll:SetScrollChild(scrollChild)
+}
 
-  local rowPool = {}
-  panel._colLayout = RaceLocked_GuildVerification_ComputeGuildTableColumns(listInnerW)
 
-  local function applyHeaderLayout(L)
-    hName:ClearAllPoints()
-    hName:SetPoint('TOPLEFT', headerBg, 'TOPLEFT', L.edge, -3)
-    hName:SetWidth(L.nameW)
-    hRace:ClearAllPoints()
-    hRace:SetPoint('TOPLEFT', headerBg, 'TOPLEFT', L.edge + L.nameW + L.gapNr, -3)
-    hRace:SetWidth(L.raceW)
+
+local CHECK_PASS_COLOR = { r = 0.35, g = 0.8, b = 0.35 }
+
+local CHECK_FAIL_COLOR = { r = 0.82, g = 0.33, b = 0.33 }
+
+
+
+local function getDetectedOnHelperText(failedAt)
+
+  if failedAt then
+
+    return 'Detected on ' .. date('%d %b %Y', failedAt)
+
   end
 
-  local function applyRowLayout(row, L)
-    row.nameFs:ClearAllPoints()
-    row.nameFs:SetPoint('LEFT', row, 'LEFT', L.edge, 0)
-    row.nameFs:SetWidth(L.nameW)
-    row.raceFs:ClearAllPoints()
-    row.raceFs:SetPoint('LEFT', row, 'LEFT', L.edge + L.nameW + L.gapNr, 0)
-    row.raceFs:SetWidth(L.raceW)
-  end
-
-  local function raiseScrollChrome()
-    local topLevel = scroll:GetFrameLevel() + 25
-    local sb = scroll.ScrollBar
-    if not sb then
-      for i = 1, select('#', scroll:GetChildren()) do
-        local c = select(i, scroll:GetChildren())
-        if c and c.GetObjectType and c:GetObjectType() == 'Slider' then
-          sb = c
-          break
-        end
-      end
-    end
-    if sb then
-      sb:SetFrameLevel(topLevel)
-      sb:Show()
-    end
-    for i = 1, select('#', scroll:GetChildren()) do
-      local c = select(i, scroll:GetChildren())
-      if c and c.GetObjectType and c:GetObjectType() == 'Button' then
-        c:SetFrameLevel(topLevel)
-        c:Show()
-      end
-    end
-  end
-
-  local function syncScrollChildWidth()
-    local w = tableTop:GetWidth()
-    if not w or w <= 4 then
-      w = scroll:GetWidth()
-    end
-    w = math.max(w or 0, 160)
-    scrollChild:SetWidth(w)
-    panel._colLayout = RaceLocked_GuildVerification_ComputeGuildTableColumns(w)
-    applyHeaderLayout(panel._colLayout)
-    for j = 1, #rowPool do
-      local r = rowPool[j]
-      if r and r:IsShown() then
-        applyRowLayout(r, panel._colLayout)
-      end
-    end
-    scroll:SetHorizontalScroll(0)
-    if scroll.UpdateScrollChildRect then
-      scroll:UpdateScrollChildRect()
-    end
-    raiseScrollChrome()
-  end
-  scroll:SetScript('OnSizeChanged', syncScrollChildWidth)
-  scroll:SetScript('OnUpdate', function(self)
-    if (self.GetHorizontalScroll and self:GetHorizontalScroll() or 0) ~= 0 then
-      self:SetHorizontalScroll(0)
-    end
-  end)
-  if scroll.HookScript then
-    scroll:HookScript('OnScrollRangeChanged', function()
-      raiseScrollChrome()
-    end)
-  end
-  applyHeaderLayout(panel._colLayout)
-  syncScrollChildWidth()
-  if C_Timer and C_Timer.After then
-    C_Timer.After(0, syncScrollChildWidth)
-  end
-
-  local function ensureRow(i)
-    local row = rowPool[i]
-    if row then
-      return row
-    end
-    row = CreateFrame('Frame', nil, scrollChild, 'BackdropTemplate')
-    row:SetHeight(V.ROW_HEIGHT)
-    row:SetPoint('TOPLEFT', scrollChild, 'TOPLEFT', 0, -((i - 1) * rowStep))
-    row:SetPoint('TOPRIGHT', scrollChild, 'TOPRIGHT', 0, -((i - 1) * rowStep))
-
-    row.nameFs = row:CreateFontString(nil, 'OVERLAY', 'GameFontHighlightSmall')
-    row.nameFs:SetJustifyH('LEFT')
-    row.nameFs:SetMaxLines(1)
-
-    row.raceFs = row:CreateFontString(nil, 'OVERLAY', 'GameFontHighlightSmall')
-    row.raceFs:SetJustifyH('LEFT')
-    row.raceFs:SetMaxLines(1)
-
-    applyRowLayout(row, panel._colLayout)
-    rowPool[i] = row
-    return row
-  end
-
-  function panel:UpdateRows(newRows, newRowTint)
-    local n = #newRows
-    local scrollChildHeight = n * V.ROW_HEIGHT + math.max(0, n - 1) * V.ROW_GAP
-    scrollChild:SetHeight(math.max(scrollChildHeight, 1))
-
-    local tint = newRowTint or rowTint
-    for i = 1, n do
-      local data = newRows[i]
-      local row = ensureRow(i)
-      row:Show()
-      applyRowLayout(row, panel._colLayout)
-      local isLocal = RaceLocked_GuildVerification_IsLocalGuildRow(data)
-      if isLocal then
-        row:SetBackdrop({
-          bgFile = 'Interface\\Buttons\\WHITE8x8',
-          edgeFile = 'Interface\\Buttons\\WHITE8x8',
-          tile = false,
-          edgeSize = 1,
-          insets = { left = 0, right = 0, top = 0, bottom = 0 },
-        })
-        row:SetBackdropColor(0.55, 0.38, 0.14, 1)
-        row:SetBackdropBorderColor(1, 0.85, 0.25, 1)
-        row.nameFs:SetTextColor(1, 0.95, 0.5)
-        row.raceFs:SetTextColor(1, 0.95, 0.5)
-      else
-        row:SetBackdrop({ bgFile = 'Interface\\Buttons\\WHITE8x8', edgeFile = nil, tile = false, edgeSize = 0 })
-        row:SetBackdropColor(tint.r, tint.g, tint.b, tint.a)
-        row.nameFs:SetTextColor(0.95, 0.95, 0.9)
-        row.raceFs:SetTextColor(0.95, 0.95, 0.9)
-      end
-      local displayName = RaceLocked_GuildVerification_StripRealmFromName(data.name)
-      row.nameFs:SetText(displayName)
-      local raceLabel = (data.race and data.race ~= '') and data.race or '—'
-      row.raceFs:SetText(raceLabel)
-    end
-    for j = n + 1, #rowPool do
-      rowPool[j]:Hide()
-    end
-    syncScrollChildWidth()
-  end
-
-  panel:UpdateRows(rows, rowTint)
-  return panel
 end
 
-local manualRefreshInProgress = false
 
-local function applyGuildRosterSyncFromButton()
-  if InCombatLockdown and InCombatLockdown() then
-    return
-  end
-  if manualRefreshInProgress then
-    return
-  end
-  manualRefreshInProgress = true
 
-  local content = _G.RaceLockedGuildVerificationTabContent
-  local container = content and content.guildVerificationContainer
-  local syncBtn = container and container.syncBtn
-  if syncBtn then
-    local loadingTex = syncBtn._loadingTex or 'Interface\\Buttons\\UI-GroupLoot-Pass-Down'
-    syncBtn:SetNormalTexture(loadingTex)
-    syncBtn:SetPushedTexture(loadingTex)
-    syncBtn:SetDisabledTexture(loadingTex)
-    syncBtn:Disable()
-    syncBtn:SetAlpha(0.75)
+local function getVerificationChecks()
+
+  local playerMoneyValidationFailed = RaceLocked_GetDBValue('playerMoneyValidationFailed')
+
+  local hasBeenMaxLevelAndSelfFound = RaceLocked_GetDBValue('hasBeenMaxLevelAndSelfFound')
+
+  if playerMoneyValidationFailed == nil then
+
+    playerMoneyValidationFailed = false
+
   end
 
-  local rosterRequested = false
-  RaceLocked_RefreshGuildRoster()
-  rosterRequested = true
 
-  local function finishRefresh()
-    if rosterRequested then
-      local rosterCount = 0
-      if GetNumGuildMembers then
-        rosterCount = tonumber((select(1, GetNumGuildMembers(true)))) or 0
-        if rosterCount < 1 then
-          rosterCount = tonumber((select(1, GetNumGuildMembers()))) or 0
-        end
-      end
-      if rosterCount < 100 then
-        if syncBtn then
-          local refreshTex = syncBtn._refreshTex or 'Interface\\Buttons\\UI-RefreshButton'
-          local isInCombat = InCombatLockdown and InCombatLockdown()
-          if isInCombat then
-            local combatTex = syncBtn._combatTex or 'Interface\\Buttons\\UI-GroupLoot-Pass-Up'
-            syncBtn:SetNormalTexture(combatTex)
-            syncBtn:SetPushedTexture(combatTex)
-            syncBtn:SetDisabledTexture(combatTex)
-            syncBtn:Disable()
-            syncBtn:SetAlpha(0.75)
-          else
-            syncBtn:SetNormalTexture(refreshTex)
-            syncBtn:SetPushedTexture(refreshTex)
-            syncBtn:SetDisabledTexture(refreshTex)
-            syncBtn:Enable()
-            syncBtn:SetAlpha(1)
-          end
-        end
-        manualRefreshInProgress = false
-        return
-      end
-    end
-    if RaceLocked_GuildVerificationTab_Refresh then
-      RaceLocked_GuildVerificationTab_Refresh()
-    end
-    if syncBtn then
-      local refreshTex = syncBtn._refreshTex or 'Interface\\Buttons\\UI-RefreshButton'
-      local isInCombat = InCombatLockdown and InCombatLockdown()
-      if isInCombat then
-        local combatTex = syncBtn._combatTex or 'Interface\\Buttons\\UI-GroupLoot-Pass-Up'
-        syncBtn:SetNormalTexture(combatTex)
-        syncBtn:SetPushedTexture(combatTex)
-        syncBtn:SetDisabledTexture(combatTex)
-        syncBtn:Disable()
-        syncBtn:SetAlpha(0.75)
-      else
-        syncBtn:SetNormalTexture(refreshTex)
-        syncBtn:SetPushedTexture(refreshTex)
-        syncBtn:SetDisabledTexture(refreshTex)
-        syncBtn:Enable()
-        syncBtn:SetAlpha(1)
-      end
-    end
-    manualRefreshInProgress = false
-  end
-  if C_Timer and C_Timer.After then
-    local waitSeconds = rosterRequested and 2.0 or 0
-    C_Timer.After(waitSeconds, finishRefresh)
-  else
-    finishRefresh()
-  end
+
+  return {
+
+    {
+
+      passed = playerMoneyValidationFailed == false,
+
+      passMessage = 'No tampering detected',
+
+      failMessage = 'Tampering detected',
+
+      failHelperText = playerMoneyValidationFailed
+
+        and getDetectedOnHelperText(RaceLocked_GetDBValue('playerMoneyValidationFailedAt')),
+
+    },
+
+    {
+
+      passed = hasBeenMaxLevelAndSelfFound == true,
+
+      passMessage = 'This character was level 60 and self found',
+
+      failMessage = 'Did not turn off self found at level 60',
+
+      failHelperText = 'You must be level 60 before turning off self found',
+
+    },
+
+  }
+
 end
 
-function RaceLocked_GuildVerificationTab_Refresh()
-  local content = _G.RaceLockedGuildVerificationTabContent
-  if not content or not content.guildVerificationContainer then
-    return
-  end
-  local container = content.guildVerificationContainer
-  local panel = container.leaderboardPanel
-  if not panel or not panel.UpdateRows then
-    return
-  end
-  local rows, allSameRaceAsPlayer = {}, false
-  if RaceLocked_GetGuildVerificationRosterRows then
-    rows, allSameRaceAsPlayer = RaceLocked_GetGuildVerificationRosterRows()
-  end
-  rows = rows or {}
-  panel:UpdateRows(rows, RaceLocked_GuildVerification_GetPrimaryRowTint())
-  local emptyFs = container.guildRosterEmptyLabel
-  if emptyFs then
-    if allSameRaceAsPlayer then
-      emptyFs:SetText('All players are the same race as you')
-      emptyFs:Show()
-    else
-      emptyFs:Hide()
+
+
+local function getOverallStatus(checks)
+
+  for _, check in ipairs(checks) do
+
+    if not check.passed then
+
+      return STATUS_TITLE.invalid
+
     end
+
   end
+
+
+
+  return STATUS_TITLE.valid
+
 end
+
+
+
+local function getWrapWidth(content, extraIndent)
+
+  extraIndent = extraIndent or 0
+
+  local width = content:GetWidth() - (LIST_LEFT_OFFSET * 2) - extraIndent
+
+  if width < 1 then
+
+    return 1
+
+  end
+
+  return width
+
+end
+
+
+
+local function applyWrappedText(fontString, content, extraIndent)
+
+  fontString:SetWidth(getWrapWidth(content, extraIndent))
+
+  fontString:SetWordWrap(true)
+
+  fontString:SetJustifyH('LEFT')
+
+  fontString:SetJustifyV('TOP')
+
+end
+
+
+
+local function ensureVerificationTabLayout(content)
+
+  if content.verificationInitialized then
+
+    return
+
+  end
+
+
+
+  content.titleLabel = content:CreateFontString(nil, 'OVERLAY', 'GameFontHighlightHuge')
+
+  content.checkRows = {}
+
+  content.checkHelpers = {}
+
+  content.verificationInitialized = true
+
+end
+
+
+
+local function updateVerificationTabDisplay(content)
+
+  local checks = getVerificationChecks()
+
+  local status = getOverallStatus(checks)
+
+
+
+  applyWrappedText(content.titleLabel, content)
+
+  content.titleLabel:ClearAllPoints()
+
+  content.titleLabel:SetPoint('TOPLEFT', content, 'TOPLEFT', LIST_LEFT_OFFSET, TITLE_TOP_OFFSET)
+
+  content.titleLabel:SetText(status.text)
+
+  content.titleLabel:SetTextColor(status.r, status.g, status.b)
+
+
+
+  local blockEnd = content.titleLabel
+
+  local firstRowGap = -TITLE_BOTTOM_GAP
+
+
+
+  for index, check in ipairs(checks) do
+
+    local row = content.checkRows[index]
+
+    if not row then
+
+      row = content:CreateFontString(nil, 'OVERLAY', 'GameFontHighlight')
+
+      content.checkRows[index] = row
+
+    end
+
+
+
+    applyWrappedText(row, content)
+
+    row:ClearAllPoints()
+
+    row:SetPoint('TOP', blockEnd, 'BOTTOM', 0, firstRowGap)
+
+    row:SetPoint('LEFT', content, 'LEFT', LIST_LEFT_OFFSET, 0)
+
+    firstRowGap = -ROW_GAP
+
+
+
+    local passed = check.passed
+
+    local color = passed and CHECK_PASS_COLOR or CHECK_FAIL_COLOR
+
+    row:SetText('• ' .. (passed and check.passMessage or check.failMessage))
+
+    row:SetTextColor(color.r, color.g, color.b)
+
+    row:Show()
+
+
+
+    blockEnd = row
+
+
+
+    local helper = content.checkHelpers[index]
+
+    if check.failHelperText and not passed then
+
+      if not helper then
+
+        helper = content:CreateFontString(nil, 'OVERLAY', 'GameFontNormalSmall')
+
+        content.checkHelpers[index] = helper
+
+      end
+
+
+
+      applyWrappedText(helper, content, HELPER_INDENT)
+
+      helper:ClearAllPoints()
+
+      helper:SetPoint('TOP', row, 'BOTTOM', 0, -HELPER_TOP_GAP)
+
+      helper:SetPoint('LEFT', content, 'LEFT', LIST_LEFT_OFFSET + HELPER_INDENT, 0)
+
+      helper:SetText(check.failHelperText)
+
+      helper:SetTextColor(0.85, 0.85, 0.85)
+
+      helper:Show()
+
+
+
+      blockEnd = helper
+
+    elseif helper then
+
+      helper:Hide()
+
+    end
+
+  end
+
+
+
+  for index = #checks + 1, #content.checkRows do
+
+    content.checkRows[index]:Hide()
+
+  end
+
+
+
+  if content.checkHelpers then
+
+    for index = #checks + 1, #content.checkHelpers do
+
+      content.checkHelpers[index]:Hide()
+
+    end
+
+  end
+
+end
+
+
 
 function RaceLocked_InitializeGuildVerificationTab(content)
+
   if not content then
+
     return
-  end
-  _G.RaceLockedGuildVerificationTabContent = content
 
-  local container = content.guildVerificationContainer
-  local infoBottomGap = 8
-  local infoTopInset = -2
-  local tableTopAnchorY = -(36 + infoBottomGap)
-  if container and content.guildVerificationBuilt then
-    container:ClearAllPoints()
-    container:SetPoint('TOPLEFT', content, 'TOPLEFT', V.PANEL_SIDE_MARGIN, V.CONTAINER_TOP_INSET)
-    container:SetPoint('BOTTOMRIGHT', content, 'BOTTOMRIGHT', -V.PANEL_SIDE_MARGIN, 4)
-    if container.infoFs then
-      container.infoFs:ClearAllPoints()
-      container.infoFs:SetPoint('TOPLEFT', container, 'TOPLEFT', V.PANEL_PAD, infoTopInset)
-      container.infoFs:SetPoint('TOPRIGHT', container, 'TOPRIGHT', -V.PANEL_PAD, infoTopInset)
-    end
-    if container.leaderboardPanel then
-      container.leaderboardPanel:ClearAllPoints()
-      container.leaderboardPanel:SetPoint('TOPLEFT', container, 'TOPLEFT', 0, tableTopAnchorY)
-      container.leaderboardPanel:SetPoint('BOTTOMRIGHT', container, 'BOTTOMRIGHT', 0, V.SYNC_BAR_HEIGHT)
-    end
-    return
   end
 
-  if not container then
-    container = CreateFrame('Frame', nil, content)
-    content.guildVerificationContainer = container
-    container:SetPoint('TOPLEFT', content, 'TOPLEFT', V.PANEL_SIDE_MARGIN, V.CONTAINER_TOP_INSET)
-    container:SetPoint('BOTTOMRIGHT', content, 'BOTTOMRIGHT', -V.PANEL_SIDE_MARGIN, 4)
-  end
 
-  local contentW = content:GetWidth()
-  if not contentW or contentW < 100 then
-    contentW = 320
-  end
-  local innerW = contentW
 
-  if not container.infoFs then
-    local infoFs = container:CreateFontString(nil, 'OVERLAY', 'GameFontHighlightSmall')
-    infoFs:SetPoint('TOPLEFT', container, 'TOPLEFT', V.PANEL_PAD, infoTopInset)
-    infoFs:SetPoint('TOPRIGHT', container, 'TOPRIGHT', -V.PANEL_PAD, infoTopInset)
-    infoFs:SetJustifyH('CENTER')
-    infoFs:SetJustifyV('TOP')
-    infoFs:SetWordWrap(true)
-    infoFs:SetTextColor(0.85, 0.82, 0.72)
-    infoFs:SetText(
-      'Find players in your guild who are not of the same race\n'
-        .. 'Coming soon: find players who are dead or who are not self found'
-    )
-    container.infoFs = infoFs
-  end
+  ensureVerificationTabLayout(content)
 
-  if not container.syncBar then
-    local syncBar = CreateFrame('Frame', nil, container)
-    container.syncBar = syncBar
-    syncBar:SetHeight(V.SYNC_BAR_HEIGHT)
-    syncBar:SetPoint('BOTTOMLEFT', container, 'BOTTOMLEFT', 0, 0)
-    syncBar:SetPoint('BOTTOMRIGHT', container, 'BOTTOMRIGHT', 0, 0)
+  updateVerificationTabDisplay(content)
 
-    local syncBtn = CreateFrame('Button', nil, syncBar)
-    container.syncBtn = syncBtn
-    syncBtn:SetSize(30, 30)
-    syncBtn:SetPoint('BOTTOMRIGHT', syncBar, 'BOTTOMRIGHT', -4, -5)
-    local refreshTex = 'Interface\\Buttons\\UI-RefreshButton'
-    local combatTex = 'Interface\\Buttons\\UI-GroupLoot-Pass-Up'
-    local loadingTex = 'Interface\\Buttons\\UI-GroupLoot-Pass-Down'
-    syncBtn._refreshTex = refreshTex
-    syncBtn._combatTex = combatTex
-    syncBtn._loadingTex = loadingTex
-    syncBtn:SetNormalTexture(refreshTex)
-    syncBtn:SetHighlightTexture('Interface\\Buttons\\ButtonHilight-Square', 'ADD')
-    syncBtn:SetPushedTexture(refreshTex)
-    syncBtn:SetScript('OnEnter', function(self)
-      GameTooltip:SetOwner(self, 'ANCHOR_LEFT')
-      GameTooltip:SetText('Refetch guild roster', 1, 1, 1)
-      GameTooltip:Show()
-    end)
-    syncBtn:SetScript('OnLeave', GameTooltip_Hide)
-    syncBtn:SetScript('OnClick', applyGuildRosterSyncFromButton)
-
-    local function updateSyncBtnCombatState()
-      if InCombatLockdown and InCombatLockdown() then
-        syncBtn:SetNormalTexture(combatTex)
-        syncBtn:SetPushedTexture(combatTex)
-        syncBtn:SetDisabledTexture(combatTex)
-        syncBtn:Disable()
-        syncBtn:SetAlpha(0.75)
-      else
-        syncBtn:SetNormalTexture(refreshTex)
-        syncBtn:SetPushedTexture(refreshTex)
-        syncBtn:SetDisabledTexture(refreshTex)
-        syncBtn:Enable()
-        syncBtn:SetAlpha(1)
-      end
-    end
-
-    local combatWatcher = CreateFrame('Frame', nil, syncBar)
-    combatWatcher:RegisterEvent('PLAYER_REGEN_DISABLED')
-    combatWatcher:RegisterEvent('PLAYER_REGEN_ENABLED')
-    combatWatcher:SetScript('OnEvent', updateSyncBtnCombatState)
-    updateSyncBtnCombatState()
-  end
-
-  if not container.leaderboardPanel then
-    container.leaderboardPanel = createNameOnlyPanel(
-      container,
-      {},
-      RaceLocked_GuildVerification_GetPrimaryRowTint(),
-      innerW,
-      tableTopAnchorY,
-      V.SYNC_BAR_HEIGHT
-    )
-  else
-    container.leaderboardPanel:ClearAllPoints()
-    container.leaderboardPanel:SetPoint('TOPLEFT', container, 'TOPLEFT', 0, tableTopAnchorY)
-    container.leaderboardPanel:SetPoint('BOTTOMRIGHT', container, 'BOTTOMRIGHT', 0, V.SYNC_BAR_HEIGHT)
-  end
-
-  if not container.guildRosterEmptyLabel then
-    local emptyFs = container:CreateFontString(nil, 'OVERLAY', 'GameFontHighlight')
-    emptyFs:SetPoint('TOP', container.leaderboardPanel, 'TOP', 0, -56)
-    emptyFs:SetWidth(math.max(innerW - 16, 120))
-    emptyFs:SetJustifyH('CENTER')
-    emptyFs:SetTextColor(0.85, 0.82, 0.72)
-    emptyFs:Hide()
-    container.guildRosterEmptyLabel = emptyFs
-  end
-
-  content.guildVerificationBuilt = true
 end
+

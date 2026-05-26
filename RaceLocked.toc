@@ -7,6 +7,7 @@
 ## SavedVariables: RaceLockedAccountDB
 
 RaceLocked.lua
+Functions/CharacterDB/Index.lua
 
 ## Libs
 Libs/LibStub/LibStub.lua
@@ -66,3 +67,30 @@ Display/MainMenu/MinimapBroker/View.lua
 Display/MainMenu/RaceLockedOptions/Index.lua
 
 Functions/SlashCommand/Index.lua
+
+## Trade Restrictions
+Functions/GuildFound/TradeRestriction/Utils/CancelAuctionHouseWithMessage.lua
+Functions/GuildFound/TradeRestriction/Utils/CancelMailWithMessage.lua
+Functions/GuildFound/TradeRestriction/Utils/CancelTradeWithMessage.lua
+Functions/GuildFound/TradeRestriction/Utils/IsPlayerInGuildRoster.lua
+Functions/GuildFound/TradeRestriction/Utils/IsTradePartnerInMyGuild.lua
+Functions/GuildFound/TradeRestriction/Utils/PrintRestrictionMessage.lua
+Functions/GuildFound/TradeRestriction/Utils/RefreshGuildRoster.lua
+Functions/GuildFound/TradeRestriction/Utils/IsInGuildFoundGuild.lua
+Functions/GuildFound/TradeRestriction/TradeRestriction.lua
+
+
+## Verification
+Functions/GuildFound/Verification/RegisterTradeVerificationPrefix.lua
+Functions/GuildFound/Verification/ParseTradeVerificationMessage.lua
+Functions/GuildFound/Verification/SendTradeVerificationStatus.lua
+Functions/GuildFound/Verification/TradeVerificationCache.lua
+Functions/GuildFound/Verification/HandleTradeVerificationAddonMessage.lua
+Functions/GuildFound/Verification/TradeVerificationOverlay.lua
+Functions/GuildFound/Verification/MailVerificationOverlay.lua
+Functions/GuildFound/Verification/TradeVerificationSession.lua
+Functions/GuildFound/Verification/IsBuffActive.lua
+Functions/GuildFound/Verification/TrackMaxLevelAndSelfFound.lua
+Functions/GuildFound/Verification/AmIVerified.lua
+Functions/GuildFound/Verification/CanPerformTradeWithPlayer.lua
+Functions/GuildFound/Verification/GoldGainedTracker.lua
