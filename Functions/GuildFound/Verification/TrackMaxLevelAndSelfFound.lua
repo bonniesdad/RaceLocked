@@ -1,4 +1,4 @@
-local MAX_LEVEL = 1
+RACE_LOCKED_GUILD_FOUND_MAX_LEVEL = 1
 
 local trackerFrame = CreateFrame('Frame')
 
@@ -11,7 +11,7 @@ end
 local function tryMarkHasBeenMaxLevelAndSelfFound()
   if RaceLocked_GetDBValue('hasBeenMaxLevelAndSelfFound') then return end
   local level = UnitLevel('player')
-  if level and level >= MAX_LEVEL and RaceLocked_PlayerHasSelfFoundBuff() then
+  if level and level >= RACE_LOCKED_GUILD_FOUND_MAX_LEVEL and RaceLocked_PlayerHasSelfFoundBuff() then
     RaceLocked_SaveDBData('hasBeenMaxLevelAndSelfFound', true)
   end
 end

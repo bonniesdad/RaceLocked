@@ -62,9 +62,9 @@ local function getVerificationChecks()
     ),
   }, {
     passed = hasBeenMaxLevelAndSelfFound == true,
-    passMessage = 'This character reached level 60 whilst self found',
-    failMessage = UnitLevel('player') < 60 and 'You are not yet level 60' or 'Did not turn off self found at level 60',
-    failHelperText = UnitLevel('player') < 60 and nil or 'You must be level 60 before turning off self found',
+    passMessage = 'This character reached level ' .. RACE_LOCKED_GUILD_FOUND_MAX_LEVEL .. ' whilst self found',
+    failMessage = UnitLevel('player') < RACE_LOCKED_GUILD_FOUND_MAX_LEVEL and 'You are not yet level ' .. RACE_LOCKED_GUILD_FOUND_MAX_LEVEL .. '' or 'Did not turn off self found at level ' .. RACE_LOCKED_GUILD_FOUND_MAX_LEVEL .. '',
+    failHelperText = UnitLevel('player') < RACE_LOCKED_GUILD_FOUND_MAX_LEVEL and nil or 'You must be level ' .. RACE_LOCKED_GUILD_FOUND_MAX_LEVEL .. ' before turning off self found',
   }, {
     passed = RaceLocked_ShouldOverrideVerificationViaGuildNote(UnitName('player')) == true,
     passMessage = 'Guild note override detected',

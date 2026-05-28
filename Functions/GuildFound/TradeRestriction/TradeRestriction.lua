@@ -21,7 +21,6 @@ frame:SetScript('OnEvent', function(self, event, ...)
     elseif event == 'TRADE_SHOW' then
       local targetName = GetUnitName('npc', true)
       if not targetName then return end
-
       RaceLocked_CanPerformTradeWithPlayer(targetName, function(canTrade, message)
         if not canTrade then
           RaceLocked_CancelTradeWithMessage(message)
