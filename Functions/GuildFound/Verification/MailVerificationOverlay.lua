@@ -70,11 +70,11 @@ mailOverlayEvents:RegisterEvent('MAIL_SHOW')
 mailOverlayEvents:RegisterEvent('MAIL_CLOSED')
 
 mailOverlayEvents:SetScript('OnEvent', function(_, event)
-  if not RaceLocked_IsInGuildFoundGuild() and not RaceLocked_AmIVerified() then return end
-
-  if event == 'MAIL_SHOW' then
-    RaceLocked_ShowMailVerificationOverlay()
-  elseif event == 'MAIL_CLOSED' then
-    RaceLocked_HideMailVerificationOverlay()
+  if RaceLocked_IsInGuildFoundGuild() and RaceLocked_AmIVerified() then
+    if event == 'MAIL_SHOW' then
+      RaceLocked_ShowMailVerificationOverlay()
+    elseif event == 'MAIL_CLOSED' then
+      RaceLocked_HideMailVerificationOverlay()
+    end
   end
 end)

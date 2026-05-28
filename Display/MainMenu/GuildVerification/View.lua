@@ -7,13 +7,13 @@ local HELPER_TOP_GAP = 4
 
 local STATUS_TITLE = {
   valid = {
-    text = 'Guild Found Trading is unlocked',
+    text = 'Guild Found Trading is Unlocked',
     r = 0.35,
     g = 0.8,
     b = 0.35,
   },
   invalid = {
-    text = 'Guild Found Trading is locked',
+    text = 'Guild Found Trading is Locked',
     r = 0.82,
     g = 0.33,
     b = 0.33,
@@ -71,11 +71,16 @@ local function getVerificationChecks()
     failMessage = 'No guild note override detected',
     failHelperText = 'You are not in a guild or do not have a guild note override',
     failColor = CHECK_WARNING_COLOR,
+  }, {
+    passed = RaceLocked_IsInGuildFoundGuild(),
+    passMessage = 'You are in the Guild Found guild',
+    failMessage = 'You are not in a Guild Found guild',
+    failHelperText = 'You must be in the Guild Found guild to unlock Guild Found',
   } }
 end
 
 local function getOverallStatus(checks)
-  if RaceLocked_AmIVerified() then
+  if RaceLocked_IsInGuildFoundGuild() and RaceLocked_AmIVerified() then
     return STATUS_TITLE.valid
   else
     return STATUS_TITLE.invalid
