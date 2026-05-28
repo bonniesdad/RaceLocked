@@ -2,7 +2,8 @@
 --- @return Frame settingsFrame global `RaceLockedSettingsFrame`
 function RaceLocked_Settings_CreateRootFrame()
   local S = RaceLocked_Settings
-  local settingsFrame = CreateFrame('Frame', 'RaceLockedSettingsFrame', UIParent, 'BackdropTemplate')
+  local settingsFrame =
+    CreateFrame('Frame', 'RaceLockedSettingsFrame', UIParent, 'BackdropTemplate')
   tinsert(UISpecialFrames, 'RaceLockedSettingsFrame')
   settingsFrame:SetSize(S.FRAME_WIDTH, S.FRAME_HEIGHT)
   settingsFrame:SetMovable(true)

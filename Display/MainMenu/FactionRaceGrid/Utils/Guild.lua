@@ -34,7 +34,7 @@ local function guildNamesCommaListToTitleCase(text)
   end
   local segs = {}
   for part in string.gmatch(text, '([^,]+)') do
-    local seg = (part:match('^%s*(.-)%s*$')) or part
+    local seg = part:match('^%s*(.-)%s*$') or part
     if seg ~= '' then
       segs[#segs + 1] = titleCaseOneGuildNameSegment(seg)
     end
@@ -126,18 +126,19 @@ end
 
 --- Called from bar / % hit frames (`self._rlCell` -> cell table).
 function RaceLocked_GuildChampion_OnClassBarCellEnter(self)
-  if not self then
-    return
-  end
+  if not self then return end
   local cell = self._rlCell
-  if not cell or not cell._rlHasTip or not GameTooltip then
-    return
-  end
+  if not cell or not cell._rlHasTip or not GameTooltip then return end
   local G = RaceLocked_GuildChampion
   GameTooltip:SetOwner(self, 'ANCHOR_RIGHT')
   GameTooltip:ClearLines()
   if cell._rlEmptyTip then
-    GameTooltip:AddLine(G.RACE_GRID_CLASS_SUBTITLE, G.LABEL_GOLD[1], G.LABEL_GOLD[2], G.LABEL_GOLD[3])
+    GameTooltip:AddLine(
+      G.RACE_GRID_CLASS_SUBTITLE,
+      G.LABEL_GOLD[1],
+      G.LABEL_GOLD[2],
+      G.LABEL_GOLD[3]
+    )
     GameTooltip:AddLine('No character counts for this race.', 1, 1, 1)
   else
     local key = cell._rlClassKey
@@ -146,12 +147,7 @@ function RaceLocked_GuildChampion_OnClassBarCellEnter(self)
     local label = classLabelForReportKey(G, key)
     local r, g, b = classColorForReportKey(G, key)
     GameTooltip:AddLine(label, r, g, b)
-    GameTooltip:AddLine(
-      string.format('%d players', count),
-      1,
-      1,
-      1
-    )
+    GameTooltip:AddLine(string.format('%d players', count), 1, 1, 1)
     if averageLevel > 0 then
       GameTooltip:AddLine(string.format('Avg level: %d', math.floor(averageLevel + 0.5)), 1, 1, 1)
     else
@@ -174,9 +170,7 @@ local function layoutClassBarColumns(pane, widths)
   local G = RaceLocked_GuildChampion
   local row = pane._classBarRow
   local pctRow = pane._classBarPctRow
-  if not row or not pctRow or not pane._classCol then
-    return
-  end
+  if not row or not pctRow or not pane._classCol then return end
   local seps = pane._classBarSep
   if seps then
     for s = 1, 8 do
@@ -289,9 +283,7 @@ end
 --- @param pane Frame
 --- @param raceToken string
 local function ensureGuildNamesTooltip(pane, raceToken)
-  if not pane or not pane._guildNames then
-    return
-  end
+  if not pane or not pane._guildNames then return end
   if not pane._guildNamesHit then
     local hit = CreateFrame('Frame', nil, pane)
     local paneLevel = (pane.GetFrameLevel and pane:GetFrameLevel()) or 0
@@ -304,15 +296,11 @@ local function ensureGuildNamesTooltip(pane, raceToken)
       end
     end)
     hit:SetScript('OnEnter', function(self)
-      if not GameTooltip then
-        return
-      end
+      if not GameTooltip then return end
       local token = self._rlRaceToken
-      local rows = RaceLocked_GuildChampion.RACE_GRID_STORED_GUILD_REPORTS_BY_RACE
-        and RaceLocked_GuildChampion.RACE_GRID_STORED_GUILD_REPORTS_BY_RACE[token]
-      if type(rows) ~= 'table' or #rows < 1 then
-        return
-      end
+      local rows =
+        RaceLocked_GuildChampion.RACE_GRID_STORED_GUILD_REPORTS_BY_RACE and RaceLocked_GuildChampion.RACE_GRID_STORED_GUILD_REPORTS_BY_RACE[token]
+      if type(rows) ~= 'table' or #rows < 1 then return end
       GameTooltip:SetOwner(self, 'ANCHOR_RIGHT')
       GameTooltip:ClearLines()
       GameTooltip:AddLine('Guild Last Update', 1, 0.92, 0.62)
@@ -320,7 +308,16 @@ local function ensureGuildNamesTooltip(pane, raceToken)
         local guildName = type(row.guildName) == 'string' and row.guildName or ''
         if guildName ~= '' then
           local stamp = formatGuildLastUpdate(row.timestamp)
-          GameTooltip:AddDoubleLine(guildName .. ' (' .. row.guildSize .. ')', stamp, 1, 1, 1, 0.9, 0.9, 0.9)
+          GameTooltip:AddDoubleLine(
+            guildName .. ' (' .. row.guildSize .. ')',
+            stamp,
+            1,
+            1,
+            1,
+            0.9,
+            0.9,
+            0.9
+          )
         end
       end
       GameTooltip:Show()
@@ -336,9 +333,7 @@ end
 
 function RaceLocked_GuildChampion_RefreshRaceGridDisplay(panes, raceTokens)
   local G = RaceLocked_GuildChampion
-  if not panes[1] or not panes[1]._guildSectionTitle or not panes[1]._classBarHost then
-    return
-  end
+  if not panes[1] or not panes[1]._guildSectionTitle or not panes[1]._classBarHost then return end
   local n = type(raceTokens) == 'table' and #raceTokens or 0
   for i = 1, n do
     local pane = panes[i]
@@ -346,7 +341,10 @@ function RaceLocked_GuildChampion_RefreshRaceGridDisplay(panes, raceTokens)
       break
     end
     local token = raceTokens[i]
-    local agg = RaceLocked_GuildChampion_GetAggregatedMockForRace and RaceLocked_GuildChampion_GetAggregatedMockForRace(token)
+    local agg =
+      RaceLocked_GuildChampion_GetAggregatedMockForRace and RaceLocked_GuildChampion_GetAggregatedMockForRace(
+        token
+      )
     local subR, subG, subB = G.LABEL_GOLD[1] * 0.85, G.LABEL_GOLD[2] * 0.85, G.LABEL_GOLD[3] * 0.85
     pane._guildSectionTitle:SetText(G.RACE_GRID_GUILD_SECTION_TITLE)
     pane._guildSectionTitle:SetTextColor(subR, subG, subB)

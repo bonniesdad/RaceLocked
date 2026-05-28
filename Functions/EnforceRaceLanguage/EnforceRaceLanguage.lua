@@ -56,9 +56,7 @@ local function findKnownLanguageNameAndId(targetLanguageId)
 end
 
 local function applyToAllChatEditBoxes(languageName, languageId)
-  if not languageName or not languageId or not NUM_CHAT_WINDOWS then
-    return
-  end
+  if not languageName or not languageId or not NUM_CHAT_WINDOWS then return end
   for i = 1, NUM_CHAT_WINDOWS do
     local editBox = _G['ChatFrame' .. i .. 'EditBox']
     if editBox then
@@ -69,21 +67,13 @@ local function applyToAllChatEditBoxes(languageName, languageId)
 end
 
 local function EnforceRaceLanguage()
-  if applyingRaceLanguage then
-    return
-  end
-  if not nativeLanguageOptionEnabled() then
-    return
-  end
+  if applyingRaceLanguage then return end
+  if not nativeLanguageOptionEnabled() then return end
   local wantedId = getRaceNativeLanguageId()
-  if not wantedId then
-    return
-  end
+  if not wantedId then return end
 
   local languageName, languageId = findKnownLanguageNameAndId(wantedId)
-  if not languageName or not languageId then
-    return
-  end
+  if not languageName or not languageId then return end
 
   applyingRaceLanguage = true
   applyToAllChatEditBoxes(languageName, languageId)
@@ -100,16 +90,16 @@ local function scheduleEnforceRaceLanguage()
 end
 
 local function registerLanguageLockedHooks()
-  if languageHooksInstalled or type(hooksecurefunc) ~= 'function' then
-    return
-  end
+  if languageHooksInstalled or type(hooksecurefunc) ~= 'function' then return end
   local function afterLanguageChange()
     if nativeLanguageOptionEnabled() then
       scheduleEnforceRaceLanguage()
     end
   end
   local hookedAny = false
-  for _, fname in ipairs({ 'ChatEdit_OnLanguageChanged', 'ChatFrame_ChatEdit_OnLanguageChanged' }) do
+  for _, fname in
+    ipairs({ 'ChatEdit_OnLanguageChanged', 'ChatFrame_ChatEdit_OnLanguageChanged' })
+  do
     if type(_G[fname]) == 'function' then
       hooksecurefunc(fname, afterLanguageChange)
       hookedAny = true
@@ -126,17 +116,11 @@ local function pollChatLanguageMismatch(_, elapsed)
     EnforceRaceLanguage()
   end
   pollAccum = pollAccum + (elapsed or 0)
-  if pollAccum < 0.25 then
-    return
-  end
+  if pollAccum < 0.25 then return end
   pollAccum = 0
-  if not nativeLanguageOptionEnabled() then
-    return
-  end
+  if not nativeLanguageOptionEnabled() then return end
   local wantedId = getRaceNativeLanguageId()
-  if not wantedId or not NUM_CHAT_WINDOWS then
-    return
-  end
+  if not wantedId or not NUM_CHAT_WINDOWS then return end
   for i = 1, NUM_CHAT_WINDOWS do
     local eb = _G['ChatFrame' .. i .. 'EditBox']
     if eb and tonumber(eb.languageID) ~= tonumber(wantedId) then

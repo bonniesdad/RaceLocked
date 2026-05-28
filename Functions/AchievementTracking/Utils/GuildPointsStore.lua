@@ -20,7 +20,8 @@ local function ensureDB(guildName)
   if norm == '' then
     return nil, ''
   end
-  RaceLockedAccountDB.guildAchievementPoints[norm] = RaceLockedAccountDB.guildAchievementPoints[norm] or {}
+  RaceLockedAccountDB.guildAchievementPoints[norm] =
+    RaceLockedAccountDB.guildAchievementPoints[norm] or {}
   return RaceLockedAccountDB.guildAchievementPoints[norm], norm
 end
 
@@ -31,12 +32,8 @@ end
 --- @param totalPoints number
 function RaceLocked_AchievementTracking_SetPlayerPoints(guildName, playerName, totalPoints)
   local store = ensureDB(guildName)
-  if not store then
-    return
-  end
-  if type(playerName) ~= 'string' or playerName == '' then
-    return
-  end
+  if not store then return end
+  if type(playerName) ~= 'string' or playerName == '' then return end
   local incoming = tonumber(totalPoints) or 0
   local existing = tonumber(store[playerName]) or 0
   if incoming >= existing then
@@ -105,9 +102,7 @@ end
 --- @param rosterNames table<string, boolean> set of player names currently in the roster
 function RaceLocked_AchievementTracking_CleanupForRoster(guildName, rosterNames)
   local store = ensureDB(guildName)
-  if not store or type(rosterNames) ~= 'table' then
-    return
-  end
+  if not store or type(rosterNames) ~= 'table' then return end
   for name, _ in pairs(store) do
     if not rosterNames[name] then
       store[name] = nil

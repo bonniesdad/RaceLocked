@@ -20,24 +20,19 @@ local function GetOrCreateMainMount(settingsFrame)
   return mount
 end
 
-
 --- @param settingsFrame Frame
 --- @param forceRefresh boolean|nil when true, rebuild the grid even if one exists
 function RaceLocked_InitializeMainPanel(settingsFrame, forceRefresh)
-  if not settingsFrame then
-    return
-  end
+  if not settingsFrame then return end
   local mount = GetOrCreateMainMount(settingsFrame)
-  if mount.raceRoot and not forceRefresh then
-    return
-  end
+  if mount.raceRoot and not forceRefresh then return end
 
   if mount.raceRoot then
     mount.raceRoot:Hide()
     mount.raceRoot:SetParent(nil)
     mount.raceRoot = nil
   end
-  
+
   if RaceLocked_CreateFactionRaceGrid then
     mount.raceRoot = select(1, RaceLocked_CreateFactionRaceGrid(mount))
   end

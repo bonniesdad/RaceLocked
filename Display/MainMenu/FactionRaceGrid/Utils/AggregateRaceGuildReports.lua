@@ -6,7 +6,8 @@ local G = RaceLocked_GuildChampion
 --- @return string
 function RaceLocked_GuildChampion_HardcodedGuildNamesTextForRace(raceToken)
   local names = {}
-  local rows = G.RACE_GRID_STORED_GUILD_REPORTS_BY_RACE and G.RACE_GRID_STORED_GUILD_REPORTS_BY_RACE[raceToken]
+  local rows =
+    G.RACE_GRID_STORED_GUILD_REPORTS_BY_RACE and G.RACE_GRID_STORED_GUILD_REPORTS_BY_RACE[raceToken]
   if type(rows) == 'table' then
     for _, e in ipairs(rows) do
       if type(e) == 'table' and e.guildName and e.guildName ~= '' then
@@ -19,15 +20,42 @@ end
 
 local function zeroClassesAggregate()
   return {
-    druids = { count = 0, averageLevel = 0 },
-    rogues = { count = 0, averageLevel = 0 },
-    hunters = { count = 0, averageLevel = 0 },
-    warriors = { count = 0, averageLevel = 0 },
-    mages = { count = 0, averageLevel = 0 },
-    priests = { count = 0, averageLevel = 0 },
-    warlocks = { count = 0, averageLevel = 0 },
-    paladins = { count = 0, averageLevel = 0 },
-    shamans = { count = 0, averageLevel = 0 },
+    druids = {
+      count = 0,
+      averageLevel = 0,
+    },
+    rogues = {
+      count = 0,
+      averageLevel = 0,
+    },
+    hunters = {
+      count = 0,
+      averageLevel = 0,
+    },
+    warriors = {
+      count = 0,
+      averageLevel = 0,
+    },
+    mages = {
+      count = 0,
+      averageLevel = 0,
+    },
+    priests = {
+      count = 0,
+      averageLevel = 0,
+    },
+    warlocks = {
+      count = 0,
+      averageLevel = 0,
+    },
+    paladins = {
+      count = 0,
+      averageLevel = 0,
+    },
+    shamans = {
+      count = 0,
+      averageLevel = 0,
+    },
   }
 end
 
@@ -42,15 +70,42 @@ function RaceLocked_GuildChampion_AggregateGuildsForRace(entries)
   local weightedSum = 0
   local names = {}
   local classes = {
-    druids = { count = 0, _sumLevel = 0 },
-    rogues = { count = 0, _sumLevel = 0 },
-    hunters = { count = 0, _sumLevel = 0 },
-    warriors = { count = 0, _sumLevel = 0 },
-    mages = { count = 0, _sumLevel = 0 },
-    priests = { count = 0, _sumLevel = 0 },
-    warlocks = { count = 0, _sumLevel = 0 },
-    paladins = { count = 0, _sumLevel = 0 },
-    shamans = { count = 0, _sumLevel = 0 },
+    druids = {
+      count = 0,
+      _sumLevel = 0,
+    },
+    rogues = {
+      count = 0,
+      _sumLevel = 0,
+    },
+    hunters = {
+      count = 0,
+      _sumLevel = 0,
+    },
+    warriors = {
+      count = 0,
+      _sumLevel = 0,
+    },
+    mages = {
+      count = 0,
+      _sumLevel = 0,
+    },
+    priests = {
+      count = 0,
+      _sumLevel = 0,
+    },
+    warlocks = {
+      count = 0,
+      _sumLevel = 0,
+    },
+    paladins = {
+      count = 0,
+      _sumLevel = 0,
+    },
+    shamans = {
+      count = 0,
+      _sumLevel = 0,
+    },
   }
   for _, e in ipairs(entries) do
     local sz = tonumber(e.guildSize) or 0
@@ -103,8 +158,10 @@ end
 --- @return table|nil
 function RaceLocked_GuildChampion_GetAggregatedMockForRace(raceToken)
   RaceLocked_GuildChampion_EnsureRaceGridAllowedGuildNamesBuilt()
-  local stored = G.RACE_GRID_STORED_GUILD_REPORTS_BY_RACE and G.RACE_GRID_STORED_GUILD_REPORTS_BY_RACE[raceToken]
-  local agg = RaceLocked_GuildChampion_AggregateGuildsForRace(type(stored) == 'table' and stored or nil)
+  local stored =
+    G.RACE_GRID_STORED_GUILD_REPORTS_BY_RACE and G.RACE_GRID_STORED_GUILD_REPORTS_BY_RACE[raceToken]
+  local agg =
+    RaceLocked_GuildChampion_AggregateGuildsForRace(type(stored) == 'table' and stored or nil)
   local namesText = RaceLocked_GuildChampion_HardcodedGuildNamesTextForRace(raceToken)
   if not agg then
     return {

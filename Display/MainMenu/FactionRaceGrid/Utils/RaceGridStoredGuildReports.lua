@@ -7,15 +7,42 @@ local G = RaceLocked_GuildChampion
 
 local function zeroClasses()
   return {
-    druids = { count = 0, averageLevel = 0 },
-    rogues = { count = 0, averageLevel = 0 },
-    hunters = { count = 0, averageLevel = 0 },
-    warriors = { count = 0, averageLevel = 0 },
-    mages = { count = 0, averageLevel = 0 },
-    priests = { count = 0, averageLevel = 0 },
-    warlocks = { count = 0, averageLevel = 0 },
-    paladins = { count = 0, averageLevel = 0 },
-    shamans = { count = 0, averageLevel = 0 },
+    druids = {
+      count = 0,
+      averageLevel = 0,
+    },
+    rogues = {
+      count = 0,
+      averageLevel = 0,
+    },
+    hunters = {
+      count = 0,
+      averageLevel = 0,
+    },
+    warriors = {
+      count = 0,
+      averageLevel = 0,
+    },
+    mages = {
+      count = 0,
+      averageLevel = 0,
+    },
+    priests = {
+      count = 0,
+      averageLevel = 0,
+    },
+    warlocks = {
+      count = 0,
+      averageLevel = 0,
+    },
+    paladins = {
+      count = 0,
+      averageLevel = 0,
+    },
+    shamans = {
+      count = 0,
+      averageLevel = 0,
+    },
   }
 end
 
@@ -36,34 +63,14 @@ end
 
 --- @type table<string, table[]>
 local DEFAULT_RACE_GRID_STORED_GUILD_REPORTS_BY_RACE = {
-  Human = {
-    guildRow('Human Error'),
-    guildRow('Honorcore'),
-  },
-  NightElf = {
-    guildRow('ELFCORE'),
-    guildRow('NELFCORE'),
-    guildRow('NIGHTCORE'),
-  },
-  Dwarf = {
-    guildRow('STONECORE'),
-    guildRow('ROCKCORE'),
-  },
-  Gnome = {
-    guildRow('FOR GNOMEREGAN'),
-  },
-  Orc = {
-    guildRow('ZUGCORE'),
-  },
-  Troll = {
-    guildRow('Hardingo'),
-  },
-  Tauren = {
-    guildRow('HERDCORE'),
-  },
-  Scourge = {
-    guildRow('DEADCORE'),
-  }
+  Human = { guildRow('Human Error'), guildRow('Honorcore') },
+  NightElf = { guildRow('ELFCORE'), guildRow('NELFCORE'), guildRow('NIGHTCORE') },
+  Dwarf = { guildRow('STONECORE'), guildRow('ROCKCORE') },
+  Gnome = { guildRow('FOR GNOMEREGAN') },
+  Orc = { guildRow('ZUGCORE') },
+  Troll = { guildRow('Hardingo') },
+  Tauren = { guildRow('HERDCORE') },
+  Scourge = { guildRow('DEADCORE') },
 }
 
 local function copyClasses(classes)
@@ -148,9 +155,8 @@ end
 
 local function ensureStoredGuildReportsDB()
   RaceLockedAccountDB = RaceLockedAccountDB or {}
-  RaceLockedAccountDB.raceGridStoredGuildReportsByRace = buildStoredGuildReportsByRace(
-    RaceLockedAccountDB.raceGridStoredGuildReportsByRace
-  )
+  RaceLockedAccountDB.raceGridStoredGuildReportsByRace =
+    buildStoredGuildReportsByRace(RaceLockedAccountDB.raceGridStoredGuildReportsByRace)
   G.RACE_GRID_STORED_GUILD_REPORTS_BY_RACE = RaceLockedAccountDB.raceGridStoredGuildReportsByRace
 end
 
@@ -190,7 +196,8 @@ local function applyRowReport(targetRow, report)
   targetRow.classes = copyClasses(report and report.classes)
   targetRow.guildMembersLevel60 = tonumber(report and report.guildMembersLevel60) or 0
   -- Roster refresh does not imply a broadcast stamp; timestamp is owned by comms apply / own broadcast.
-  targetRow.guildAchievementsAverage = tonumber(report and report.guildAchievementsAverage) or targetRow.guildAchievementsAverage or 0
+  targetRow.guildAchievementsAverage =
+    tonumber(report and report.guildAchievementsAverage) or targetRow.guildAchievementsAverage or 0
   return true
 end
 
@@ -214,7 +221,8 @@ function RaceLocked_GuildChampion_UpdateOwnStoredGuildReportsFromRoster(raceToke
   local changed = false
   for i = 1, #raceTokens do
     local raceToken = raceTokens[i]
-    local rows = G.RACE_GRID_STORED_GUILD_REPORTS_BY_RACE and G.RACE_GRID_STORED_GUILD_REPORTS_BY_RACE[raceToken]
+    local rows =
+      G.RACE_GRID_STORED_GUILD_REPORTS_BY_RACE and G.RACE_GRID_STORED_GUILD_REPORTS_BY_RACE[raceToken]
     if type(rows) == 'table' then
       local report = RaceLocked_GetGuildRaceGridReportForRaceToken(raceToken)
       for _, row in ipairs(rows) do
@@ -252,7 +260,8 @@ function RaceLocked_GuildChampion_IncrementGuildDeathsForOwnGuild()
   if playerRaceToken == '' then
     return false
   end
-  local rows = G.RACE_GRID_STORED_GUILD_REPORTS_BY_RACE and G.RACE_GRID_STORED_GUILD_REPORTS_BY_RACE[playerRaceToken]
+  local rows =
+    G.RACE_GRID_STORED_GUILD_REPORTS_BY_RACE and G.RACE_GRID_STORED_GUILD_REPORTS_BY_RACE[playerRaceToken]
   if type(rows) ~= 'table' then
     return false
   end
@@ -277,7 +286,8 @@ end
 --- @return number
 function RaceLocked_GuildChampion_GetTotalGuildDeathsForRace(raceToken)
   RaceLocked_GuildChampion_EnsureStoredGuildReportsDB()
-  local rows = G.RACE_GRID_STORED_GUILD_REPORTS_BY_RACE and G.RACE_GRID_STORED_GUILD_REPORTS_BY_RACE[raceToken]
+  local rows =
+    G.RACE_GRID_STORED_GUILD_REPORTS_BY_RACE and G.RACE_GRID_STORED_GUILD_REPORTS_BY_RACE[raceToken]
   if type(rows) ~= 'table' then
     return 0
   end
@@ -296,7 +306,8 @@ end
 --- @return number 0 when no guilds have reported achievement data
 function RaceLocked_GuildChampion_GetWeightedGuildAchievementsAverageForRace(raceToken)
   RaceLocked_GuildChampion_EnsureStoredGuildReportsDB()
-  local rows = G.RACE_GRID_STORED_GUILD_REPORTS_BY_RACE and G.RACE_GRID_STORED_GUILD_REPORTS_BY_RACE[raceToken]
+  local rows =
+    G.RACE_GRID_STORED_GUILD_REPORTS_BY_RACE and G.RACE_GRID_STORED_GUILD_REPORTS_BY_RACE[raceToken]
   if type(rows) ~= 'table' then
     return 0
   end

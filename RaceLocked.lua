@@ -20,6 +20,5 @@ RaceLocked:SetScript('OnEvent', function(self, event, loadedAddonName)
     end
 
     RaceLocked_RefreshGuildRoster()
-
   end
 end)

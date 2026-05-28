@@ -67,9 +67,7 @@ local MAX_ADDON_MSG = 255
 
 local function broadcastOwnPointsToGuild(playerName, totalPoints)
   local send = getAddonSend()
-  if not send then
-    return
-  end
+  if not send then return end
   local msg = RELAY_PREFIX .. playerName .. '=' .. tostring(tonumber(totalPoints) or 0)
   send(ADDON_PREFIX, msg, 'GUILD')
 end
@@ -129,9 +127,7 @@ end
 
 local function broadcastRelayToGuild(guildName)
   local msgs = buildRelayMessages(guildName)
-  if #msgs == 0 then
-    return
-  end
+  if #msgs == 0 then return end
   for i = 1, #msgs do
     relayQueue[#relayQueue + 1] = msgs[i]
   end
@@ -143,9 +139,7 @@ end
 local function storeOwnPoints(totalPoints)
   local guildName = getPlayerGuildName()
   local playerName = getPlayerName()
-  if not guildName or not playerName then
-    return
-  end
+  if not guildName or not playerName then return end
   if RaceLocked_AchievementTracking_SetPlayerPoints then
     RaceLocked_AchievementTracking_SetPlayerPoints(guildName, playerName, totalPoints)
   end
@@ -180,9 +174,7 @@ local function installHardcoreAchievementsHook()
     return false
   end
   HardcoreAchievements_Hooks:HookScript('OnAchievement', function(achievementData)
-    if type(achievementData) ~= 'table' then
-      return
-    end
+    if type(achievementData) ~= 'table' then return end
     local totalPoints = tonumber(achievementData.totalPoints) or 0
     lastKnownTotalPoints = totalPoints
     storeOwnPoints(totalPoints)
@@ -196,12 +188,8 @@ end
 
 local function applyRelayMessage(guildName, message)
   local payload = string.sub(message, #RELAY_PREFIX + 1)
-  if payload == '' then
-    return
-  end
-  if not RaceLocked_AchievementTracking_SetPlayerPoints then
-    return
-  end
+  if payload == '' then return end
+  if not RaceLocked_AchievementTracking_SetPlayerPoints then return end
   for entry in string.gmatch(payload, '[^,]+') do
     local eq = string.find(entry, '=', 1, true)
     if eq and eq > 1 then
@@ -215,19 +203,11 @@ local function applyRelayMessage(guildName, message)
 end
 
 local function onAddonMessage(prefix, message, channel, sender)
-  if prefix ~= ADDON_PREFIX then
-    return
-  end
-  if not IsInGuild or not IsInGuild() then
-    return
-  end
-  if isSenderLocalPlayer(sender) then
-    return
-  end
+  if prefix ~= ADDON_PREFIX then return end
+  if not IsInGuild or not IsInGuild() then return end
+  if isSenderLocalPlayer(sender) then return end
   local guildName = getPlayerGuildName()
-  if not guildName then
-    return
-  end
+  if not guildName then return end
   if string.sub(message, 1, #RELAY_PREFIX) == RELAY_PREFIX then
     applyRelayMessage(guildName, message)
   end

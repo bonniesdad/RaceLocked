@@ -11,7 +11,8 @@ local CONTENT_TOP_Y = -(57 + TAB_HEIGHT)
 local CONTENT_BOTTOM_INSET = 8
 
 local S = RaceLocked_Settings
-local TAB_TEXTURE = (S and S.TEXTURE_PATH or 'Interface\\AddOns\\RaceLocked\\Textures') .. '\\tab_texture.png'
+local TAB_TEXTURE =
+  (S and S.TEXTURE_PATH or 'Interface\\AddOns\\RaceLocked\\Textures') .. '\\tab_texture.png'
 local TAB_WIDTHS = {
   [1] = TAB_WIDTH, -- Main
   [2] = TAB_WIDTH, -- Settings
@@ -119,9 +120,7 @@ local function createTabContent(_, parentFrame)
 end
 
 function RaceLocked_InitializeTabs(settingsFrame)
-  if tabButtons[1] then
-    return
-  end
+  if tabButtons[1] then return end
 
   tabButtons[1] = createTabButton('Overview', 1, settingsFrame)
   tabContents[1] = createTabContent(1, settingsFrame)

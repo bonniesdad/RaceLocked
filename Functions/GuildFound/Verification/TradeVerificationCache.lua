@@ -11,9 +11,7 @@ function RaceLocked_PlayerNamesMatch(nameA, nameB)
 end
 
 function RaceLocked_CachePartnerVerification(playerName, isVerified)
-  if not playerName then
-    return
-  end
+  if not playerName then return end
 
   RaceLocked_partnerVerificationCache[playerName] = {
     verified = isVerified,

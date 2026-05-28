@@ -8,9 +8,7 @@ function RaceLocked_GetDBValue(key)
 end
 
 function RaceLocked_SaveDBData(key, value)
-  if not key then
-    return
-  end
+  if not key then return end
   RaceLockedDB = RaceLockedDB or {}
   RaceLockedDB[key] = value
 end

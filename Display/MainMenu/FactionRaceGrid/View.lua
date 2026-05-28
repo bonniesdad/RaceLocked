@@ -32,9 +32,7 @@ local function createChrome(root)
   refreshBtn:SetPushedTexture(refreshTex)
   refreshBtn:EnableMouse(true)
   refreshBtn:SetScript('OnEnter', function(self)
-    if not GameTooltip then
-      return
-    end
+    if not GameTooltip then return end
     GameTooltip:SetOwner(self, 'ANCHOR_RIGHT')
     GameTooltip:AddLine('Reload', 1, 0.92, 0.62)
     GameTooltip:AddLine('Reload guild data and broadcast to other players', 1, 1, 1)
@@ -84,9 +82,7 @@ local function createRaceStatPane(root, raceToken, raceAccent)
   icon:Show()
   icon:EnableMouse(true)
   icon:SetScript('OnEnter', function(self)
-    if not GameTooltip then
-      return
-    end
+    if not GameTooltip then return end
     local raceName = (G.RACE_LABEL and G.RACE_LABEL[raceToken]) or raceToken
     GameTooltip:SetOwner(self, 'ANCHOR_RIGHT')
     GameTooltip:ClearLines()
@@ -105,7 +101,11 @@ local function createRaceStatPane(root, raceToken, raceAccent)
 
   f._skullCountFs = f:CreateFontString(nil, 'OVERLAY', 'GameFontNormal')
   f._skullCountFs:SetJustifyH('RIGHT')
-  f._skullCountFs:SetTextColor(G.LABEL_GOLD[1] * 0.85, G.LABEL_GOLD[2] * 0.85, G.LABEL_GOLD[3] * 0.85)
+  f._skullCountFs:SetTextColor(
+    G.LABEL_GOLD[1] * 0.85,
+    G.LABEL_GOLD[2] * 0.85,
+    G.LABEL_GOLD[3] * 0.85
+  )
   f._skullCountFs:SetText('-')
 
   f._skullIcon = f:CreateTexture(nil, 'OVERLAY')
@@ -115,9 +115,7 @@ local function createRaceStatPane(root, raceToken, raceAccent)
   f._skullInfoHit = CreateFrame('Frame', nil, f)
   f._skullInfoHit:EnableMouse(true)
   f._skullInfoHit:SetScript('OnEnter', function(self)
-    if not GameTooltip then
-      return
-    end
+    if not GameTooltip then return end
     GameTooltip:SetOwner(self, 'ANCHOR_RIGHT')
     GameTooltip:AddLine('Total number of Deaths', 1, 0.92, 0.62)
     GameTooltip:AddLine('Only includes players with the addon', 1, 1, 1)
@@ -131,33 +129,36 @@ local function createRaceStatPane(root, raceToken, raceAccent)
 
   f._achievementPointsFs = f:CreateFontString(nil, 'OVERLAY', 'GameFontNormal')
   f._achievementPointsFs:SetJustifyH('RIGHT')
-  f._achievementPointsFs:SetTextColor(G.LABEL_GOLD[1] * 0.85, G.LABEL_GOLD[2] * 0.85, G.LABEL_GOLD[3] * 0.85)
+  f._achievementPointsFs:SetTextColor(
+    G.LABEL_GOLD[1] * 0.85,
+    G.LABEL_GOLD[2] * 0.85,
+    G.LABEL_GOLD[3] * 0.85
+  )
   f._achievementPointsFs:SetText('-')
 
   f._achievementIcon = f:CreateTexture(nil, 'OVERLAY')
-  f._achievementIcon:SetTexture('Interface\\AddOns\\RaceLocked\\Textures\\HardcoreAchievementsButton.png')
+  f._achievementIcon:SetTexture(
+    'Interface\\AddOns\\RaceLocked\\Textures\\HardcoreAchievementsButton.png'
+  )
   f._achievementIcon:SetSize(16, 16)
 
   f._achievementInfoHit = CreateFrame('Frame', nil, f)
   f._achievementInfoHit:SetFrameLevel((f.GetFrameLevel and f:GetFrameLevel() or 0) + 6)
   f._achievementInfoHit:EnableMouse(true)
   f._achievementInfoHit:SetScript('OnEnter', function(self)
-    if not GameTooltip then
-      return
-    end
+    if not GameTooltip then return end
     GameTooltip:SetOwner(self, 'ANCHOR_RIGHT')
     GameTooltip:ClearLines()
     GameTooltip:AddLine('Race average achievement points', 1, 0.92, 0.62)
     local token = self._rlRaceToken
-    if token and RaceLocked_GuildChampion and RaceLocked_GuildChampion.RACE_GRID_STORED_GUILD_REPORTS_BY_RACE
-      and RaceLocked_AchievementTracking_GetGuildReportingCount
-    then
+    if token and RaceLocked_GuildChampion and RaceLocked_GuildChampion.RACE_GRID_STORED_GUILD_REPORTS_BY_RACE and RaceLocked_AchievementTracking_GetGuildReportingCount then
       local rows = RaceLocked_GuildChampion.RACE_GRID_STORED_GUILD_REPORTS_BY_RACE[token]
       if type(rows) == 'table' then
         local totalReporting = 0
         for _, row in ipairs(rows) do
           if type(row) == 'table' and (tonumber(row.guildSize) or 0) > 0 then
-            totalReporting = totalReporting + RaceLocked_AchievementTracking_GetGuildReportingCount(row.guildName)
+            totalReporting =
+              totalReporting + RaceLocked_AchievementTracking_GetGuildReportingCount(row.guildName)
           end
         end
         if totalReporting > 0 then
@@ -218,7 +219,12 @@ local function createRaceStatPane(root, raceToken, raceAccent)
   f._classBarBarWell = CreateFrame('Frame', nil, f._classBarHost, 'BackdropTemplate')
   f._classBarBarWell:SetBackdrop(G.CLASS_BAR_CHART_BACKDROP)
   f._classBarBarWell:SetBackdropColor(0.05, 0.06, 0.08, 0.92)
-  f._classBarBarWell:SetBackdropBorderColor(G.AP_BORDER.r, G.AP_BORDER.g, G.AP_BORDER.b, G.AP_BORDER.a * 0.85)
+  f._classBarBarWell:SetBackdropBorderColor(
+    G.AP_BORDER.r,
+    G.AP_BORDER.g,
+    G.AP_BORDER.b,
+    G.AP_BORDER.a * 0.85
+  )
   f._classBarBarWell:SetHeight(G.CLASS_BAR_HEIGHT + 2 * G.CLASS_BAR_BORDER_PAD)
 
   f._classBarRow = CreateFrame('Frame', nil, f._classBarBarWell)
@@ -241,7 +247,12 @@ local function createRaceStatPane(root, raceToken, raceAccent)
     pctHit:SetFrameLevel((pct.GetFrameLevel and pct:GetFrameLevel() or 0) + 3)
     pctHit:EnableMouse(true)
     pctHit:Hide()
-    local cell = { frame = col, tex = tex, pct = pct, pctHit = pctHit }
+    local cell = {
+      frame = col,
+      tex = tex,
+      pct = pct,
+      pctHit = pctHit,
+    }
     f._classCol[idx] = cell
     col._rlCell = cell
     pctHit._rlCell = cell
@@ -398,10 +409,16 @@ local function computeRaceGridSortOrder(raceTokens)
   local rows = {}
   for i = 1, n do
     local token = raceTokens[i]
-    local agg = RaceLocked_GuildChampion_GetAggregatedMockForRace and RaceLocked_GuildChampion_GetAggregatedMockForRace(token)
+    local agg =
+      RaceLocked_GuildChampion_GetAggregatedMockForRace and RaceLocked_GuildChampion_GetAggregatedMockForRace(
+        token
+      )
     local avg = agg and agg.averageLevel
     local avn = type(avg) == 'number' and avg or -math.huge
-    rows[#rows + 1] = { idx = i, avg = avn }
+    rows[#rows + 1] = {
+      idx = i,
+      avg = avn,
+    }
   end
   table.sort(rows, function(a, b)
     if a.avg ~= b.avg then
@@ -452,9 +469,7 @@ local function layoutGrid(ctx)
   local panes = ctx.panes
   local raceTokens = ctx.raceTokens
   local numRaces = #raceTokens
-  if numRaces < 1 then
-    return
-  end
+  if numRaces < 1 then return end
   local numRows = math.max(1, math.ceil(numRaces / 2))
 
   local order, rankByIdx = computeRaceGridSortOrder(raceTokens)
@@ -505,7 +520,10 @@ local function layoutGrid(ctx)
     if panes[i]._achievementPointsFs then
       local ach = 0
       if RaceLocked_GuildChampion_GetWeightedGuildAchievementsAverageForRace then
-        ach = RaceLocked_GuildChampion_GetWeightedGuildAchievementsAverageForRace(ctx.raceTokens[i]) or 0
+        ach =
+          RaceLocked_GuildChampion_GetWeightedGuildAchievementsAverageForRace(
+            ctx.raceTokens[i]
+          ) or 0
       end
       panes[i]._achievementPointsFs:SetText(formatRaceGridStatDisplay(ach))
     end
@@ -518,10 +536,8 @@ local function layoutGrid(ctx)
   ctx.refreshRow:SetPoint('BOTTOMLEFT', root, 'BOTTOMLEFT', 0, G.OUTER_PAD_Y)
   ctx.refreshRow:SetPoint('BOTTOMRIGHT', root, 'BOTTOMRIGHT', 0, G.OUTER_PAD_Y)
 
-  local gridContentH = gridTop
-    + numRows * paneH
-    + math.max(0, numRows - 1) * G.ROW_GAP
-    + G.OUTER_PAD_Y
+  local gridContentH =
+    gridTop + numRows * paneH + math.max(0, numRows - 1) * G.ROW_GAP + G.OUTER_PAD_Y
   scrollChild:SetHeight(gridContentH)
 
   local newH = gridContentH + G.GAP_AFTER_GRID + G.REFRESH_ROW_H + 2 * G.OUTER_PAD_Y
@@ -537,17 +553,24 @@ function RaceLocked_CreateFactionRaceGrid(parent)
   local G = RaceLocked_GuildChampion
   local paneH = math.max(1, (tonumber(G.STATS_ROW_H) or 0) - 30)
 
-  local raceTokens = G.RACE_GRID_ALL_TOKENS
-    or { 'Human', 'Dwarf', 'NightElf', 'Gnome', 'Orc', 'Troll', 'Tauren', 'Scourge' }
+  local raceTokens =
+    G.RACE_GRID_ALL_TOKENS or {
+      'Human',
+      'Dwarf',
+      'NightElf',
+      'Gnome',
+      'Orc',
+      'Troll',
+      'Tauren',
+      'Scourge',
+    }
   local numRaces = #raceTokens
   local numRows = math.max(1, math.ceil(numRaces / 2))
-  local totalH = G.OUTER_PAD_Y
-    + G.GRID_TOP_OFFSET
-    + numRows * paneH
-    + math.max(0, numRows - 1) * G.ROW_GAP
-    + G.GAP_AFTER_GRID
-    + G.REFRESH_ROW_H
-    + 2 * G.OUTER_PAD_Y
+  local totalH =
+    G.OUTER_PAD_Y + G.GRID_TOP_OFFSET + numRows * paneH + math.max(
+      0,
+      numRows - 1
+    ) * G.ROW_GAP + G.GAP_AFTER_GRID + G.REFRESH_ROW_H + 2 * G.OUTER_PAD_Y
 
   local root = CreateFrame('Frame', nil, parent)
   root:SetAllPoints(parent)
@@ -630,16 +653,12 @@ function RaceLocked_CreateFactionRaceGrid(parent)
   RaceLocked_GuildChampion_RequestRaceGridRerender = runLayout
 
   refreshBtn:SetScript('OnClick', function()
-    if refreshBtn._isLoading or refreshBtn._isAppliedAndBroadcasted then
-      return
-    end
+    if refreshBtn._isLoading or refreshBtn._isAppliedAndBroadcasted then return end
 
     local ROSTER_FAIL_MSG = 'Guild Roster not ready, try again'
     local function setGuildLoadFailVisible(show)
       local fs = refreshRow._guildLoadFailFs
-      if not fs then
-        return
-      end
+      if not fs then return end
       fs:SetText(ROSTER_FAIL_MSG)
       if show then
         fs:Show()
@@ -668,9 +687,15 @@ function RaceLocked_CreateFactionRaceGrid(parent)
 
     setGuildLoadFailVisible(false)
     refreshBtn._isLoading = true
-    refreshBtn:SetNormalTexture(refreshBtn._loadingTex or 'Interface\\Buttons\\UI-GroupLoot-Pass-Down')
-    refreshBtn:SetPushedTexture(refreshBtn._loadingTex or 'Interface\\Buttons\\UI-GroupLoot-Pass-Down')
-    refreshBtn:SetDisabledTexture(refreshBtn._loadingTex or 'Interface\\Buttons\\UI-GroupLoot-Pass-Down')
+    refreshBtn:SetNormalTexture(
+      refreshBtn._loadingTex or 'Interface\\Buttons\\UI-GroupLoot-Pass-Down'
+    )
+    refreshBtn:SetPushedTexture(
+      refreshBtn._loadingTex or 'Interface\\Buttons\\UI-GroupLoot-Pass-Down'
+    )
+    refreshBtn:SetDisabledTexture(
+      refreshBtn._loadingTex or 'Interface\\Buttons\\UI-GroupLoot-Pass-Down'
+    )
     refreshBtn:Disable()
     refreshBtn:SetAlpha(0.75)
 
@@ -720,9 +745,15 @@ function RaceLocked_CreateFactionRaceGrid(parent)
 
     local function finishRefreshButton()
       if refreshBtn._isAppliedAndBroadcasted then
-        refreshBtn:SetNormalTexture(refreshBtn._validTex or 'Interface\\AddOns\\RaceLocked\\Textures\\valid.png')
-        refreshBtn:SetPushedTexture(refreshBtn._validTex or 'Interface\\AddOns\\RaceLocked\\Textures\\valid.png')
-        refreshBtn:SetDisabledTexture(refreshBtn._validTex or 'Interface\\AddOns\\RaceLocked\\Textures\\valid.png')
+        refreshBtn:SetNormalTexture(
+          refreshBtn._validTex or 'Interface\\AddOns\\RaceLocked\\Textures\\valid.png'
+        )
+        refreshBtn:SetPushedTexture(
+          refreshBtn._validTex or 'Interface\\AddOns\\RaceLocked\\Textures\\valid.png'
+        )
+        refreshBtn:SetDisabledTexture(
+          refreshBtn._validTex or 'Interface\\AddOns\\RaceLocked\\Textures\\valid.png'
+        )
         refreshBtn:Disable()
         refreshBtn:SetAlpha(1)
         refreshBtn._isLoading = false
@@ -730,7 +761,9 @@ function RaceLocked_CreateFactionRaceGrid(parent)
       end
       refreshBtn:SetNormalTexture(refreshBtn._refreshTex or 'Interface\\Buttons\\UI-RefreshButton')
       refreshBtn:SetPushedTexture(refreshBtn._refreshTex or 'Interface\\Buttons\\UI-RefreshButton')
-      refreshBtn:SetDisabledTexture(refreshBtn._refreshTex or 'Interface\\Buttons\\UI-RefreshButton')
+      refreshBtn:SetDisabledTexture(
+        refreshBtn._refreshTex or 'Interface\\Buttons\\UI-RefreshButton'
+      )
       refreshBtn:Enable()
       refreshBtn:SetAlpha(1)
       refreshBtn._isLoading = false
@@ -759,7 +792,9 @@ function RaceLocked_CreateFactionRaceGrid(parent)
       refreshBtn._isLoading = false
       refreshBtn:SetNormalTexture(refreshBtn._refreshTex or 'Interface\\Buttons\\UI-RefreshButton')
       refreshBtn:SetPushedTexture(refreshBtn._refreshTex or 'Interface\\Buttons\\UI-RefreshButton')
-      refreshBtn:SetDisabledTexture(refreshBtn._refreshTex or 'Interface\\Buttons\\UI-RefreshButton')
+      refreshBtn:SetDisabledTexture(
+        refreshBtn._refreshTex or 'Interface\\Buttons\\UI-RefreshButton'
+      )
       refreshBtn:Enable()
       refreshBtn:SetAlpha(1)
     end)

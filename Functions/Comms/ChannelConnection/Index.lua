@@ -21,9 +21,7 @@ function Comms.GetDataChannelId()
 end
 
 local function hideChannelFromChatWindows()
-  if not ChatFrame_RemoveChannel or not NUM_CHAT_WINDOWS then
-    return
-  end
+  if not ChatFrame_RemoveChannel or not NUM_CHAT_WINDOWS then return end
   for i = 1, NUM_CHAT_WINDOWS do
     local frame = _G['ChatFrame' .. i]
     if frame then
@@ -57,28 +55,19 @@ end
 -- (older Classic clients), this is a no-op and we accept the current slot.
 local function tryMoveOurChannelToBack()
   local swap = C_ChatInfo and C_ChatInfo.SwapChatChannelsByChannelIndex
-  if not swap or not GetChannelName then
-    return
-  end
+  if not swap or not GetChannelName then return end
   for _ = 1, MAX_CHANNEL_SLOTS do
     local id = Comms.GetDataChannelId()
-    if id <= 0 then
-      return
-    end
+    if id <= 0 then return end
     local nextId, nextName = GetChannelName(id + 1)
-    local nextOccupied = (type(nextId) == 'number' and nextId > 0)
-      or (nextName and nextName ~= '')
-    if not nextOccupied then
-      return
-    end
+    local nextOccupied = (type(nextId) == 'number' and nextId > 0) or (nextName and nextName ~= '')
+    if not nextOccupied then return end
     swap(id, id + 1)
   end
 end
 
 function Comms.InstallChannelNoticeFilters()
-  if channelFiltersInstalled or not ChatFrame_AddMessageEventFilter then
-    return
-  end
+  if channelFiltersInstalled or not ChatFrame_AddMessageEventFilter then return end
   channelFiltersInstalled = true
   local function filterFn(_, _, ...)
     local arg1 = select(1, ...)
@@ -162,9 +151,7 @@ function Comms.EnsureDataChannelJoined(forceJoin)
 end
 
 function Comms.ScheduleDelayedDataChannelJoin()
-  if delayedJoinScheduled then
-    return
-  end
+  if delayedJoinScheduled then return end
   delayedJoinScheduled = true
   if not C_Timer or not C_Timer.After then
     Comms.EnsureDataChannelJoined(true)
@@ -196,9 +183,7 @@ end
 
 --- Classic does not support C_ChatInfo.SendAddonMessage(..., "CHANNEL", ...). Use SendChatMessage(..., "CHANNEL", channelIndex).
 function Comms.SendRaceGridChannelLine(channelId, payload)
-  if not SendChatMessage or channelId <= 0 or not payload or payload == '' then
-    return
-  end
+  if not SendChatMessage or channelId <= 0 or not payload or payload == '' then return end
   -- Hex on the wire: no '|' (chat escapes) and no raw control bytes that might get altered.
   local wire = Comms.PREFIX .. ':' .. Comms.BytesToHex(payload)
   if #wire > 255 then

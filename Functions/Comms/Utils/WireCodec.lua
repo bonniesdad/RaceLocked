@@ -36,15 +36,42 @@ end
 
 function Comms.EmptyClasses()
   return {
-    druids = { count = 0, averageLevel = 0 },
-    rogues = { count = 0, averageLevel = 0 },
-    hunters = { count = 0, averageLevel = 0 },
-    warriors = { count = 0, averageLevel = 0 },
-    mages = { count = 0, averageLevel = 0 },
-    priests = { count = 0, averageLevel = 0 },
-    warlocks = { count = 0, averageLevel = 0 },
-    paladins = { count = 0, averageLevel = 0 },
-    shamans = { count = 0, averageLevel = 0 },
+    druids = {
+      count = 0,
+      averageLevel = 0,
+    },
+    rogues = {
+      count = 0,
+      averageLevel = 0,
+    },
+    hunters = {
+      count = 0,
+      averageLevel = 0,
+    },
+    warriors = {
+      count = 0,
+      averageLevel = 0,
+    },
+    mages = {
+      count = 0,
+      averageLevel = 0,
+    },
+    priests = {
+      count = 0,
+      averageLevel = 0,
+    },
+    warlocks = {
+      count = 0,
+      averageLevel = 0,
+    },
+    paladins = {
+      count = 0,
+      averageLevel = 0,
+    },
+    shamans = {
+      count = 0,
+      averageLevel = 0,
+    },
   }
 end
 
@@ -82,35 +109,38 @@ function Comms.BuildPayload(raceToken, row)
   local ts = wireInt(row.timestamp)
   local deaths = wireInt(row.guildDeaths)
   local achAvg = wireInt(row.guildAchievementsAverage)
-  return table.concat({
-    'v5',
-    tostring(raceToken or ''),
-    Comms.SanitizeGuildName(row.guildName or ''),
-    tostring(wireInt(row.guildSize)),
-    tostring(wireInt(row.averageLevel)),
-    tostring(wireInt(classWireCount(c.druids))),
-    tostring(wireInt(classWireAverage(c.druids))),
-    tostring(wireInt(classWireCount(c.rogues))),
-    tostring(wireInt(classWireAverage(c.rogues))),
-    tostring(wireInt(classWireCount(c.hunters))),
-    tostring(wireInt(classWireAverage(c.hunters))),
-    tostring(wireInt(classWireCount(c.warriors))),
-    tostring(wireInt(classWireAverage(c.warriors))),
-    tostring(wireInt(classWireCount(c.mages))),
-    tostring(wireInt(classWireAverage(c.mages))),
-    tostring(wireInt(classWireCount(c.priests))),
-    tostring(wireInt(classWireAverage(c.priests))),
-    tostring(wireInt(classWireCount(c.warlocks))),
-    tostring(wireInt(classWireAverage(c.warlocks))),
-    tostring(wireInt(classWireCount(c.paladins))),
-    tostring(wireInt(classWireAverage(c.paladins))),
-    tostring(wireInt(classWireCount(c.shamans))),
-    tostring(wireInt(classWireAverage(c.shamans))),
-    tostring(ts),
-    tostring(deaths),
-    tostring(achAvg),
-    tostring(wireInt(row.guildMembersLevel60)),
-  }, Comms.WIRE_FIELD_SEP)
+  return table.concat(
+    {
+      'v5',
+      tostring(raceToken or ''),
+      Comms.SanitizeGuildName(row.guildName or ''),
+      tostring(wireInt(row.guildSize)),
+      tostring(wireInt(row.averageLevel)),
+      tostring(wireInt(classWireCount(c.druids))),
+      tostring(wireInt(classWireAverage(c.druids))),
+      tostring(wireInt(classWireCount(c.rogues))),
+      tostring(wireInt(classWireAverage(c.rogues))),
+      tostring(wireInt(classWireCount(c.hunters))),
+      tostring(wireInt(classWireAverage(c.hunters))),
+      tostring(wireInt(classWireCount(c.warriors))),
+      tostring(wireInt(classWireAverage(c.warriors))),
+      tostring(wireInt(classWireCount(c.mages))),
+      tostring(wireInt(classWireAverage(c.mages))),
+      tostring(wireInt(classWireCount(c.priests))),
+      tostring(wireInt(classWireAverage(c.priests))),
+      tostring(wireInt(classWireCount(c.warlocks))),
+      tostring(wireInt(classWireAverage(c.warlocks))),
+      tostring(wireInt(classWireCount(c.paladins))),
+      tostring(wireInt(classWireAverage(c.paladins))),
+      tostring(wireInt(classWireCount(c.shamans))),
+      tostring(wireInt(classWireAverage(c.shamans))),
+      tostring(ts),
+      tostring(deaths),
+      tostring(achAvg),
+      tostring(wireInt(row.guildMembersLevel60)),
+    },
+    Comms.WIRE_FIELD_SEP
+  )
 end
 
 --- Guild death event payload on the RaceLockedDataBus channel.
@@ -196,25 +226,79 @@ function Comms.ParsePayload(msg)
     guildSize = tonumber(p[4]) or 0,
     averageLevel = tonumber(p[5]) or 0,
     classes = (wireVersion == 'v3' or wireVersion == 'v4' or wireVersion == 'v5') and {
-      druids = { count = tonumber(p[6]) or 0, averageLevel = tonumber(p[7]) or 0 },
-      rogues = { count = tonumber(p[8]) or 0, averageLevel = tonumber(p[9]) or 0 },
-      hunters = { count = tonumber(p[10]) or 0, averageLevel = tonumber(p[11]) or 0 },
-      warriors = { count = tonumber(p[12]) or 0, averageLevel = tonumber(p[13]) or 0 },
-      mages = { count = tonumber(p[14]) or 0, averageLevel = tonumber(p[15]) or 0 },
-      priests = { count = tonumber(p[16]) or 0, averageLevel = tonumber(p[17]) or 0 },
-      warlocks = { count = tonumber(p[18]) or 0, averageLevel = tonumber(p[19]) or 0 },
-      paladins = { count = tonumber(p[20]) or 0, averageLevel = tonumber(p[21]) or 0 },
-      shamans = { count = tonumber(p[22]) or 0, averageLevel = tonumber(p[23]) or 0 },
+      druids = {
+        count = tonumber(p[6]) or 0,
+        averageLevel = tonumber(p[7]) or 0,
+      },
+      rogues = {
+        count = tonumber(p[8]) or 0,
+        averageLevel = tonumber(p[9]) or 0,
+      },
+      hunters = {
+        count = tonumber(p[10]) or 0,
+        averageLevel = tonumber(p[11]) or 0,
+      },
+      warriors = {
+        count = tonumber(p[12]) or 0,
+        averageLevel = tonumber(p[13]) or 0,
+      },
+      mages = {
+        count = tonumber(p[14]) or 0,
+        averageLevel = tonumber(p[15]) or 0,
+      },
+      priests = {
+        count = tonumber(p[16]) or 0,
+        averageLevel = tonumber(p[17]) or 0,
+      },
+      warlocks = {
+        count = tonumber(p[18]) or 0,
+        averageLevel = tonumber(p[19]) or 0,
+      },
+      paladins = {
+        count = tonumber(p[20]) or 0,
+        averageLevel = tonumber(p[21]) or 0,
+      },
+      shamans = {
+        count = tonumber(p[22]) or 0,
+        averageLevel = tonumber(p[23]) or 0,
+      },
     } or {
-      druids = { count = tonumber(p[6]) or 0, averageLevel = 0 },
-      rogues = { count = tonumber(p[7]) or 0, averageLevel = 0 },
-      hunters = { count = tonumber(p[8]) or 0, averageLevel = 0 },
-      warriors = { count = tonumber(p[9]) or 0, averageLevel = 0 },
-      mages = { count = tonumber(p[10]) or 0, averageLevel = 0 },
-      priests = { count = tonumber(p[11]) or 0, averageLevel = 0 },
-      warlocks = { count = tonumber(p[12]) or 0, averageLevel = 0 },
-      paladins = { count = tonumber(p[13]) or 0, averageLevel = 0 },
-      shamans = { count = tonumber(p[14]) or 0, averageLevel = 0 },
+      druids = {
+        count = tonumber(p[6]) or 0,
+        averageLevel = 0,
+      },
+      rogues = {
+        count = tonumber(p[7]) or 0,
+        averageLevel = 0,
+      },
+      hunters = {
+        count = tonumber(p[8]) or 0,
+        averageLevel = 0,
+      },
+      warriors = {
+        count = tonumber(p[9]) or 0,
+        averageLevel = 0,
+      },
+      mages = {
+        count = tonumber(p[10]) or 0,
+        averageLevel = 0,
+      },
+      priests = {
+        count = tonumber(p[11]) or 0,
+        averageLevel = 0,
+      },
+      warlocks = {
+        count = tonumber(p[12]) or 0,
+        averageLevel = 0,
+      },
+      paladins = {
+        count = tonumber(p[13]) or 0,
+        averageLevel = 0,
+      },
+      shamans = {
+        count = tonumber(p[14]) or 0,
+        averageLevel = 0,
+      },
     },
     timestamp = timestamp,
     guildDeaths = guildDeaths,

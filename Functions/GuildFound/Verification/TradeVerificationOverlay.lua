@@ -13,12 +13,11 @@ local function updateSpinner(self, elapsed)
 end
 
 function RaceLocked_ShowTradeVerificationOverlay()
-  if not TradeFrame then
-    return
-  end
+  if not TradeFrame then return end
 
   if not overlay then
-    overlay = CreateFrame('Frame', 'RaceLockedTradeVerificationOverlay', TradeFrame, 'BackdropTemplate')
+    overlay =
+      CreateFrame('Frame', 'RaceLockedTradeVerificationOverlay', TradeFrame, 'BackdropTemplate')
     overlay:SetFrameStrata('HIGH')
     overlay:SetFrameLevel(TradeFrame:GetFrameLevel() + 20)
     overlay:EnableMouse(true)
@@ -28,7 +27,12 @@ function RaceLocked_ShowTradeVerificationOverlay()
       tile = true,
       tileSize = 32,
       edgeSize = 32,
-      insets = { left = 11, right = 11, top = 11, bottom = 11 },
+      insets = {
+        left = 11,
+        right = 11,
+        top = 11,
+        bottom = 11,
+      },
     })
     overlay:SetBackdropColor(0, 0, 0, 0.85)
 
@@ -44,7 +48,10 @@ function RaceLocked_ShowTradeVerificationOverlay()
     overlay:SetScript('OnUpdate', updateSpinner)
   end
 
-  overlay:SetSize(TradeFrame:GetWidth() + (OVERLAY_PADDING * 2), TradeFrame:GetHeight() + (OVERLAY_PADDING * 2))
+  overlay:SetSize(
+    TradeFrame:GetWidth() + (OVERLAY_PADDING * 2),
+    TradeFrame:GetHeight() + (OVERLAY_PADDING * 2)
+  )
   overlay:ClearAllPoints()
   overlay:SetPoint('CENTER', TradeFrame, 'CENTER')
   overlay:Show()

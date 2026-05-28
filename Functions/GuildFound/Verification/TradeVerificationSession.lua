@@ -28,9 +28,7 @@ end
 
 function RaceLocked_TryResolveTradeVerification(isTimeout)
   local session = RaceLocked_TradeVerificationSession
-  if not session or session.resolved then
-    return
-  end
+  if not session or session.resolved then return end
 
   if isTimeout and session.partnerVerified == nil then
     session.resolved = true
@@ -41,9 +39,7 @@ function RaceLocked_TryResolveTradeVerification(isTimeout)
     return
   end
 
-  if session.partnerVerified == nil then
-    return
-  end
+  if session.partnerVerified == nil then return end
 
   session.resolved = true
 
@@ -73,12 +69,16 @@ function RaceLocked_BeginTradeVerification(playerName, onComplete)
   }
 
   local iAmVerified = RaceLocked_AmIVerified()
-  RaceLocked_PrintRestrictionMessage(iAmVerified and 'I have passed verification' or 'I have failed verification')
+  RaceLocked_PrintRestrictionMessage(
+    iAmVerified and 'I have passed verification' or 'I have failed verification'
+  )
   RaceLocked_SendTradeVerificationStatus(iAmVerified, playerName)
 
   local cached = RaceLocked_GetCachedPartnerVerification(playerName)
   if cached ~= nil then
-    RaceLocked_PrintRestrictionMessage(playerName .. ' has ' .. (cached and 'passed' or 'failed') .. ' verification')
+    RaceLocked_PrintRestrictionMessage(
+      playerName .. ' has ' .. (cached and 'passed' or 'failed') .. ' verification'
+    )
     RaceLocked_TradeVerificationSession.partnerVerified = cached
     RaceLocked_TryResolveTradeVerification()
   end
@@ -94,11 +94,14 @@ function RaceLocked_OnTradeVerificationMessageReceived(sender, isVerified)
   RaceLocked_CachePartnerVerification(sender, isVerified)
 
   local session = RaceLocked_TradeVerificationSession
-  if not session or session.resolved or not RaceLocked_PlayerNamesMatch(sender, session.targetName) then
-    return
-  end
+  if not session or session.resolved or not RaceLocked_PlayerNamesMatch(
+    sender,
+    session.targetName
+  ) then return end
 
   session.partnerVerified = isVerified
-  RaceLocked_PrintRestrictionMessage(session.targetName .. ' has ' .. (isVerified and 'passed' or 'failed') .. ' verification')
+  RaceLocked_PrintRestrictionMessage(
+    session.targetName .. ' has ' .. (isVerified and 'passed' or 'failed') .. ' verification'
+  )
   RaceLocked_TryResolveTradeVerification()
 end

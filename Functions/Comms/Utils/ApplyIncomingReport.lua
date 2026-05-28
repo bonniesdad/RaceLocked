@@ -51,7 +51,8 @@ function Comms.ApplyIncomingReport(report)
     return false
   end
 
-  local rows = G.RACE_GRID_STORED_GUILD_REPORTS_BY_RACE and G.RACE_GRID_STORED_GUILD_REPORTS_BY_RACE[report.raceToken]
+  local rows =
+    G.RACE_GRID_STORED_GUILD_REPORTS_BY_RACE and G.RACE_GRID_STORED_GUILD_REPORTS_BY_RACE[report.raceToken]
   if type(rows) ~= 'table' then
     PrintIncomingBroadcast('REJECTED', 'race bucket missing', report)
     return false
@@ -62,13 +63,9 @@ function Comms.ApplyIncomingReport(report)
     PrintIncomingBroadcast('REJECTED', 'normalized incoming guild empty', report)
     return false
   end
-  if RaceLocked_GuildChampion_GetNormalizedPlayerGuildName
-    and RaceLocked_GuildChampion_MeetsMinGuildMembersForRaceGrid
-  then
+  if RaceLocked_GuildChampion_GetNormalizedPlayerGuildName and RaceLocked_GuildChampion_MeetsMinGuildMembersForRaceGrid then
     local ownGuildNorm = RaceLocked_GuildChampion_GetNormalizedPlayerGuildName()
-    if ownGuildNorm ~= '' and incomingNorm == ownGuildNorm
-      and not RaceLocked_GuildChampion_MeetsMinGuildMembersForRaceGrid()
-    then
+    if ownGuildNorm ~= '' and incomingNorm == ownGuildNorm and not RaceLocked_GuildChampion_MeetsMinGuildMembersForRaceGrid() then
       PrintIncomingBroadcast('REJECTED', 'own guild below minimum members', report)
       return false
     end
@@ -89,7 +86,11 @@ function Comms.ApplyIncomingReport(report)
         local storedDeaths = tonumber(row.guildDeaths) or 0
         local acceptByDeaths = incomingDeaths > storedDeaths
         if not acceptByTimestamp and not acceptByDeaths then
-          PrintIncomingBroadcast('REJECTED', 'incoming report not newer and no death increase', report)
+          PrintIncomingBroadcast(
+            'REJECTED',
+            'incoming report not newer and no death increase',
+            report
+          )
           return false
         end
         if acceptByTimestamp then
@@ -142,7 +143,9 @@ function Comms.ApplyIncomingGuildDeath(event)
   end
   local guildName = event.guildName
   local raceToken = event.raceToken
-  if type(guildName) ~= 'string' or guildName == '' or type(raceToken) ~= 'string' or raceToken == '' then
+  if type(guildName) ~= 'string' or guildName == '' or type(
+    raceToken
+  ) ~= 'string' or raceToken == '' then
     return false
   end
   if RaceLocked_GuildChampion_EnsureStoredGuildReportsDB then
@@ -158,7 +161,8 @@ function Comms.ApplyIncomingGuildDeath(event)
     return false
   end
 
-  local rows = G.RACE_GRID_STORED_GUILD_REPORTS_BY_RACE and G.RACE_GRID_STORED_GUILD_REPORTS_BY_RACE[raceToken]
+  local rows =
+    G.RACE_GRID_STORED_GUILD_REPORTS_BY_RACE and G.RACE_GRID_STORED_GUILD_REPORTS_BY_RACE[raceToken]
   if type(rows) ~= 'table' then
     return false
   end

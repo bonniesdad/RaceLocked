@@ -15,12 +15,11 @@ local function updateSpinner(self, elapsed)
 end
 
 function RaceLocked_ShowMailVerificationOverlay()
-  if not MailFrame then
-    return
-  end
+  if not MailFrame then return end
 
   if not overlay then
-    overlay = CreateFrame('Frame', 'RaceLockedMailVerificationOverlay', MailFrame, 'BackdropTemplate')
+    overlay =
+      CreateFrame('Frame', 'RaceLockedMailVerificationOverlay', MailFrame, 'BackdropTemplate')
     overlay:SetFrameStrata('HIGH')
     overlay:SetFrameLevel(MailFrame:GetFrameLevel() + 20)
     overlay:EnableMouse(true)
@@ -30,7 +29,12 @@ function RaceLocked_ShowMailVerificationOverlay()
       tile = true,
       tileSize = 32,
       edgeSize = 32,
-      insets = { left = 11, right = 11, top = 11, bottom = 11 },
+      insets = {
+        left = 11,
+        right = 11,
+        top = 11,
+        bottom = 11,
+      },
     })
     overlay:SetBackdropColor(0, 0, 0, 0.85)
 
@@ -46,7 +50,10 @@ function RaceLocked_ShowMailVerificationOverlay()
     overlay:SetScript('OnUpdate', updateSpinner)
   end
 
-  overlay:SetSize(MailFrame:GetWidth() + (OVERLAY_PADDING * 2), MailFrame:GetHeight() + (OVERLAY_PADDING * 2))
+  overlay:SetSize(
+    MailFrame:GetWidth() + (OVERLAY_PADDING * 2),
+    MailFrame:GetHeight() + (OVERLAY_PADDING * 2)
+  )
   overlay:ClearAllPoints()
   overlay:SetPoint('CENTER', MailFrame, 'CENTER', 0, OVERLAY_OFFSET_Y)
   overlay:Show()
@@ -63,9 +70,7 @@ mailOverlayEvents:RegisterEvent('MAIL_SHOW')
 mailOverlayEvents:RegisterEvent('MAIL_CLOSED')
 
 mailOverlayEvents:SetScript('OnEvent', function(_, event)
-  if not RaceLocked_IsInGuildFoundGuild() then
-    return
-  end
+  if not RaceLocked_IsInGuildFoundGuild() and not RaceLocked_AmIVerified() then return end
 
   if event == 'MAIL_SHOW' then
     RaceLocked_ShowMailVerificationOverlay()

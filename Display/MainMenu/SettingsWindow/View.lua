@@ -14,9 +14,7 @@ RaceLocked_Settings_BuildWindow()
 
 function ToggleRaceLockedSettings()
   local settingsFrame = _G.RaceLockedSettingsFrame
-  if not settingsFrame then
-    return
-  end
+  if not settingsFrame then return end
   if settingsFrame:IsShown() then
     if _G.HideConfirmationDialog then
       _G.HideConfirmationDialog()

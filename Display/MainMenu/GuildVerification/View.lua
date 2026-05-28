@@ -1,133 +1,95 @@
 local TITLE_TOP_OFFSET = -30
-
 local LIST_LEFT_OFFSET = 10
-
 local TITLE_BOTTOM_GAP = 16
-
 local ROW_GAP = 12
-
 local HELPER_INDENT = 12
-
 local HELPER_TOP_GAP = 4
 
-
-
 local STATUS_TITLE = {
-
-  valid = { text = 'Guild Found Trading is unlocked', r = 0.35, g = 0.8, b = 0.35 },
-
-  invalid = { text = 'Guild Found Trading is locked', r = 0.82, g = 0.33, b = 0.33 },
-
+  valid = {
+    text = 'Guild Found Trading is unlocked',
+    r = 0.35,
+    g = 0.8,
+    b = 0.35,
+  },
+  invalid = {
+    text = 'Guild Found Trading is locked',
+    r = 0.82,
+    g = 0.33,
+    b = 0.33,
+  },
 }
 
+local CHECK_PASS_COLOR = {
+  r = 0.35,
+  g = 0.8,
+  b = 0.35,
+}
 
-
-local CHECK_PASS_COLOR = { r = 0.35, g = 0.8, b = 0.35 }
-
-local CHECK_FAIL_COLOR = { r = 0.82, g = 0.33, b = 0.33 }
-
-
+local CHECK_FAIL_COLOR = {
+  r = 0.82,
+  g = 0.33,
+  b = 0.33,
+}
 
 local function getDetectedOnHelperText(failedAt)
-
   if failedAt then
-
     return 'Detected on ' .. date('%d %b %Y', failedAt)
-
   end
-
 end
 
-
-
 local function getVerificationChecks()
-
   local playerMoneyValidationFailed = RaceLocked_GetDBValue('playerMoneyValidationFailed')
 
   local hasBeenMaxLevelAndSelfFound = RaceLocked_GetDBValue('hasBeenMaxLevelAndSelfFound')
 
   if playerMoneyValidationFailed == nil then
-
     playerMoneyValidationFailed = false
-
   end
 
-
-
-  return {
-
-    {
-
-      passed = playerMoneyValidationFailed == false,
-
-      passMessage = 'No tampering detected',
-
-      failMessage = 'Tampering detected',
-
-      failHelperText = playerMoneyValidationFailed
-
-        and getDetectedOnHelperText(RaceLocked_GetDBValue('playerMoneyValidationFailedAt')),
-
-    },
-
-    {
-
-      passed = hasBeenMaxLevelAndSelfFound == true,
-
-      passMessage = 'This character was level 60 and self found',
-
-      failMessage = 'Did not turn off self found at level 60',
-
-      failHelperText = 'You must be level 60 before turning off self found',
-
-    },
-
-  }
-
+  return { {
+    passed = playerMoneyValidationFailed == false,
+    passMessage = 'No tampering detected',
+    failMessage = 'Tampering detected',
+    failHelperText = playerMoneyValidationFailed and getDetectedOnHelperText(
+      RaceLocked_GetDBValue('playerMoneyValidationFailedAt')
+    ),
+  }, {
+    passed = hasBeenMaxLevelAndSelfFound == true,
+    passMessage = 'This character reached level 60 whilst self found',
+    failMessage = UnitLevel('player') < 60 and 'You are not yet level 60' or 'Did not turn off self found at level 60',
+    failHelperText = UnitLevel('player') < 60 and nil or 'You must be level 60 before turning off self found',
+  }, {
+    passed = RaceLocked_ShouldOverrideVerificationViaGuildNote(UnitName('player')) == true,
+    passMessage = 'Guild note override detected',
+    failMessage = 'No guild note override detected',
+    failHelperText = 'You are not in a guild or do not have a guild note override',
+  } }
 end
-
-
 
 local function getOverallStatus(checks)
-
   for _, check in ipairs(checks) do
-
     if not check.passed then
-
       return STATUS_TITLE.invalid
-
     end
-
   end
 
-
-
   return STATUS_TITLE.valid
-
 end
 
-
-
 local function getWrapWidth(content, extraIndent)
-
   extraIndent = extraIndent or 0
 
   local width = content:GetWidth() - (LIST_LEFT_OFFSET * 2) - extraIndent
 
   if width < 1 then
-
     return 1
-
   end
 
   return width
-
 end
 
-
-
 local function applyWrappedText(fontString, content, extraIndent)
-
   fontString:SetWidth(getWrapWidth(content, extraIndent))
 
   fontString:SetWordWrap(true)
@@ -135,20 +97,10 @@ local function applyWrappedText(fontString, content, extraIndent)
   fontString:SetJustifyH('LEFT')
 
   fontString:SetJustifyV('TOP')
-
 end
 
-
-
 local function ensureVerificationTabLayout(content)
-
-  if content.verificationInitialized then
-
-    return
-
-  end
-
-
+  if content.verificationInitialized then return end
 
   content.titleLabel = content:CreateFontString(nil, 'OVERLAY', 'GameFontHighlightHuge')
 
@@ -157,18 +109,12 @@ local function ensureVerificationTabLayout(content)
   content.checkHelpers = {}
 
   content.verificationInitialized = true
-
 end
 
-
-
 local function updateVerificationTabDisplay(content)
-
   local checks = getVerificationChecks()
 
   local status = getOverallStatus(checks)
-
-
 
   applyWrappedText(content.titleLabel, content)
 
@@ -180,27 +126,18 @@ local function updateVerificationTabDisplay(content)
 
   content.titleLabel:SetTextColor(status.r, status.g, status.b)
 
-
-
   local blockEnd = content.titleLabel
 
   local firstRowGap = -TITLE_BOTTOM_GAP
 
-
-
   for index, check in ipairs(checks) do
-
     local row = content.checkRows[index]
 
     if not row then
-
       row = content:CreateFontString(nil, 'OVERLAY', 'GameFontHighlight')
 
       content.checkRows[index] = row
-
     end
-
-
 
     applyWrappedText(row, content)
 
@@ -212,8 +149,6 @@ local function updateVerificationTabDisplay(content)
 
     firstRowGap = -ROW_GAP
 
-
-
     local passed = check.passed
 
     local color = passed and CHECK_PASS_COLOR or CHECK_FAIL_COLOR
@@ -224,25 +159,16 @@ local function updateVerificationTabDisplay(content)
 
     row:Show()
 
-
-
     blockEnd = row
-
-
 
     local helper = content.checkHelpers[index]
 
     if check.failHelperText and not passed then
-
       if not helper then
-
         helper = content:CreateFontString(nil, 'OVERLAY', 'GameFontNormalSmall')
 
         content.checkHelpers[index] = helper
-
       end
-
-
 
       applyWrappedText(helper, content, HELPER_INDENT)
 
@@ -258,55 +184,27 @@ local function updateVerificationTabDisplay(content)
 
       helper:Show()
 
-
-
       blockEnd = helper
-
     elseif helper then
-
       helper:Hide()
-
     end
-
   end
-
-
 
   for index = #checks + 1, #content.checkRows do
-
     content.checkRows[index]:Hide()
-
   end
-
-
 
   if content.checkHelpers then
-
     for index = #checks + 1, #content.checkHelpers do
-
       content.checkHelpers[index]:Hide()
-
     end
-
   end
-
 end
 
-
-
 function RaceLocked_InitializeGuildVerificationTab(content)
-
-  if not content then
-
-    return
-
-  end
-
-
+  if not content then return end
 
   ensureVerificationTabLayout(content)
 
   updateVerificationTabDisplay(content)
-
 end
-

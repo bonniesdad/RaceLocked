@@ -1,5 +1,5 @@
 function RaceLocked_IsPlayerInGuildRoster(playerName)
-    RaceLocked_RefreshGuildRoster()
+  RaceLocked_RefreshGuildRoster()
 
   if not playerName or not IsInGuild() then
     return false

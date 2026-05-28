@@ -62,9 +62,7 @@ local function CreateOptionRowButton(parent)
   end
 
   row:SetScript('OnClick', function(self)
-    if not check:IsEnabled() then
-      return
-    end
+    if not check:IsEnabled() then return end
     check:Click()
   end)
 
@@ -74,9 +72,7 @@ local function CreateOptionRowButton(parent)
 end
 
 function RaceLocked_InitializeMainMenuSettingsTab(content)
-  if not content or content.raceLockedMainMenuSettingsInit then
-    return
-  end
+  if not content or content.raceLockedMainMenuSettingsInit then return end
   content.raceLockedMainMenuSettingsInit = true
 
   if RaceLocked_Options_EnsureLoaded then
@@ -135,7 +131,9 @@ function RaceLocked_InitializeMainMenuSettingsTab(content)
   forceRaceOnlyGroupingRow:SetPoint('TOPLEFT', langRow, 'BOTTOMLEFT', 0, -10)
   forceRaceOnlyGroupingRow:SetPoint('TOPRIGHT', langRow, 'BOTTOMRIGHT', 0, -10)
   forceRaceOnlyGroupingRow.Text:SetText('Force race only grouping')
-  forceRaceOnlyGroupingRow:SetDescription('When enabled, players will only be able to group with other players of the same race.')
+  forceRaceOnlyGroupingRow:SetDescription(
+    'When enabled, players will only be able to group with other players of the same race.'
+  )
   local forceRaceOnly = true
   if RaceLocked_Options_GetForceRaceOnlyGrouping then
     forceRaceOnly = RaceLocked_Options_GetForceRaceOnlyGrouping()

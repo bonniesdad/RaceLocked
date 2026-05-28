@@ -11,7 +11,10 @@ local function utc_ts(y, mo, d, h, mi, s)
   local a = floor((14 - mo) / 12)
   local yy = y + 4800 - a
   local m = mo + 12 * a - 3
-  local jd = d + floor((153 * m + 2) / 5) + 365 * yy + floor(yy / 4) - floor(yy / 100) + floor(yy / 400) - 32045
+  local jd =
+    d + floor((153 * m + 2) / 5) + 365 * yy + floor(yy / 4) - floor(yy / 100) + floor(
+      yy / 400
+    ) - 32045
   return (jd - 2440588) * 86400 + h * 3600 + mi * 60 + s
 end
 

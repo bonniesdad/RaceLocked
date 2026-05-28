@@ -8,7 +8,8 @@
 - Race total 60s
 
 ### Bug Fixes
-- Options that are off showing as ticked on reload 
+
+- Options that are off showing as ticked on reload
 
 **1.0.5 (24-04-2026)**
 
@@ -18,8 +19,7 @@
 - More compact display
 - Guild Last updated info on hover
 - Race deaths WIP
-- Race achievement points average WIP 
-
+- Race achievement points average WIP
 
 **1.0.4 (21-04-2026)**
 

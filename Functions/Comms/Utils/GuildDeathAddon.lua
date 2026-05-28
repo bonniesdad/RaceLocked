@@ -30,13 +30,9 @@ local function isSenderLocalPlayer(sender)
 end
 
 local function sendGuildDeathPing()
-  if not IsInGuild or not IsInGuild() then
-    return
-  end
+  if not IsInGuild or not IsInGuild() then return end
   local send = SendAddonMessage or (C_ChatInfo and C_ChatInfo.SendAddonMessage)
-  if not send then
-    return
-  end
+  if not send then return end
   -- print('|cffffffffRace Locked|r: Sending guild death ping.')
   send(PREFIX, '1', 'GUILD')
 end
@@ -48,15 +44,9 @@ end
 
 --- Handle `CHAT_MSG_ADDON` for guild death pings (increment; do not re-broadcast).
 function RaceLocked_GuildChampion_OnGuildDeathAddonMessage(prefix, message, channel, sender)
-  if prefix ~= PREFIX then
-    return
-  end
-  if not IsInGuild or not IsInGuild() then
-    return
-  end
-  if isSenderLocalPlayer(sender) then
-    return
-  end
+  if prefix ~= PREFIX then return end
+  if not IsInGuild or not IsInGuild() then return end
+  if isSenderLocalPlayer(sender) then return end
   -- print(
   --   string.format(
   --     '|cffffffffRace Locked|r: Received guild death ping from %s, incrementing stored guild deaths.',

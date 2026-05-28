@@ -21,9 +21,7 @@ end
 local built = false
 
 function RaceLocked_GuildChampion_EnsureRaceGridAllowedGuildNamesBuilt()
-  if built then
-    return
-  end
+  if built then return end
   built = true
   local lookup = {}
   local displayByNorm = {}

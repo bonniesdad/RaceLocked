@@ -58,9 +58,7 @@ function RaceLocked_GuildChampion_SaveRaceGridGuildSnapshotFromRoster(raceTokens
     return
   end
   snap.normalizedGuild = gnorm
-  if not RaceLocked_GetGuildRaceGridReportForRaceToken then
-    return
-  end
+  if not RaceLocked_GetGuildRaceGridReportForRaceToken then return end
   for i = 1, #raceTokens do
     local token = raceTokens[i]
     local row = RaceLocked_GetGuildRaceGridReportForRaceToken(token)
@@ -74,7 +72,9 @@ end
 --- @param raceToken string
 --- @return table|nil
 function RaceLocked_GuildChampion_GetSnapshotGuildRowForRace(raceToken)
-  if not raceToken or raceToken == '' or not RaceLockedAccountDB or type(RaceLockedAccountDB.raceGridGuildSnapshot) ~= 'table' then
+  if not raceToken or raceToken == '' or not RaceLockedAccountDB or type(
+    RaceLockedAccountDB.raceGridGuildSnapshot
+  ) ~= 'table' then
     return nil
   end
   local snap = RaceLockedAccountDB.raceGridGuildSnapshot

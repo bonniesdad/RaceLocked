@@ -11,9 +11,7 @@ function RaceLocked_Settings_RegisterDataBroker()
       end
     end,
     OnTooltipShow = function(tooltip)
-      if not tooltip or not tooltip.AddLine then
-        return
-      end
+      if not tooltip or not tooltip.AddLine then return end
       tooltip:AddLine('|cffffffffRace Locked|r\n\nLeft-click to open', nil, nil, nil, nil)
     end,
   })

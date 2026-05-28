@@ -7,9 +7,7 @@ local G = RaceLocked_GuildChampion
 local fileToReportKey
 
 local function ensureClassFileMap()
-  if fileToReportKey then
-    return
-  end
+  if fileToReportKey then return end
   fileToReportKey = {}
   for reportKey, classFile in pairs(G.CLASS_KEY_TO_FILE) do
     fileToReportKey[classFile] = reportKey
@@ -122,7 +120,9 @@ function RaceLocked_GetGuildRaceGridReportForRaceToken(raceToken)
 
     if not engRace and name and playerShort ~= '' then
       local rosterShort = stripRealmFromRosterName(name)
-      if rosterShort ~= '' and string.lower(rosterShort) == string.lower(playerShort) and UnitRace then
+      if rosterShort ~= '' and string.lower(rosterShort) == string.lower(
+        playerShort
+      ) and UnitRace then
         _, engRace = UnitRace('player')
       end
     end
@@ -144,7 +144,11 @@ function RaceLocked_GetGuildRaceGridReportForRaceToken(raceToken)
       if rk then
         local classEntry = classes[rk]
         if type(classEntry) ~= 'table' then
-          classEntry = { count = 0, sumLevel = 0, averageLevel = 0 }
+          classEntry = {
+            count = 0,
+            sumLevel = 0,
+            averageLevel = 0,
+          }
           classes[rk] = classEntry
         end
         classEntry.count = (tonumber(classEntry.count) or 0) + 1

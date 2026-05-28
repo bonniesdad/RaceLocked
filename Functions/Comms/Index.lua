@@ -6,16 +6,12 @@ G.Comms = G.Comms or {}
 local Comms = G.Comms
 
 function RaceLocked_GuildChampion_BroadcastOwnGuildRaceGridReports()
-  if not RaceLocked_GuildChampion_NormalizeGuildNameForRaceGrid then
-    return
-  end
+  if not RaceLocked_GuildChampion_NormalizeGuildNameForRaceGrid then return end
   if RaceLocked_GuildChampion_EnsureStoredGuildReportsDB then
     RaceLocked_GuildChampion_EnsureStoredGuildReportsDB()
   end
   local channelId = Comms.EnsureDataChannelJoined()
-  if channelId <= 0 then
-    return
-  end
+  if channelId <= 0 then return end
   local raceTokens = {}
   for raceToken, _ in pairs(G.RACE_GRID_STORED_GUILD_REPORTS_BY_RACE or {}) do
     raceTokens[#raceTokens + 1] = raceToken
@@ -131,14 +127,10 @@ service:SetScript('OnEvent', function(_, event, ...)
     return
   end
   if event == 'CHAT_MSG_CHANNEL' then
-    if not Comms.IsOurDataChannelMessage(...) then
-      return
-    end
+    if not Comms.IsOurDataChannelMessage(...) then return end
     local msg = select(1, ...)
     local report = Comms.ParsePayload(msg)
-    if not report then
-      return
-    end
+    if not report then return end
     -- Keep incoming reports persisted, but do not force live UI rerenders;
     -- the race grid redraw is user-driven from Apply Update.
     Comms.ApplyIncomingReport(report)

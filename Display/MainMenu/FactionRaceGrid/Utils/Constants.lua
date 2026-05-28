@@ -23,10 +23,8 @@ G.CLASS_BAR_SEP_W = 1
 G.CLASS_BAR_SEP = { 0.22, 0.22, 0.24 }
 -- Multiplier applied to class colors so bars/labels are less vivid.
 G.CLASS_COLOR_BRIGHTNESS = 0.82
-G.CLASS_BAR_HOST_H = G.CLASS_BAR_HEIGHT
-  + 2 * G.CLASS_BAR_BORDER_PAD
-  + G.CLASS_BAR_PCT_GAP
-  + G.CLASS_BAR_LABEL_ROW
+G.CLASS_BAR_HOST_H =
+  G.CLASS_BAR_HEIGHT + 2 * G.CLASS_BAR_BORDER_PAD + G.CLASS_BAR_PCT_GAP + G.CLASS_BAR_LABEL_ROW
 -- Extra vertical space between **sections** (after race name, after guild list, after level value).
 -- Not applied between a subheading and its value (guild title→names, avg label→number, class label→bar).
 G.RACE_GRID_PANE_SECTION_GAP = 5
@@ -57,8 +55,18 @@ G.GAP_AFTER_ICON = 6
 G.LABEL_GOLD = { 1, 0.92, 0.62 }
 G.MUTED = { 0.62, 0.6, 0.55 }
 
-G.AP_BG = { r = 0.08, g = 0.1, b = 0.14, a = 0.94 }
-G.AP_BORDER = { r = 0.38, g = 0.45, b = 0.52, a = 0.88 }
+G.AP_BG = {
+  r = 0.08,
+  g = 0.1,
+  b = 0.14,
+  a = 0.94,
+}
+G.AP_BORDER = {
+  r = 0.38,
+  g = 0.45,
+  b = 0.52,
+  a = 0.88,
+}
 
 --- Per-race crests under Interface\Icons (glue CharacterCreate assets are not usable from addons).
 --- @type table<string, string>
@@ -78,7 +86,12 @@ G.CELL_BACKDROP = {
   edgeFile = 'Interface\\Tooltips\\UI-Tooltip-Border',
   tile = false,
   edgeSize = 8,
-  insets = { left = 3, right = 3, top = 3, bottom = 3 },
+  insets = {
+    left = 3,
+    right = 3,
+    top = 3,
+    bottom = 3,
+  },
 }
 
 -- Class stacked bar: border only around the colored strip (see _classBarBarWell in View).
@@ -87,7 +100,12 @@ G.CLASS_BAR_CHART_BACKDROP = {
   edgeFile = 'Interface\\Tooltips\\UI-Tooltip-Border',
   tile = false,
   edgeSize = 6,
-  insets = { left = 2, right = 2, top = 2, bottom = 2 },
+  insets = {
+    left = 2,
+    right = 2,
+    top = 2,
+    bottom = 2,
+  },
 }
 
 -- Per-race accent (left bar); legacy 4-pane Alliance order (see `RACE_TOKEN_ACCENT` for the full grid).
@@ -106,7 +124,8 @@ G.HORDE_RACE_ACCENT = {
 }
 
 --- All Classic playable races (both factions), for the combined race grid tab.
-G.RACE_GRID_ALL_TOKENS = { 'Human', 'Dwarf', 'NightElf', 'Gnome', 'Orc', 'Troll', 'Tauren', 'Scourge' }
+G.RACE_GRID_ALL_TOKENS =
+  { 'Human', 'Dwarf', 'NightElf', 'Gnome', 'Orc', 'Troll', 'Tauren', 'Scourge' }
 
 --- Left-bar tint per race token (for any grid order).
 G.RACE_TOKEN_ACCENT = {
@@ -145,17 +164,34 @@ G.TRUSTED_GUILDS_TITLE_TOP_GAP = 6
 G.MIN_GUILD_MEMBERS_FOR_RACE_GRID = 400
 
 --- Display order for class keys (matches stored payload keys).
-G.CLASS_REPORT_KEYS = {
-  { key = 'druids', label = 'Druid' },
-  { key = 'rogues', label = 'Rogue' },
-  { key = 'hunters', label = 'Hunter' },
-  { key = 'warriors', label = 'Warrior' },
-  { key = 'mages', label = 'Mage' },
-  { key = 'priests', label = 'Priest' },
-  { key = 'warlocks', label = 'Warlock' },
-  { key = 'paladins', label = 'Paladin' },
-  { key = 'shamans', label = 'Shaman' },
-}
+G.CLASS_REPORT_KEYS = { {
+  key = 'druids',
+  label = 'Druid',
+}, {
+  key = 'rogues',
+  label = 'Rogue',
+}, {
+  key = 'hunters',
+  label = 'Hunter',
+}, {
+  key = 'warriors',
+  label = 'Warrior',
+}, {
+  key = 'mages',
+  label = 'Mage',
+}, {
+  key = 'priests',
+  label = 'Priest',
+}, {
+  key = 'warlocks',
+  label = 'Warlock',
+}, {
+  key = 'paladins',
+  label = 'Paladin',
+}, {
+  key = 'shamans',
+  label = 'Shaman',
+} }
 
 --- Maps report keys to RAID_CLASS_COLORS / GetClassColor file tokens.
 G.CLASS_KEY_TO_FILE = {
