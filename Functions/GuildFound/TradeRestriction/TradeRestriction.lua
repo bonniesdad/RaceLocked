@@ -5,8 +5,7 @@ frame:RegisterEvent('AUCTION_HOUSE_SHOW')
 frame:RegisterEvent('MAIL_INBOX_UPDATE')
 
 frame:SetScript('OnEvent', function(self, event, ...)
-  if not RaceLocked_IsInGuildFoundGuild() and not RaceLocked_AmIVerified() then return end
-
+  if not RaceLocked_IsInGuildFoundGuild() or not RaceLocked_AmIVerified() then return end
   if event == 'MAIL_INBOX_UPDATE' then
     for inboxIndex = GetInboxNumItems(), 1, -1 do
       local _, _, sender, _, _, _, _, _, _, _, _, isGM = GetInboxHeaderInfo(i)

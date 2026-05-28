@@ -32,6 +32,12 @@ local CHECK_FAIL_COLOR = {
   b = 0.33,
 }
 
+local CHECK_WARNING_COLOR = {
+  r = 0.95,
+  g = 0.82,
+  b = 0.2,
+}
+
 local function getDetectedOnHelperText(failedAt)
   if failedAt then
     return 'Detected on ' .. date('%d %b %Y', failedAt)
@@ -64,17 +70,16 @@ local function getVerificationChecks()
     passMessage = 'Guild note override detected',
     failMessage = 'No guild note override detected',
     failHelperText = 'You are not in a guild or do not have a guild note override',
+    failColor = CHECK_WARNING_COLOR,
   } }
 end
 
 local function getOverallStatus(checks)
-  for _, check in ipairs(checks) do
-    if not check.passed then
-      return STATUS_TITLE.invalid
-    end
+  if RaceLocked_AmIVerified() then
+    return STATUS_TITLE.valid
+  else
+    return STATUS_TITLE.invalid
   end
-
-  return STATUS_TITLE.valid
 end
 
 local function getWrapWidth(content, extraIndent)
@@ -151,7 +156,7 @@ local function updateVerificationTabDisplay(content)
 
     local passed = check.passed
 
-    local color = passed and CHECK_PASS_COLOR or CHECK_FAIL_COLOR
+    local color = passed and CHECK_PASS_COLOR or (check.failColor or CHECK_FAIL_COLOR)
 
     row:SetText('• ' .. (passed and check.passMessage or check.failMessage))
 

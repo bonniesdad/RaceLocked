@@ -1,4 +1,4 @@
-local MAX_LEVEL = 60
+local MAX_LEVEL = 1
 
 local trackerFrame = CreateFrame('Frame')
 
