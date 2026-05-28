@@ -1,5 +1,11 @@
 ### PATCH NOTES
 
+**1.0.7 (28-05-2026)**
+
+### Features
+
+- Guild Found for <FOR GNOMEREGAN>
+
 **1.0.6 (07-05-2026)**
 
 ### Features

@@ -7,13 +7,13 @@ local HELPER_TOP_GAP = 4
 
 local STATUS_TITLE = {
   valid = {
-    text = 'Guild Found Trading is Unlocked',
+    text = 'Guild Found Trading is unlocked',
     r = 0.35,
     g = 0.8,
     b = 0.35,
   },
   invalid = {
-    text = 'Guild Found Trading is Locked',
+    text = 'Guild Found Trading is locked',
     r = 0.82,
     g = 0.33,
     b = 0.33,
@@ -73,7 +73,7 @@ local function getVerificationChecks()
     failColor = CHECK_WARNING_COLOR,
   }, {
     passed = RaceLocked_IsInGuildFoundGuild(),
-    passMessage = 'You are in the Guild Found guild',
+    passMessage = 'You are in a Guild Found guild',
     failMessage = 'You are not in a Guild Found guild',
     failHelperText = 'You must be in the Guild Found guild to unlock Guild Found',
   } }
