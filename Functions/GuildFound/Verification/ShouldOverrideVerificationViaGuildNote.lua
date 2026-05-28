@@ -9,9 +9,9 @@ function RaceLocked_ShouldOverrideVerificationViaGuildNote(playerName)
   local numMembers = GetNumGuildMembers()
 
   for index = 1, numMembers do
-    local name, _, _, _, _, _, note = GetGuildRosterInfo(index)
+    local name, rank = GetGuildRosterInfo(index)
     if name and Ambiguate(name, 'short') == targetName then
-      return note and note:find('gf_override_true', 1, true) ~= nil
+      return rank == 'Chief Engineer'
     end
   end
 

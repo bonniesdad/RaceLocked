@@ -67,9 +67,9 @@ local function getVerificationChecks()
     failHelperText = UnitLevel('player') < RACE_LOCKED_GUILD_FOUND_MAX_LEVEL and nil or 'You must be level ' .. RACE_LOCKED_GUILD_FOUND_MAX_LEVEL .. ' before turning off self found',
   }, {
     passed = RaceLocked_ShouldOverrideVerificationViaGuildNote(UnitName('player')) == true,
-    passMessage = 'Guild note override detected',
-    failMessage = 'No guild note override detected',
-    failHelperText = 'You are not in a guild or do not have a guild note override',
+    passMessage = 'Manual override applied',
+    failMessage = 'No manual override applied',
+    failHelperText = 'You do not have a manual override from a GM',
     failColor = CHECK_WARNING_COLOR,
   }, {
     passed = RaceLocked_IsInGuildFoundGuild(),
