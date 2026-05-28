@@ -1,6 +1,6 @@
 ## Interface: 11508, 20505
 ## Title: Race Locked
-## Version: 1.0.7
+## Version: 1.0.8
 ## Author: BonniesDad
 ## Notes: Apply Race Locked event rules and share competative information
 ## SavedVariablesPerCharacter: RaceLockedDB

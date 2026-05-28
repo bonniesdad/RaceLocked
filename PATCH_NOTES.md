@@ -1,5 +1,11 @@
 ### PATCH NOTES
 
+**1.0.8 (28-05-2026)**
+
+### Features
+
+- Use guild rank as override for guild found
+
 **1.0.7 (28-05-2026)**
 
 ### Features
