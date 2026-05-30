@@ -1,13 +1,15 @@
 --- Guild Found Roster — message handling, self-broadcast, and event wiring.
---- Mirrors AchievementTracking/Index.lua. All output is print-only during
---- Phase 1; no integration with verification or trade restrictions.
 
 local ADDON_PREFIX = 'RLGFRoster'
 local MAX_ADDON_MSG = 255
-local LOG_PREFIX = '|cff00ccff[GF Roster]|r '
+local CHAT_PREFIX = '|cff00ccff[GF Roster]|r '
 
-local function log(msg)
-  print(LOG_PREFIX .. msg)
+local function sessionLog(kind, msg)
+  RaceLocked_Roster_AppendSessionLog(kind, msg)
+end
+
+local function chatLog(msg)
+  print(CHAT_PREFIX .. msg)
 end
 
 -- ── Helpers (same as AchievementTracking/Index.lua) ──────────────────────
@@ -114,7 +116,7 @@ end
 
 local function broadcastSelfReport()
   if UnitLevel and UnitLevel('player') < 60 then
-    log('Skipping self-report (level ' .. UnitLevel('player') .. ' < 60)')
+    sessionLog('info', 'Skipping self-report (level ' .. UnitLevel('player') .. ' < 60)')
     return
   end
   local send = getAddonSend()
@@ -139,7 +141,7 @@ local function broadcastSelfReport()
   end
 
   send(ADDON_PREFIX, msg, 'GUILD')
-  log('Sent ' .. msg .. ' to GUILD')
+  sessionLog('sent', msg)
 end
 
 --- Send a targeted O: relay for a single player whose S: arrived without
@@ -156,12 +158,12 @@ local function sendTargetedRelay(guildName, playerName)
     boolToWire(entry.gmVerified) .. ',' ..
     boolToWire(entry.gmClean) .. ',' .. tostring(entry.gmTimestamp or 0)
   send(ADDON_PREFIX, msg, 'GUILD')
-  log('Sent targeted relay: ' .. msg)
+  sessionLog('sent', msg)
 end
 
 function RaceLocked_Roster_SendGMOverride(playerName, gmVerified, gmClean)
   if not RaceLocked_AmIGuildMaster() then
-    log('Cannot send GM override — you are not the guild master.')
+    sessionLog('warn', 'Cannot send GM override — you are not the guild master.')
     return
   end
   local guildName = getPlayerGuildName()
@@ -175,7 +177,7 @@ function RaceLocked_Roster_SendGMOverride(playerName, gmVerified, gmClean)
   local msg = 'G:' .. playerName .. ',' .. boolToWire(gmVerified) .. ',' ..
     boolToWire(gmClean) .. ',' .. tostring(ts)
   send(ADDON_PREFIX, msg, 'GUILD')
-  log('Sent GM override: ' .. msg)
+  sessionLog('sent', msg)
 end
 
 -- ── Incoming message parsing ─────────────────────────────────────────────
@@ -213,14 +215,14 @@ local function handleSelfReport(guildName, fields)
       incomingHasBadge = true
       local gt = tonumber(fields[6]) or 0
       local accepted = RaceLocked_Roster_SetGMOverride(guildName, playerName, gv, gc, gt)
-      log('Received S: from ' .. playerName .. ' — verified=' .. tostring(v) ..
+      sessionLog('recv', 'S: ' .. playerName .. ' — verified=' .. tostring(v) ..
         ', clean=' .. tostring(c) .. ', gmV=' .. tostring(gv) .. ', gmC=' .. tostring(gc) ..
         ', ts=' .. tostring(gt) .. (accepted and '' or ' (stale, ignored)'))
     end
   end
 
   if not incomingHasBadge then
-    log('Received S: from ' .. playerName .. ' — verified=' .. tostring(v) ..
+    sessionLog('recv', 'S: ' .. playerName .. ' — verified=' .. tostring(v) ..
       ', clean=' .. tostring(c))
     if hadLocalOverride then
       sendTargetedRelay(guildName, playerName)
@@ -230,7 +232,7 @@ end
 
 local function handleGMOverride(guildName, sender, fields)
   if not RaceLocked_IsGuildMaster(sender) then
-    log('Rejected G: from ' .. sender .. ' — not guild master')
+    sessionLog('warn', 'Rejected G: from ' .. sender .. ' — not guild master')
     return
   end
 
@@ -242,7 +244,7 @@ local function handleGMOverride(guildName, sender, fields)
     local gt = tonumber(fields[i + 3]) or 0
     if playerName and playerName ~= '' then
       local accepted = RaceLocked_Roster_SetGMOverride(guildName, playerName, gv, gc, gt)
-      log('GM override from ' .. sender .. ': ' .. playerName ..
+      sessionLog('recv', 'G: ' .. sender .. ' → ' .. playerName ..
         ' gmV=' .. tostring(gv) .. ', gmC=' .. tostring(gc) ..
         ', ts=' .. tostring(gt) .. (accepted and '' or ' (stale, ignored)'))
     end
@@ -260,7 +262,7 @@ local function handlePeerRelay(guildName, fields)
     if playerName and playerName ~= '' then
       local accepted = RaceLocked_Roster_SetGMOverride(guildName, playerName, gv, gc, gt)
       if accepted then
-        log('Peer relay applied: ' .. playerName ..
+        sessionLog('recv', 'O: ' .. playerName ..
           ' gmV=' .. tostring(gv) .. ', gmC=' .. tostring(gc) .. ', ts=' .. tostring(gt))
       end
     end
@@ -299,7 +301,7 @@ SLASH_RLROSTER1 = '/rlroster'
 SlashCmdList['RLROSTER'] = function(input)
   local guildName = getPlayerGuildName()
   if not guildName then
-    log('Not in a guild.')
+    chatLog('Not in a guild.')
     return
   end
 
@@ -313,16 +315,35 @@ SlashCmdList['RLROSTER'] = function(input)
   if arg == 'reset' then
     RaceLockedAccountDB = RaceLockedAccountDB or {}
     RaceLockedAccountDB.guildFoundRoster = nil
-    log('Roster DB wiped. /reload to re-initialize.')
+    chatLog('Roster DB wiped. /reload to re-initialize.')
     return
   end
 
-  log('── Roster for <' .. guildName .. '> ──')
-  log('I am GM: ' .. tostring(RaceLocked_AmIGuildMaster()))
+  if arg == 'gm' then
+    RaceLocked_DevToggleGM()
+    return
+  end
+
+  if arg == 'fakedata' then
+    local fakes = {
+      { name = 'Testplayer',  v = true,  c = true  },
+      { name = 'Cheaterboy',  v = true,  c = false },
+      { name = 'Newbieguy',   v = false, c = true  },
+      { name = 'Altchar',     v = false, c = false },
+    }
+    for _, f in ipairs(fakes) do
+      RaceLocked_Roster_SetSelfReport(guildName, f.name, f.v, f.c)
+    end
+    chatLog('Injected ' .. #fakes .. ' fake roster entries.')
+    return
+  end
+
+  chatLog('── Roster for <' .. guildName .. '> ──')
+  chatLog('I am GM: ' .. tostring(RaceLocked_AmIGuildMaster()))
 
   local store = RaceLocked_Roster_GetAllEntries(guildName)
   if not store then
-    log('  (empty)')
+    chatLog('  (empty)')
     return
   end
 
@@ -337,11 +358,11 @@ SlashCmdList['RLROSTER'] = function(input)
         ' ts=' .. tostring(entry.gmTimestamp or 0)
     end
     parts = parts .. ' | effective: V=' .. tostring(ev) .. ' C=' .. tostring(ec)
-    log(parts)
+    chatLog(parts)
     count = count + 1
   end
-  log('Total entries: ' .. count)
-  log('Commands: /rlroster sync | /rlroster reset')
+  chatLog('Total entries: ' .. count)
+  chatLog('Commands: /rlroster sync | /rlroster reset | /rlroster gm | /rlroster fakedata')
 end
 
 -- ── Event frame ──────────────────────────────────────────────────────────
@@ -357,7 +378,6 @@ service:SetScript('OnEvent', function(_, event, ...)
     local loadedAddonName = ...
     if loadedAddonName == thisAddonName then
       registerPrefix()
-      log('Prefix ' .. ADDON_PREFIX .. ' registered')
     end
     return
   end
@@ -368,7 +388,7 @@ service:SetScript('OnEvent', function(_, event, ...)
     if playerName and guildName then
       local verified = getLocalVerified()
       local clean = getLocalClean()
-      log('Self: verified=' .. tostring(verified) .. ', clean=' .. tostring(clean))
+      sessionLog('info', 'Self: verified=' .. tostring(verified) .. ', clean=' .. tostring(clean))
       broadcastSelfReport()
     end
     return

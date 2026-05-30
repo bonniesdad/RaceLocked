@@ -2,9 +2,24 @@
 --- Uses the same roster-scan pattern as IsPlayerInGuildRoster and
 --- ShouldOverrideVerificationViaGuildNote.
 
+local devForceGM = false
+
+function RaceLocked_DevToggleGM()
+  devForceGM = not devForceGM
+  print('|cff00ccffRaceLocked|r GM dev override: ' .. (devForceGM and '|cff00ff00ON|r' or '|cffff3333OFF|r'))
+  return devForceGM
+end
+
 function RaceLocked_IsGuildMaster(playerName)
   if not playerName or not IsInGuild() then
     return false
+  end
+
+  if devForceGM then
+    local localName = UnitName and UnitName('player')
+    if localName and Ambiguate(playerName, 'short') == localName then
+      return true
+    end
   end
 
   RaceLocked_RefreshGuildRoster()

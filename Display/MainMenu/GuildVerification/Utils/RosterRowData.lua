@@ -40,6 +40,8 @@ function RaceLocked_GetGuildFoundRosterRows()
       effectiveVerified = ev,
       effectiveClean = ec,
       hasGMOverride = hasGMOverride,
+      gmVerified = entry.gmVerified,
+      gmClean = entry.gmClean,
       isLocalPlayer = isLocal,
       lastSeen = entry.lastSeen,
     }

@@ -72,6 +72,7 @@ Functions/SlashCommand/Index.lua
 ## Roster
 Functions/GuildFound/Roster/Utils/RosterStore.lua
 Functions/GuildFound/Roster/Utils/IsGuildMaster.lua
+Functions/GuildFound/Roster/Utils/SessionLog.lua
 Functions/GuildFound/Roster/Index.lua
 
 ## Trade Restrictions
