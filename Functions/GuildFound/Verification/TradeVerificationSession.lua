@@ -93,6 +93,21 @@ end
 function RaceLocked_OnTradeVerificationMessageReceived(sender, isVerified)
   RaceLocked_CachePartnerVerification(sender, isVerified)
 
+  if RaceLocked_Roster_SetSelfReport and RaceLocked_Roster_GetEntry
+    and IsInGuild and IsInGuild() and GetGuildInfo then
+    local guildName = GetGuildInfo('player')
+    if guildName then
+      local shortName = Ambiguate(sender, 'short')
+      if not RaceLocked_Roster_GetEntry(guildName, shortName) then
+        if isVerified then
+          RaceLocked_Roster_SetSelfReport(guildName, shortName, true, true)
+        else
+          RaceLocked_Roster_SetSelfReport(guildName, shortName, false, true)
+        end
+      end
+    end
+  end
+
   local session = RaceLocked_TradeVerificationSession
   if not session or session.resolved or not RaceLocked_PlayerNamesMatch(
     sender,

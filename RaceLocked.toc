@@ -46,6 +46,7 @@ Display/MainMenu/GuildVerification/Utils/IsLocalGuildRow.lua
 Display/MainMenu/GuildVerification/Utils/ComputeGuildTableColumns.lua
 Display/MainMenu/GuildVerification/Utils/GetPrimaryRowTint.lua
 Display/MainMenu/GuildVerification/Utils/GetGuildVerificationRosterRows.lua
+Display/MainMenu/GuildVerification/Utils/RosterRowData.lua
 Display/MainMenu/GuildVerification/View.lua
 
 Display/MainMenu/SettingsWindow/Utils/Constants.lua
@@ -67,6 +68,11 @@ Display/MainMenu/MinimapBroker/View.lua
 Display/MainMenu/RaceLockedOptions/Index.lua
 
 Functions/SlashCommand/Index.lua
+
+## Roster
+Functions/GuildFound/Roster/Utils/RosterStore.lua
+Functions/GuildFound/Roster/Utils/IsGuildMaster.lua
+Functions/GuildFound/Roster/Index.lua
 
 ## Trade Restrictions
 Functions/GuildFound/TradeRestriction/Utils/CancelAuctionHouseWithMessage.lua
