@@ -70,6 +70,7 @@ Display/MainMenu/RaceLockedOptions/Index.lua
 Functions/SlashCommand/Index.lua
 
 ## Roster
+Functions/GuildFound/Roster/Utils/PlayerIdentity.lua
 Functions/GuildFound/Roster/Utils/RosterStore.lua
 Functions/GuildFound/Roster/Utils/IsGuildMaster.lua
 Functions/GuildFound/Roster/Utils/SessionLog.lua

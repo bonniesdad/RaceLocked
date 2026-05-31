@@ -225,6 +225,10 @@ local ROSTER_SCROLLBAR_W = 26
 local ROSTER_LOG_ROW_HEIGHT = 28
 local ROSTER_VIEW_TOGGLE_W = 42
 
+-- Sync Log: hovering a row shows the raw wire message behind it. This is a
+-- developer aid; set to false for production builds to hide it entirely.
+local ROSTER_LOG_RAW_TOOLTIP = true
+
 local ROSTER_LOG_COLORS = {
   sent = { r = 1.0,  g = 0.82, b = 0.0  },
   recv = { r = 0.35, g = 0.8,  b = 0.35 },
@@ -305,6 +309,16 @@ local function overrideDisplayValue(isOverride, effective, selfReported)
   return selfReported
 end
 
+--- Effective value of a field given an optional GM override: the override
+--- wins when set (true/false), otherwise the player's self-report stands.
+--- Written out (not `a and b or c`) so a `false` override survives.
+local function resolveEffectiveStatus(overrideValue, selfReported)
+  if overrideValue ~= nil then
+    return overrideValue
+  end
+  return selfReported
+end
+
 local function getRosterRowsForDisplay(content)
   local freshRows, isGM = RaceLocked_GetGuildFoundRosterRows()
 
@@ -373,8 +387,8 @@ local function ensureEditLinkButton(row)
     if not GameTooltip then return end
     GameTooltip:SetOwner(self, 'ANCHOR_RIGHT')
     if self._editing then
-      GameTooltip:AddLine('Done', 1, 0.92, 0.62)
-      GameTooltip:AddLine('Close override editing', 1, 1, 1)
+      GameTooltip:AddLine('Save', 1, 0.92, 0.62)
+      GameTooltip:AddLine('Save overrides and broadcast to the guild', 1, 1, 1)
     else
       GameTooltip:AddLine('Edit', 1, 0.92, 0.62)
       GameTooltip:AddLine('Set GM overrides for this player', 1, 1, 1)
@@ -392,21 +406,50 @@ local function ensureEditLinkButton(row)
   return btn
 end
 
-local function setPanelButtonLabel(btn, text, color)
-  btn:SetText(text)
-  local fs = btn:GetFontString()
-  if fs then
-    fs:SetFont(fs:GetFont(), 9)
-    if color then
-      fs:SetTextColor(color.r, color.g, color.b)
-    end
-  end
-end
-
 local function refreshAfterOverride(content)
   C_Timer.After(0.3, function()
     RaceLocked_InitializeGuildVerificationTab(content)
   end)
+end
+
+--- Begin editing a row: hold the player's current override in a temporary,
+--- in-memory buffer. Nothing is written to the store or broadcast until the GM
+--- clicks Save, so abandoning an edit (switching rows / closing) discards it.
+local function beginPendingOverride(content, data)
+  -- Keep the original alongside the working copy so Save can skip a needless
+  -- broadcast when nothing actually changed.
+  content.rosterPendingEdit = {
+    verified = data.gmVerified,
+    clean = data.gmClean,
+    origVerified = data.gmVerified,
+    origClean = data.gmClean,
+  }
+end
+
+--- Update one field of the in-memory buffer for the row being edited and
+--- re-render so the change is visible. Still no store write or broadcast.
+local function setPendingOverride(content, field, value)
+  if not content.rosterPendingEdit then content.rosterPendingEdit = {} end
+  content.rosterPendingEdit[field] = value
+  refreshAfterOverride(content)
+end
+
+--- Throw away the in-memory buffer without persisting anything.
+local function discardPendingOverride(content)
+  content.rosterPendingEdit = nil
+end
+
+--- Persist the buffered override to the store and broadcast it once. This is
+--- the only path that writes/sends an override, so it runs solely on Save.
+local function savePendingOverride(content, playerName)
+  local pending = content.rosterPendingEdit
+  local changed = pending and
+    (pending.verified ~= pending.origVerified or pending.clean ~= pending.origClean)
+  if changed then
+    RaceLocked_Roster_StageGMOverride(playerName, pending.verified, pending.clean)
+    RaceLocked_Roster_CommitGMOverride(playerName)
+  end
+  content.rosterPendingEdit = nil
 end
 
 local function rosterFieldDropdownInit(dropdown)
@@ -488,6 +531,32 @@ local function hideFieldDropdown(textFs, dropdown)
   dropdown:Hide()
 end
 
+--- Lay out and populate a single status cell (Verified or Tampered).
+--- When the row is being edited it swaps the text for a Yes/No/Reset dropdown.
+--- `spec` carries everything that differs between the two columns:
+---   text, color, hasOverride, yesSelected, onYes, onNo, onReset
+local function renderRosterField(row, fieldFs, dropdown, leftOffset, colW, isEditing, spec)
+  fieldFs:ClearAllPoints()
+  fieldFs:SetPoint('LEFT', row, 'LEFT', leftOffset, 0)
+  fieldFs:SetWidth(colW)
+  fieldFs:SetJustifyH('CENTER')
+  fieldFs:SetText(spec.text)
+  fieldFs:SetTextColor(spec.color.r, spec.color.g, spec.color.b)
+
+  if isEditing then
+    showFieldDropdown(row, colW, leftOffset, fieldFs, dropdown, {
+      displayText = spec.text,
+      hasOverride = spec.hasOverride,
+      yesSelected = spec.yesSelected,
+      onYes = spec.onYes,
+      onNo = spec.onNo,
+      onReset = spec.onReset,
+    })
+  else
+    hideFieldDropdown(fieldFs, dropdown)
+  end
+end
+
 local function ensureRosterViewToggle(content)
   if content.rosterViewBtn and content.rosterViewBtn.editLabel then
     return content.rosterViewBtn
@@ -550,6 +619,21 @@ local function ensureRosterLogRow(content, index)
   row.bg = row:CreateTexture(nil, 'BACKGROUND')
   row.bg:SetAllPoints()
 
+  -- Hover shows the raw wire message (developer aid, gated by config).
+  row:EnableMouse(true)
+  row:SetScript('OnEnter', function(self)
+    if not ROSTER_LOG_RAW_TOOLTIP then return end
+    if not self._raw or self._raw == '' then return end
+    if not GameTooltip then return end
+    GameTooltip:SetOwner(self, 'ANCHOR_RIGHT')
+    GameTooltip:AddLine('Raw message', 1, 0.92, 0.62)
+    GameTooltip:AddLine(self._raw, 1, 1, 1, true)
+    GameTooltip:Show()
+  end)
+  row:SetScript('OnLeave', function()
+    if GameTooltip then GameTooltip:Hide() end
+  end)
+
   row.clockText = row:CreateFontString(nil, 'OVERLAY', 'GameFontHighlightSmall')
   row.clockText:SetJustifyH('LEFT')
 
@@ -585,6 +669,8 @@ local function updateRosterLogSection(content, scrollWidth, listPad)
 
     local bg = (i % 2 == 0) and ROSTER_COLORS.rowEven or ROSTER_COLORS.rowOdd
     row.bg:SetColorTexture(bg.r, bg.g, bg.b, bg.a)
+
+    row._raw = entry.raw
 
     local kindColor = ROSTER_LOG_COLORS[entry.kind] or ROSTER_LOG_COLORS.info
     local kindLabel = ROSTER_LOG_KIND_LABEL[entry.kind] or 'Info'
@@ -689,6 +775,11 @@ local function ensureRosterLayout(content)
   local settingsFrame = _G.RaceLockedSettingsFrame
   if settingsFrame and settingsFrame.HookScript then
     settingsFrame:HookScript('OnHide', function()
+      -- Closing the window abandons any unsaved edit (overrides only persist on
+      -- an explicit Save).
+      discardPendingOverride(content)
+      content.rosterEditingName = nil
+      content.rosterViewMode = 'roster'
       content.rosterSyncBtn._synced = false
       content.rosterSyncBtn:SetNormalTexture(REFRESH_TEX)
       content.rosterSyncBtn:SetPushedTexture(REFRESH_TEX)
@@ -710,6 +801,7 @@ local function ensureRosterLayout(content)
 
   content.rosterEditingName = nil
   content.rosterLastRows = nil
+  content.rosterPendingEdit = nil
   content.rosterViewMode = content.rosterViewMode or 'roster'
 
   content.rosterScrollFrame = CreateFrame('ScrollFrame', 'RaceLocked_RosterScrollFrame', content.rosterPanel, 'UIPanelScrollFrameTemplate')
@@ -721,10 +813,20 @@ local function ensureRosterLayout(content)
 
   ensureRosterViewToggle(content)
 
+  -- A burst of incoming messages can append many log lines at once. Coalesce
+  -- them into at most one relayout every fraction of a second instead of
+  -- rebuilding the tab (and re-scanning the guild roster) per message.
   RaceLocked_Roster_OnSessionLogUpdated = function()
     if content.rosterViewMode ~= 'log' then return end
     if not content:IsShown() then return end
-    RaceLocked_InitializeGuildVerificationTab(content)
+    if content._logRefreshPending then return end
+    content._logRefreshPending = true
+    C_Timer.After(0.2, function()
+      content._logRefreshPending = false
+      if content.rosterViewMode == 'log' and content:IsShown() then
+        RaceLocked_InitializeGuildVerificationTab(content)
+      end
+    end)
   end
 
   content.rosterLegend = content:CreateFontString(nil, 'OVERLAY', 'GameFontHighlightSmall')
@@ -865,7 +967,11 @@ local function updateRosterSection(content, blockEnd)
   content.rosterLegend:ClearAllPoints()
   content.rosterLegend:SetPoint('BOTTOMLEFT', content, 'BOTTOMLEFT', PANEL_MARGIN + panelPad, 15)
   if showLog then
-    content.rosterLegend:SetText('Session log · clears on reload')
+    if ROSTER_LOG_RAW_TOOLTIP then
+      content.rosterLegend:SetText('Session log · clears on reload · hover for raw')
+    else
+      content.rosterLegend:SetText('Session log · clears on reload')
+    end
   else
     content.rosterLegend:SetText('* GM override')
   end
@@ -924,15 +1030,21 @@ local function updateRosterSection(content, blockEnd)
     if isGM then
       row.editBtn._editing = isEditing
       if isEditing then
-        setEditLinkLabel(row.editBtn, 'Done', ROSTER_COLORS.editActive)
+        setEditLinkLabel(row.editBtn, 'Save', ROSTER_COLORS.editActive)
       else
         setEditLinkLabel(row.editBtn, 'Edit', ROSTER_COLORS.editLink)
       end
       row.editBtn:SetScript('OnClick', function()
         if content.rosterEditingName == data.name then
+          -- Button reads "Save": persist + broadcast the buffered override once.
+          savePendingOverride(content, data.name)
           content.rosterEditingName = nil
           content.rosterLastRows = nil
         else
+          -- Opening another row: drop any unsaved edits, then seed the buffer
+          -- from this row's stored override.
+          discardPendingOverride(content)
+          beginPendingOverride(content, data)
           content.rosterLastRows = rows
           content.rosterEditingName = data.name
         end
@@ -943,76 +1055,64 @@ local function updateRosterSection(content, blockEnd)
       row.editBtn:Hide()
     end
 
-    local verifiedOverride = data.gmVerified ~= nil
-    local cleanOverride = data.gmClean ~= nil
+    -- While this row is being edited, drive the display from the in-memory
+    -- buffer (not the store) so selections preview without being saved.
+    local gmVerified = data.gmVerified
+    local gmClean = data.gmClean
+    local effectiveVerified = data.effectiveVerified
+    local effectiveClean = data.effectiveClean
+    if isEditing and content.rosterPendingEdit then
+      gmVerified = content.rosterPendingEdit.verified
+      gmClean = content.rosterPendingEdit.clean
+      effectiveVerified = resolveEffectiveStatus(gmVerified, data.selfVerified)
+      effectiveClean = resolveEffectiveStatus(gmClean, data.selfClean)
+    end
+
+    local verifiedOverride = gmVerified ~= nil
+    local cleanOverride = gmClean ~= nil
+    local hasGMOverride = verifiedOverride or cleanOverride
     local displayVerified = overrideDisplayValue(
-      verifiedOverride, data.effectiveVerified, data.selfVerified
+      verifiedOverride, effectiveVerified, data.selfVerified
     )
     local displayClean = overrideDisplayValue(
-      cleanOverride, data.effectiveClean, data.selfClean
+      cleanOverride, effectiveClean, data.selfClean
     )
 
-    local vColor = displayColor(displayVerified, true, verifiedOverride)
-    row.verifiedText:ClearAllPoints()
-    row.verifiedText:SetPoint('LEFT', row, 'LEFT', verifiedLeft, 0)
-    row.verifiedText:SetWidth(colStatusW)
-    row.verifiedText:SetJustifyH('CENTER')
-    row.verifiedText:SetText(withOverrideSuffix(statusText(displayVerified, true), verifiedOverride))
-    row.verifiedText:SetTextColor(vColor.r, vColor.g, vColor.b)
+    -- Verified column: Yes/No reflects whether the player is verified.
+    renderRosterField(row, row.verifiedText, row.verifiedDropdown, verifiedLeft, colStatusW, isEditing, {
+      text = withOverrideSuffix(statusText(displayVerified, true), verifiedOverride),
+      color = displayColor(displayVerified, true, verifiedOverride),
+      hasOverride = verifiedOverride,
+      yesSelected = effectiveVerified == true,
+      onYes = function()
+        setPendingOverride(content, 'verified', true)
+      end,
+      onNo = function()
+        setPendingOverride(content, 'verified', false)
+      end,
+      onReset = function()
+        setPendingOverride(content, 'verified', nil)
+      end,
+    })
 
-    if isEditing then
-      showFieldDropdown(row, colStatusW, verifiedLeft, row.verifiedText, row.verifiedDropdown, {
-        displayText = withOverrideSuffix(statusText(displayVerified, true), verifiedOverride),
-        hasOverride = verifiedOverride,
-        yesSelected = data.effectiveVerified == true,
-        onYes = function()
-          RaceLocked_Roster_SendGMOverride(data.name, true, data.gmClean)
-          refreshAfterOverride(content)
-        end,
-        onNo = function()
-          RaceLocked_Roster_SendGMOverride(data.name, false, data.gmClean)
-          refreshAfterOverride(content)
-        end,
-        onReset = function()
-          RaceLocked_Roster_SendGMOverride(data.name, nil, data.gmClean)
-          refreshAfterOverride(content)
-        end,
-      })
-    else
-      hideFieldDropdown(row.verifiedText, row.verifiedDropdown)
-    end
+    -- Tampered column: inverted semantics — "Yes" (tampered) means not clean.
+    renderRosterField(row, row.cleanText, row.cleanDropdown, cleanLeft, colStatusW, isEditing, {
+      text = withOverrideSuffix(tamperedText(displayClean), cleanOverride),
+      color = tamperedColor(displayClean, cleanOverride),
+      hasOverride = cleanOverride,
+      yesSelected = displayClean == false,
+      onYes = function()
+        setPendingOverride(content, 'clean', false)
+      end,
+      onNo = function()
+        setPendingOverride(content, 'clean', true)
+      end,
+      onReset = function()
+        setPendingOverride(content, 'clean', nil)
+      end,
+    })
 
-    local tColor = tamperedColor(displayClean, cleanOverride)
-    row.cleanText:ClearAllPoints()
-    row.cleanText:SetPoint('LEFT', row, 'LEFT', cleanLeft, 0)
-    row.cleanText:SetWidth(colStatusW)
-    row.cleanText:SetJustifyH('CENTER')
-    row.cleanText:SetText(withOverrideSuffix(tamperedText(displayClean), cleanOverride))
-    row.cleanText:SetTextColor(tColor.r, tColor.g, tColor.b)
-
-    if isEditing then
-      showFieldDropdown(row, colStatusW, cleanLeft, row.cleanText, row.cleanDropdown, {
-        displayText = withOverrideSuffix(tamperedText(displayClean), cleanOverride),
-        hasOverride = cleanOverride,
-        yesSelected = displayClean == false,
-        onYes = function()
-          RaceLocked_Roster_SendGMOverride(data.name, data.gmVerified, false)
-          refreshAfterOverride(content)
-        end,
-        onNo = function()
-          RaceLocked_Roster_SendGMOverride(data.name, data.gmVerified, true)
-          refreshAfterOverride(content)
-        end,
-        onReset = function()
-          RaceLocked_Roster_SendGMOverride(data.name, data.gmVerified, nil)
-          refreshAfterOverride(content)
-        end,
-      })
-    else
-      hideFieldDropdown(row.cleanText, row.cleanDropdown)
-    end
-
-    local eligible = data.effectiveVerified == true and data.effectiveClean == true
+    local eligible = effectiveVerified == true and effectiveClean == true
     local effColor
     local effText
     if eligible then
@@ -1022,7 +1122,7 @@ local function updateRosterSection(content, blockEnd)
       effText = 'Ineligible'
       effColor = ROSTER_COLORS.ineligible
     end
-    if data.hasGMOverride then
+    if hasGMOverride then
       effText = effText .. ' *'
       effColor = ROSTER_COLORS.override
     end

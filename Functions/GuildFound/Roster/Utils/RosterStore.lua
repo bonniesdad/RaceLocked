@@ -114,27 +114,6 @@ function RaceLocked_Roster_GetAllEntries(guildName)
   return ensureDB(guildName)
 end
 
---- Return a table of all GM overrides for a guild, for peer relay.
---- Returns { [playerName] = { gmVerified=…, gmClean=… }, … } for entries
---- that have at least one non-nil GM override field.
---- @param guildName string
---- @return table
-function RaceLocked_Roster_GetAllGMOverrides(guildName)
-  local store = ensureDB(guildName)
-  local result = {}
-  if not store then return result end
-  for name, entry in pairs(store) do
-    if entry.gmVerified ~= nil or entry.gmClean ~= nil then
-      result[name] = {
-        gmVerified = entry.gmVerified,
-        gmClean = entry.gmClean,
-        gmTimestamp = entry.gmTimestamp,
-      }
-    end
-  end
-  return result
-end
-
 --- Read the local player's own GM override from the roster.
 --- Used (in Phase 3) by AmIVerified() to check for a GM override on self.
 --- @return table { verified = bool|nil, clean = bool|nil }

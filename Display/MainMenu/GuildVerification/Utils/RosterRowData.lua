@@ -1,27 +1,16 @@
 --- Build a sorted row list for the Guild Found roster UI.
 --- Uses only the persisted roster store — no live guild roster scan.
 
-local function getPlayerGuildName()
-  if not IsInGuild or not IsInGuild() or not GetGuildInfo then
-    return nil
-  end
-  local guildName = GetGuildInfo('player')
-  if type(guildName) ~= 'string' or guildName == '' then
-    return nil
-  end
-  return guildName
-end
-
 --- @return table[] rows, boolean isGM
 function RaceLocked_GetGuildFoundRosterRows()
   local rows = {}
-  local guildName = getPlayerGuildName()
+  local guildName = RaceLocked_Roster_GetPlayerGuildName()
   if not guildName then
     return rows, false
   end
 
   local isGM = RaceLocked_AmIGuildMaster()
-  local myName = UnitName and UnitName('player')
+  local myName = RaceLocked_Roster_GetPlayerName()
 
   local store = RaceLocked_Roster_GetAllEntries(guildName)
   if not store then
