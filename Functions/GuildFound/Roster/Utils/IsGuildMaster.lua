@@ -6,7 +6,7 @@ local devForceGM = false
 
 function RaceLocked_DevToggleGM()
   devForceGM = not devForceGM
-  print('|cff00ccffRaceLocked|r GM dev override: ' .. (devForceGM and '|cff00ff00ON|r' or '|cffff3333OFF|r'))
+  RaceLocked_PrintRestrictionMessage('GM dev override: ' .. (devForceGM and 'ON' or 'OFF'))
   return devForceGM
 end
 

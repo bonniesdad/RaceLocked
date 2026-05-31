@@ -104,6 +104,14 @@ function RaceLocked_OnTradeVerificationMessageReceived(sender, isVerified)
         else
           RaceLocked_Roster_SetSelfReport(guildName, shortName, false, true)
         end
+        -- Roster entry was freshly seeded; re-evaluate any mail held pending this sender
+        if RaceLocked_RefreshMailAccessPlan then
+          RaceLocked_RefreshMailAccessPlan()
+        end
+        -- Notify the send guard in case the player tried to send mail to this person
+        if RaceLocked_NotifyOutboundProbeResolved then
+          RaceLocked_NotifyOutboundProbeResolved(shortName)
+        end
       end
     end
   end

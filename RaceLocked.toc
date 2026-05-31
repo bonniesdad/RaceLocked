@@ -72,13 +72,13 @@ Functions/SlashCommand/Index.lua
 ## Roster
 Functions/GuildFound/Roster/Utils/PlayerIdentity.lua
 Functions/GuildFound/Roster/Utils/RosterStore.lua
+Functions/GuildFound/Roster/Utils/IsRosterEligible.lua
 Functions/GuildFound/Roster/Utils/IsGuildMaster.lua
 Functions/GuildFound/Roster/Utils/SessionLog.lua
 Functions/GuildFound/Roster/Index.lua
 
 ## Trade Restrictions
 Functions/GuildFound/TradeRestriction/Utils/CancelAuctionHouseWithMessage.lua
-Functions/GuildFound/TradeRestriction/Utils/CancelMailWithMessage.lua
 Functions/GuildFound/TradeRestriction/Utils/CancelTradeWithMessage.lua
 Functions/GuildFound/TradeRestriction/Utils/IsPlayerInGuildRoster.lua
 Functions/GuildFound/TradeRestriction/Utils/IsTradePartnerInMyGuild.lua
@@ -86,6 +86,15 @@ Functions/GuildFound/TradeRestriction/Utils/PrintRestrictionMessage.lua
 Functions/GuildFound/TradeRestriction/Utils/RefreshGuildRoster.lua
 Functions/GuildFound/TradeRestriction/Utils/IsInGuildFoundGuild.lua
 Functions/GuildFound/TradeRestriction/TradeRestriction.lua
+
+## Mail Restriction
+Functions/GuildFound/MailRestriction/Utils/ClassifyInboxMail.lua
+Functions/GuildFound/MailRestriction/Utils/CancelMailWithMessage.lua
+Functions/GuildFound/MailRestriction/MailAccessPlan.lua
+Functions/GuildFound/MailRestriction/MailAccessSession.lua
+Functions/GuildFound/MailRestriction/MailStateReport.lua
+Functions/GuildFound/MailRestriction/MailVerificationOverlay.lua
+Functions/GuildFound/MailRestriction/MailSendGuard.lua
 
 
 ## Verification
@@ -95,7 +104,6 @@ Functions/GuildFound/Verification/SendTradeVerificationStatus.lua
 Functions/GuildFound/Verification/TradeVerificationCache.lua
 Functions/GuildFound/Verification/HandleTradeVerificationAddonMessage.lua
 Functions/GuildFound/Verification/TradeVerificationOverlay.lua
-Functions/GuildFound/Verification/MailVerificationOverlay.lua
 Functions/GuildFound/Verification/TradeVerificationSession.lua
 Functions/GuildFound/Verification/IsBuffActive.lua
 Functions/GuildFound/Verification/TrackMaxLevelAndSelfFound.lua

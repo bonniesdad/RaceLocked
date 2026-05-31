@@ -4,17 +4,11 @@
 --- member who logs in late still learns about an override that predates them.
 
 local ADDON_PREFIX = 'RLGFRoster'
-local CHAT_PREFIX = '|cff00ccff[GF Roster]|r '
 
 --- Append to the in-panel session log (the user-facing record of traffic).
 --- `raw` is the original wire message, shown on hover when enabled.
 local function sessionLog(kind, text, raw)
   RaceLocked_Roster_AppendSessionLog(kind, text, raw)
-end
-
---- Print to the chat frame (only used by the /rlroster debug command).
-local function chatLog(msg)
-  print(CHAT_PREFIX .. msg)
 end
 
 -- ── Helpers ──────────────────────────────────────────────────────────────
@@ -368,7 +362,7 @@ SLASH_RLROSTER1 = '/rlroster'
 SlashCmdList['RLROSTER'] = function(input)
   local guildName = RaceLocked_Roster_GetPlayerGuildName()
   if not guildName then
-    chatLog('Not in a guild.')
+    RaceLocked_PrintRestrictionMessage('Not in a guild.')
     return
   end
 
@@ -382,7 +376,7 @@ SlashCmdList['RLROSTER'] = function(input)
   if arg == 'reset' then
     RaceLockedAccountDB = RaceLockedAccountDB or {}
     RaceLockedAccountDB.guildFoundRoster = nil
-    chatLog('Roster DB wiped. /reload to re-initialize.')
+    RaceLocked_PrintRestrictionMessage('Roster DB wiped. /reload to re-initialize.')
     return
   end
 
@@ -401,16 +395,16 @@ SlashCmdList['RLROSTER'] = function(input)
     for _, f in ipairs(fakes) do
       RaceLocked_Roster_SetSelfReport(guildName, f.name, f.v, f.c)
     end
-    chatLog('Injected ' .. #fakes .. ' fake roster entries.')
+    RaceLocked_PrintRestrictionMessage('Injected ' .. #fakes .. ' fake roster entries.')
     return
   end
 
-  chatLog('── Roster for <' .. guildName .. '> ──')
-  chatLog('I am GM: ' .. tostring(RaceLocked_AmIGuildMaster()))
+  RaceLocked_PrintRestrictionMessage('── Roster for <' .. guildName .. '> ──')
+  RaceLocked_PrintRestrictionMessage('I am GM: ' .. tostring(RaceLocked_AmIGuildMaster()))
 
   local store = RaceLocked_Roster_GetAllEntries(guildName)
   if not store then
-    chatLog('  (empty)')
+    RaceLocked_PrintRestrictionMessage('  (empty)')
     return
   end
 
@@ -425,11 +419,11 @@ SlashCmdList['RLROSTER'] = function(input)
         ' ts=' .. tostring(entry.gmTimestamp or 0)
     end
     parts = parts .. ' | effective: V=' .. tostring(ev) .. ' C=' .. tostring(ec)
-    chatLog(parts)
+    RaceLocked_PrintRestrictionMessage(parts)
     count = count + 1
   end
-  chatLog('Total entries: ' .. count)
-  chatLog('Commands: /rlroster sync | /rlroster reset | /rlroster gm | /rlroster fakedata')
+  RaceLocked_PrintRestrictionMessage('Total entries: ' .. count)
+  RaceLocked_PrintRestrictionMessage('Commands: /rlroster sync | /rlroster reset | /rlroster gm | /rlroster fakedata')
 end
 
 -- ── Event frame ──────────────────────────────────────────────────────────
@@ -466,7 +460,7 @@ local function trySessionAnnounce()
   sessionLog('info', loginStatus)
   -- Echo just this one line to chat so players can confirm the addon
   -- initialized correctly on login.
-  chatLog(loginStatus)
+  RaceLocked_PrintRestrictionMessage(loginStatus)
   broadcastSelfReport()
 end
 

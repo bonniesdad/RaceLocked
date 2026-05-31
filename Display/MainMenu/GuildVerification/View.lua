@@ -38,6 +38,18 @@ local CHECK_WARNING_COLOR = {
   b = 0.2,
 }
 
+local CHECK_INACTIVE_COLOR = {
+  r = 0.55,
+  g = 0.55,
+  b = 0.55,
+}
+
+local CHECK_OVERRIDE_COLOR = {
+  r = 0.4,
+  g = 0.7,
+  b = 1.0,
+}
+
 local function getDetectedOnHelperText(failedAt)
   if failedAt then
     return 'Detected on ' .. date('%d %b %Y', failedAt)
@@ -46,37 +58,59 @@ end
 
 local function getVerificationChecks()
   local playerMoneyValidationFailed = RaceLocked_GetDBValue('playerMoneyValidationFailed')
-
   local hasBeenMaxLevelAndSelfFound = RaceLocked_GetDBValue('hasBeenMaxLevelAndSelfFound')
 
   if playerMoneyValidationFailed == nil then
     playerMoneyValidationFailed = false
   end
+  local gmOverride = RaceLocked_Roster_GetGMOverrideForSelf and RaceLocked_Roster_GetGMOverrideForSelf() or {}
+  local hasRosterOverride = gmOverride.verified ~= nil or gmOverride.clean ~= nil
+  local hasRankOverride = RaceLocked_ShouldOverrideVerificationViaGuildNote(UnitName('player')) == true
+  local hasGMOverride = hasRosterOverride or hasRankOverride
 
-  return { {
+  local checks = {}
+
+  -- 1. In guild
+  checks[#checks + 1] = {
+    passed = RaceLocked_IsInGuildFoundGuild(),
+    passMessage = 'You are in a Guild Found guild',
+    failMessage = 'You are not in a Guild Found guild',
+    failHelperText = 'You must be in the Guild Found guild to unlock Guild Found',
+  }
+
+  -- 2. Reached max level as self found
+  checks[#checks + 1] = {
+    passed = hasBeenMaxLevelAndSelfFound == true,
+    passMessage = 'This character reached level ' .. RACE_LOCKED_GUILD_FOUND_MAX_LEVEL .. ' whilst self found',
+    failMessage = UnitLevel('player') < RACE_LOCKED_GUILD_FOUND_MAX_LEVEL
+      and 'You are not yet level ' .. RACE_LOCKED_GUILD_FOUND_MAX_LEVEL
+      or 'Did not turn off self found at level ' .. RACE_LOCKED_GUILD_FOUND_MAX_LEVEL,
+    failHelperText = UnitLevel('player') < RACE_LOCKED_GUILD_FOUND_MAX_LEVEL
+      and nil
+      or 'You must be level ' .. RACE_LOCKED_GUILD_FOUND_MAX_LEVEL .. ' before turning off self found',
+  }
+
+  -- 3. Tampering
+  checks[#checks + 1] = {
     passed = playerMoneyValidationFailed == false,
     passMessage = 'No tampering detected',
     failMessage = 'Tampering detected',
     failHelperText = playerMoneyValidationFailed and getDetectedOnHelperText(
       RaceLocked_GetDBValue('playerMoneyValidationFailedAt')
-    ),
-  }, {
-    passed = hasBeenMaxLevelAndSelfFound == true,
-    passMessage = 'This character reached level ' .. RACE_LOCKED_GUILD_FOUND_MAX_LEVEL .. ' whilst self found',
-    failMessage = UnitLevel('player') < RACE_LOCKED_GUILD_FOUND_MAX_LEVEL and 'You are not yet level ' .. RACE_LOCKED_GUILD_FOUND_MAX_LEVEL .. '' or 'Did not turn off self found at level ' .. RACE_LOCKED_GUILD_FOUND_MAX_LEVEL .. '',
-    failHelperText = UnitLevel('player') < RACE_LOCKED_GUILD_FOUND_MAX_LEVEL and nil or 'You must be level ' .. RACE_LOCKED_GUILD_FOUND_MAX_LEVEL .. ' before turning off self found',
-  }, {
-    passed = RaceLocked_ShouldOverrideVerificationViaGuildNote(UnitName('player')) == true,
+    ) or nil,
+  }
+
+  -- 4. GM override — grey when absent (informational, not a blocker on its own)
+  checks[#checks + 1] = {
+    passed = hasGMOverride,
     passMessage = 'Manual override applied',
+    passColor = CHECK_OVERRIDE_COLOR,
     failMessage = 'No manual override applied',
     failHelperText = 'You do not have a manual override from a GM',
-    failColor = CHECK_WARNING_COLOR,
-  }, {
-    passed = RaceLocked_IsInGuildFoundGuild(),
-    passMessage = 'You are in a Guild Found guild',
-    failMessage = 'You are not in a Guild Found guild',
-    failHelperText = 'You must be in the Guild Found guild to unlock Guild Found',
-  } }
+    failColor = CHECK_INACTIVE_COLOR,
+  }
+
+  return checks
 end
 
 local function getOverallStatus(checks)
@@ -161,7 +195,7 @@ local function updateVerificationTabDisplay(content)
 
     local passed = check.passed
 
-    local color = passed and CHECK_PASS_COLOR or (check.failColor or CHECK_FAIL_COLOR)
+    local color = passed and (check.passColor or CHECK_PASS_COLOR) or (check.failColor or CHECK_FAIL_COLOR)
 
     row:SetText('• ' .. (passed and check.passMessage or check.failMessage))
 
