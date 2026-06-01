@@ -2,16 +2,19 @@
 --- For guild members with no GF roster entry, sends a TV probe and notifies the
 --- player to try again once the reply arrives.
 
-local PROBE_TIMEOUT = 5
+local PROBE_TIMEOUT = RACE_LOCKED_MAIL_PROBE_TIMEOUT  -- shared in MailRestriction/Utils/Constants.lua
 
 local pendingOutboundProbes = {}  -- shortName → timestamp
 
 --- Called from TradeVerificationSession when a new roster entry is seeded.
---- If we had a pending outbound probe for that player, notify the player they can retry.
+--- If we had a pending outbound probe for that player, notify the player they
+--- can retry. The reply doesn't guarantee the recipient is eligible (they may
+--- have answered "not verified"), so the message stays neutral — the retry
+--- itself will allow or block with the precise reason.
 function RaceLocked_NotifyOutboundProbeResolved(shortName)
   if pendingOutboundProbes[shortName] then
     pendingOutboundProbes[shortName] = nil
-    RaceLocked_PrintRestrictionMessage(shortName .. ' verified — you may now send mail.')
+    RaceLocked_PrintRestrictionMessage(shortName .. ' responded to verification — try sending again.')
   end
 end
 
@@ -39,7 +42,11 @@ local function isRecipientAllowed(recipient)
 
   local guildName = RaceLocked_Roster_GetPlayerGuildName
     and RaceLocked_Roster_GetPlayerGuildName()
-  if not guildName then return true end
+  -- Default-deny: if guild data isn't available we can't verify the recipient,
+  -- so block rather than silently allow (consistent with the mail policy).
+  if not guildName then
+    return false, 'Cannot verify ' .. Ambiguate(recipient, 'short') .. ' — guild data unavailable'
+  end
 
   local shortRecipient = Ambiguate(recipient, 'short')
   local entry = RaceLocked_Roster_GetEntry and RaceLocked_Roster_GetEntry(guildName, shortRecipient)

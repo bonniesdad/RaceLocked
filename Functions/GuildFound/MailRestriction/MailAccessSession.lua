@@ -36,7 +36,7 @@ function RaceLocked_BeginMailAccessSession()
   end
 end
 
-local PROBE_TIMEOUT = 5
+local PROBE_TIMEOUT = RACE_LOCKED_MAIL_PROBE_TIMEOUT  -- shared in MailRestriction/Utils/Constants.lua
 
 local function sendNewProbes(plan)
   if not session or not plan then return end
@@ -89,7 +89,14 @@ local function executeStep()
   session.plan = plan
 
   if not plan.requiresReturn then
-    if not plan.requiresPending then
+    if plan.requiresPending then
+      -- Returns are done but unverified senders remain. Drop back to 'ready'
+      -- so the overlay shows the pending state and probes can keep firing.
+      -- Staying in 'executing' would soft-lock the "Returning mail..." view,
+      -- because RefreshMailAccessPlan is a no-op while executing.
+      session.phase = 'ready'
+      sendNewProbes(plan)
+    else
       finishExecution()
     end
     if RaceLocked_RefreshMailVerificationDisplay then

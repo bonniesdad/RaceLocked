@@ -37,8 +37,8 @@ function RaceLocked_GetGuildFoundRosterRows()
   end
 
   table.sort(rows, function(a, b)
-    local aElig = (a.effectiveVerified == true and a.effectiveClean == true) and 1 or 0
-    local bElig = (b.effectiveVerified == true and b.effectiveClean == true) and 1 or 0
+    local aElig = RaceLocked_Roster_IsPlayerEligible(guildName, a.name) and 1 or 0
+    local bElig = RaceLocked_Roster_IsPlayerEligible(guildName, b.name) and 1 or 0
     if aElig ~= bElig then
       return aElig > bElig
     end

@@ -1,3 +1,18 @@
+--- Tamper detection for the "clean" half of Guild Found verification.
+---
+--- Model: while playing we persist the player's current gold on every
+--- PLAYER_MONEY event. On the next login we compare the saved gold to the
+--- live amount: if they differ, the SavedVariables file was edited offline
+--- (the only way gold can change while logged out), so we set the persistent
+--- flag `playerMoneyValidationFailed = true`. We only check on login because
+--- that is the boundary where offline tampering can be detected.
+---
+--- Self-found exemption: a character still flagged self-found by the game
+--- cannot meaningfully tamper for advantage, so any prior failure flag while
+--- self-found is treated as a false positive and cleared.
+---
+--- This flag is consumed by RaceLocked_IsLocalClean() (AmIVerified.lua) and is
+--- shown as the "Tampering" row in the Guild Verification display.
 local playerMoneyFrame = CreateFrame('Frame')
 
 local function OnMoneyChanged()

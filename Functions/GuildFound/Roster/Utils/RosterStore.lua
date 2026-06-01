@@ -35,17 +35,27 @@ local function ensureEntry(store, playerName)
 end
 
 --- Store a player's self-reported verification and clean status.
+--- Nil-field contract: passing nil for `verified` or `clean` means
+--- "do not update this field" (leave whatever was stored), NOT "clear it".
+--- To clear a field, pass `false` explicitly. This lets TV seeding record a
+--- known `verified` value while leaving `clean` untouched until it is known.
+--- Note: the wire self-report path (Index.lua) rejects messages missing
+--- either field, so over the network both are always concrete booleans.
 --- @param guildName string
 --- @param playerName string
---- @param verified boolean
---- @param clean boolean
+--- @param verified boolean|nil  nil = leave existing value unchanged
+--- @param clean boolean|nil     nil = leave existing value unchanged
 function RaceLocked_Roster_SetSelfReport(guildName, playerName, verified, clean)
   local store = ensureDB(guildName)
   if not store then return end
   local entry = ensureEntry(store, playerName)
   if not entry then return end
-  entry.verified = (verified == true)
-  entry.clean = (clean == true)
+  if verified ~= nil then
+    entry.verified = (verified == true)
+  end
+  if clean ~= nil then
+    entry.clean = (clean == true)
+  end
   entry.lastSeen = time()
 end
 
@@ -114,8 +124,51 @@ function RaceLocked_Roster_GetAllEntries(guildName)
   return ensureDB(guildName)
 end
 
+--- Count the number of stored entries for a guild.
+--- @param guildName string
+--- @return number
+function RaceLocked_Roster_GetEntryCount(guildName)
+  local store = ensureDB(guildName)
+  if not store then return 0 end
+  local count = 0
+  for _ in pairs(store) do
+    count = count + 1
+  end
+  return count
+end
+
+--- Prune stored entries for players no longer in the guild.
+--- Callers pass a set of the CURRENT guild member names (short form) as keys;
+--- any stored entry whose key is absent from that set is removed.
+--- No-op when `currentMembers` is empty (basic protection against a completely
+--- unloaded roster). Callers should apply their own higher-level guards (e.g.
+--- self-name presence, count ratio) before invoking this. Even past all guards
+--- the prune is self-correcting — a wrongly removed member reappears on their
+--- next self-report.
+--- @param guildName string
+--- @param currentMembers table<string, boolean>  short names currently in the guild
+--- @return number removed  count of entries pruned
+function RaceLocked_Roster_CleanupForRoster(guildName, currentMembers)
+  local store = ensureDB(guildName)
+  if not store or type(currentMembers) ~= 'table' then
+    return 0
+  end
+  if next(currentMembers) == nil then
+    return 0
+  end
+
+  local removed = 0
+  for playerName in pairs(store) do
+    if not currentMembers[playerName] then
+      store[playerName] = nil
+      removed = removed + 1
+    end
+  end
+  return removed
+end
+
 --- Read the local player's own GM override from the roster.
---- Used (in Phase 3) by AmIVerified() to check for a GM override on self.
+--- Used by AmIVerified() to check for a GM override on self.
 --- @return table { verified = bool|nil, clean = bool|nil }
 function RaceLocked_Roster_GetGMOverrideForSelf()
   local guildName = GetGuildInfo and GetGuildInfo('player')
@@ -128,17 +181,4 @@ function RaceLocked_Roster_GetGMOverrideForSelf()
     return {}
   end
   return { verified = entry.gmVerified, clean = entry.gmClean }
-end
-
---- Remove entries for players no longer in the guild roster.
---- @param guildName string
---- @param rosterNames table<string, boolean> set of names currently in guild
-function RaceLocked_Roster_CleanupForRoster(guildName, rosterNames)
-  local store = ensureDB(guildName)
-  if not store or type(rosterNames) ~= 'table' then return end
-  for name, _ in pairs(store) do
-    if not rosterNames[name] then
-      store[name] = nil
-    end
-  end
 end

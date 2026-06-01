@@ -93,6 +93,11 @@ end
 function RaceLocked_OnTradeVerificationMessageReceived(sender, isVerified)
   RaceLocked_CachePartnerVerification(sender, isVerified)
 
+  -- Trust note: this seeds a roster entry from a TV whisper reply, which is
+  -- trust-based (a modified client can claim verified=true). We only seed when
+  -- no entry exists yet, so an authenticated guild-sync self-report (S:) from the
+  -- real owner can later correct it. See CanPerformTradeWithPlayer.lua for the
+  -- full trust-model rationale.
   if RaceLocked_Roster_SetSelfReport and RaceLocked_Roster_GetEntry
     and IsInGuild and IsInGuild() and GetGuildInfo then
     local guildName = GetGuildInfo('player')
@@ -102,7 +107,7 @@ function RaceLocked_OnTradeVerificationMessageReceived(sender, isVerified)
         if isVerified then
           RaceLocked_Roster_SetSelfReport(guildName, shortName, true, true)
         else
-          RaceLocked_Roster_SetSelfReport(guildName, shortName, false, true)
+          RaceLocked_Roster_SetSelfReport(guildName, shortName, false, nil)
         end
         -- Roster entry was freshly seeded; re-evaluate any mail held pending this sender
         if RaceLocked_RefreshMailAccessPlan then

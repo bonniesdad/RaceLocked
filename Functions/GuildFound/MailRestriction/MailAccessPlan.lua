@@ -3,7 +3,7 @@
 local ACTION_RETURN = 'return'
 local ACTION_PENDING = 'pending'
 
-local PROBE_TIMEOUT = 5  -- seconds before an unresponsive probe is treated as a block
+local PROBE_TIMEOUT = RACE_LOCKED_MAIL_PROBE_TIMEOUT  -- shared in MailRestriction/Utils/Constants.lua
 
 local INVOICE_LABELS = {
   buyer = 'purchase',
@@ -189,6 +189,9 @@ function RaceLocked_BuildMailAccessPlan(pendingProbes)
   if plan.inboxCount == 0 then
     plan.lines[#plan.lines + 1] = 'Your mailbox is empty.'
   elseif plan.requiresReturn then
+    -- plan.lines feeds the chat-based dev report (MailStateReport), not the
+    -- player overlay. The overlay renders the full scrollable list from
+    -- plan.actions; here we cap at 8 bullets so the chat report stays readable.
     plan.lines[#plan.lines + 1] = 'To access your mailbox, the following mail must be returned:'
     plan.lines[#plan.lines + 1] = ''
     local shown = 0
@@ -247,8 +250,10 @@ function RaceLocked_RemoveInboxMail(inboxIndex)
 end
 
 --- Execute the single highest-index ACTION_RETURN item from the plan.
---- The next step is driven by MAIL_INBOX_UPDATE firing after the remove,
---- so indices are always fresh and never drift.
+--- Removing the highest index first means lower indices never shift under us
+--- within a single pass. The caller (executeStep in MailAccessSession.lua)
+--- drives the next step on a timer and rebuilds the plan from fresh inbox data
+--- each time, so indices are always re-derived and never drift.
 --- @param plan table  from RaceLocked_BuildMailAccessPlan
 function RaceLocked_ExecuteNextMailAction(plan)
   if not plan or not plan.requiresReturn then return end

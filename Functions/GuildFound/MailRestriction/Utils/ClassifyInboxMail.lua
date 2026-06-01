@@ -13,10 +13,13 @@ local KIND_LABELS = {
   [KIND_NPC] = 'NPC/system',
 }
 
-local function isAuctionHouseMail(inboxIndex)
-  if not GetInboxInvoiceInfo then return false end
-  local invoiceType = GetInboxInvoiceInfo(inboxIndex)
-  return invoiceType ~= nil
+--- Returns the AH invoice type for this mail, or nil if it isn't AH mail.
+--- (GetInboxInvoiceInfo returns its first value only for auction-house mail.)
+--- @param inboxIndex number
+--- @return string|nil invoiceType
+local function getInvoiceType(inboxIndex)
+  if not GetInboxInvoiceInfo then return nil end
+  return GetInboxInvoiceInfo(inboxIndex)
 end
 
 --- @param inboxIndex number
@@ -38,8 +41,8 @@ function RaceLocked_ClassifyInboxMail(inboxIndex)
     }
   end
 
-  if isAuctionHouseMail(inboxIndex) then
-    local invoiceType = GetInboxInvoiceInfo(inboxIndex)
+  local invoiceType = getInvoiceType(inboxIndex)
+  if invoiceType ~= nil then
     return {
       kind = KIND_AUCTION_HOUSE,
       sender = sender,
@@ -50,6 +53,12 @@ function RaceLocked_ClassifyInboxMail(inboxIndex)
     }
   end
 
+  -- Player-mail discriminator: GetInboxHeaderInfo reports canReply=true for
+  -- mail originating from a real character (you can reply to them). System/NPC
+  -- mail is not replyable. Assumption: any genuine player mail is replyable.
+  -- If WoW ever delivers replyable=false player mail (e.g. exotic COD/system-
+  -- wrapped cases), it would fall through to KIND_NPC and be allowed; no such
+  -- case is currently known on Classic. Revisit here if one is found.
   if canReply and sender and sender ~= '' then
     return {
       kind = KIND_PLAYER,
@@ -69,21 +78,4 @@ function RaceLocked_ClassifyInboxMail(inboxIndex)
     invoiceType = nil,
     label = KIND_LABELS[KIND_NPC],
   }
-end
-
---- Short enforcement hint for dev overlay / logs.
---- @param info table from RaceLocked_ClassifyInboxMail
---- @return string
-function RaceLocked_DescribeInboxMailEnforcement(info)
-  if not info then return 'unknown mail' end
-
-  if info.kind == KIND_GAME_MASTER or info.kind == KIND_NPC then
-    return 'allowed (' .. info.label .. ')'
-  end
-
-  if info.kind == KIND_AUCTION_HOUSE then
-    return 'would block — AH mail (AH disabled)'
-  end
-
-  return nil
 end

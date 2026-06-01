@@ -41,12 +41,8 @@ Display/MainMenu/FactionRaceGrid/View.lua
 Display/MainMenu/InitializeMainPanel.lua
 
 Display/MainMenu/GuildVerification/Utils/Constants.lua
-Display/MainMenu/GuildVerification/Utils/StripRealmFromName.lua
-Display/MainMenu/GuildVerification/Utils/IsLocalGuildRow.lua
-Display/MainMenu/GuildVerification/Utils/ComputeGuildTableColumns.lua
-Display/MainMenu/GuildVerification/Utils/GetPrimaryRowTint.lua
-Display/MainMenu/GuildVerification/Utils/GetGuildVerificationRosterRows.lua
 Display/MainMenu/GuildVerification/Utils/RosterRowData.lua
+Display/MainMenu/GuildVerification/RosterTable/View.lua
 Display/MainMenu/GuildVerification/View.lua
 
 Display/MainMenu/SettingsWindow/Utils/Constants.lua
@@ -88,13 +84,14 @@ Functions/GuildFound/TradeRestriction/Utils/IsInGuildFoundGuild.lua
 Functions/GuildFound/TradeRestriction/TradeRestriction.lua
 
 ## Mail Restriction
+Functions/GuildFound/MailRestriction/Utils/Constants.lua
 Functions/GuildFound/MailRestriction/Utils/ClassifyInboxMail.lua
-Functions/GuildFound/MailRestriction/Utils/CancelMailWithMessage.lua
 Functions/GuildFound/MailRestriction/MailAccessPlan.lua
 Functions/GuildFound/MailRestriction/MailAccessSession.lua
 Functions/GuildFound/MailRestriction/MailStateReport.lua
 Functions/GuildFound/MailRestriction/MailVerificationOverlay.lua
 Functions/GuildFound/MailRestriction/MailSendGuard.lua
+Functions/GuildFound/MailRestriction/Index.lua
 
 
 ## Verification
