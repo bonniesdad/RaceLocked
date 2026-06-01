@@ -40,11 +40,24 @@ mailOverlayEvents:SetScript('OnEvent', function(_, event)
     end
     RaceLocked_PrintRestrictionMessage('Checking mail contents.')
     RaceLocked_ShowMailVerificationOverlay()
-    if RaceLocked_RefreshMailAccessPlan then
-      RaceLocked_RefreshMailAccessPlan()
-    end
-    if RaceLocked_RefreshMailVerificationDisplay then
-      RaceLocked_RefreshMailVerificationDisplay()
+    -- CheckInbox() fires MAIL_INBOX_UPDATE which builds the plan. But on a
+    -- quick close/reopen the inbox data is already cached and WoW may skip
+    -- the event entirely, leaving the session stuck in 'loading'. This
+    -- fallback forces a plan build if nothing has happened after a short delay.
+    local sess = RaceLocked_GetMailAccessSession and RaceLocked_GetMailAccessSession()
+    if sess and C_Timer and C_Timer.After then
+      local ref = sess
+      C_Timer.After(0.5, function()
+        local current = RaceLocked_GetMailAccessSession and RaceLocked_GetMailAccessSession()
+        if current ~= ref then return end
+        if current.phase ~= 'loading' then return end
+        if RaceLocked_RefreshMailAccessPlan then
+          RaceLocked_RefreshMailAccessPlan()
+        end
+        if RaceLocked_RefreshMailVerificationDisplay then
+          RaceLocked_RefreshMailVerificationDisplay()
+        end
+      end)
     end
 
   elseif event == 'MAIL_CLOSED' then

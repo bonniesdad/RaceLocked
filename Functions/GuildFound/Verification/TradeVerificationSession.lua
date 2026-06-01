@@ -113,6 +113,9 @@ function RaceLocked_OnTradeVerificationMessageReceived(sender, isVerified)
         if RaceLocked_RefreshMailAccessPlan then
           RaceLocked_RefreshMailAccessPlan()
         end
+        if RaceLocked_RefreshMailVerificationDisplay then
+          RaceLocked_RefreshMailVerificationDisplay()
+        end
         -- Notify the send guard in case the player tried to send mail to this person
         if RaceLocked_NotifyOutboundProbeResolved then
           RaceLocked_NotifyOutboundProbeResolved(shortName)

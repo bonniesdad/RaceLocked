@@ -168,7 +168,7 @@ function RaceLocked_BuildMailAccessPlan(pendingProbes)
 
   plan.inboxCount = GetInboxNumItems and GetInboxNumItems() or 0
 
-  for inboxIndex = plan.inboxCount, 1, -1 do
+  for inboxIndex = 1, plan.inboxCount do
     local required = RaceLocked_GetMailRequiredAction(inboxIndex, guildName, pendingProbes)
     if required then
       plan.actions[#plan.actions + 1] = required
@@ -179,12 +179,23 @@ function RaceLocked_BuildMailAccessPlan(pendingProbes)
       end
     else
       plan.allowedCount = plan.allowedCount + 1
+      local _, _, sender, subject = GetInboxHeaderInfo(inboxIndex)
+      local mail = RaceLocked_ClassifyInboxMail and RaceLocked_ClassifyInboxMail(inboxIndex)
+      local kindLabel = mail and mail.kind or 'unknown'
+      plan.actions[#plan.actions + 1] = {
+        inboxIndex = inboxIndex,
+        action = 'allowed',
+        kind = kindLabel,
+        sender = sender,
+        subject = subject,
+        description = nil,
+      }
     end
   end
 
   plan.requiresReturn = plan.returnCount > 0
   plan.requiresPending = plan.pendingCount > 0
-  plan.requiresAction = #plan.actions > 0
+  plan.requiresAction = plan.returnCount > 0 or plan.pendingCount > 0
 
   if plan.inboxCount == 0 then
     plan.lines[#plan.lines + 1] = 'Your mailbox is empty.'

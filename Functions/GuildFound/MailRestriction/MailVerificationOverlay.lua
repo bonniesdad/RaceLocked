@@ -2,12 +2,13 @@
 
 local overlay
 local BUTTON_HEIGHT = 22
-local BUTTON_GAP = 8
 local INNER_PAD = 14
-local TOP_PAD = 28
+local TOP_PAD = 36
 local ROW_LINE_HEIGHT = 16
 local ROW_PADDING = 3
-local TITLE_FONT = 'GameFontHighlight'
+local BTN_BOTTOM_PAD = 14
+local BTN_CENTER_GAP = 6
+local TITLE_FONT = 'GameFontHighlightLarge'
 local BODY_FONT = 'GameFontHighlightSmall'
 local REASON_FONT = 'GameFontNormalSmall'
 local FOOTER_FONT = 'GameFontHighlight'
@@ -33,12 +34,6 @@ local function updateSpinner(self, elapsed)
     self.rotation = (self.rotation or 0) - elapsed * 2
     self.spinner:SetRotation(self.rotation)
   end
-end
-
-local function setButtonVisible(btn, visible)
-  if not btn then return end
-  if visible then btn:Show(); btn:Enable()
-  else btn:Hide(); btn:Disable() end
 end
 
 local function hideAllActionRows()
@@ -77,8 +72,8 @@ local function showLoadingState(message)
   overlay.subtitleText:Hide()
   overlay.footerText:Hide()
   overlay.listArea:Hide()
-  setButtonVisible(overlay.proceedBtn, false)
-  setButtonVisible(overlay.cancelBtn, false)
+  overlay.proceedBtn:Hide()
+  overlay.cancelBtn:Hide()
 
   overlay.spinner:ClearAllPoints()
   overlay.spinner:SetPoint('CENTER', overlay, 'CENTER', 0, 20)
@@ -97,36 +92,10 @@ local function showLoadingState(message)
   overlay.loadingText:Show()
 end
 
-local function renderPlanDisplay(plan)
-  overlay.spinner:Hide()
-  overlay.spinner:ClearAllPoints()
-  overlay.spinner:SetPoint('TOP', overlay, 'TOP', 0, -TOP_PAD)
-  if overlay.loadingText then overlay.loadingText:Hide() end
-  overlay.titleText:SetText('Guild Found Mail')
-  overlay.titleText:SetTextColor(COLORS.title.r, COLORS.title.g, COLORS.title.b)
+-- ── Row rendering ────────────────────────────────────────────────────────
 
+local function renderActionRows(plan)
   hideAllActionRows()
-
-  if not plan.requiresAction then
-    overlay.subtitleText:SetText('Your inbox meets Guild Found mail rules.')
-    overlay.subtitleText:SetTextColor(COLORS.allowed.r, COLORS.allowed.g, COLORS.allowed.b)
-    overlay.subtitleText:Show()
-    overlay.listArea:Hide()
-    overlay.footerText:Hide()
-    setButtonVisible(overlay.proceedBtn, false)
-    setButtonVisible(overlay.cancelBtn, false)
-    return
-  end
-
-  if plan.requiresReturn then
-    overlay.subtitleText:SetText('The following mail must be returned before mail access can be granted:')
-    overlay.subtitleText:SetTextColor(COLORS.subtitle.r, COLORS.subtitle.g, COLORS.subtitle.b)
-  else
-    overlay.subtitleText:SetText('Verifying senders — please wait...')
-    overlay.subtitleText:SetTextColor(COLORS.muted.r, COLORS.muted.g, COLORS.muted.b)
-  end
-  overlay.subtitleText:Show()
-  overlay.listArea:Show()
 
   local scrollWidth = overlay.listArea:GetWidth()
   if scrollWidth < 40 then scrollWidth = 200 end
@@ -153,18 +122,37 @@ local function renderPlanDisplay(plan)
     local subject = action.subject and action.subject ~= '' and action.subject or nil
     local reason = ''
 
-    if action.kind == 'auction_house' then
-      reason = 'AH disabled'
-    elseif action.description then
-      local dash = action.description:match(' — (.+)$')
-      if dash then reason = dash end
+    if action.action == 'return' then
+      if action.kind == 'auction_house' then
+        reason = 'AH disabled'
+      elseif action.description then
+        local dash = action.description:match(' — (.+)$')
+        if dash then reason = dash end
+      end
+    elseif action.action == 'pending' then
+      reason = 'pending verification'
+    elseif action.action == 'allowed' then
+      if action.kind == 'gm' then
+        reason = 'GM mail'
+      elseif action.kind == 'npc_system' then
+        reason = 'system mail'
+      else
+        reason = 'verified sender'
+      end
     end
 
     local senderText = sender
     if subject then senderText = senderText .. '  "' .. subject .. '"' end
 
     row.senderLine:SetText(senderText)
-    local c = action.action == 'return' and COLORS.returnRow or COLORS.pendRow
+    local c
+    if action.action == 'return' then
+      c = COLORS.returnRow
+    elseif action.action == 'pending' then
+      c = COLORS.pendRow
+    else
+      c = COLORS.allowed
+    end
     row.senderLine:SetTextColor(c.r, c.g, c.b)
 
     row.reasonLine:SetText(reason)
@@ -175,37 +163,76 @@ local function renderPlanDisplay(plan)
   end
 
   scrollChild:SetHeight(math.max(1, yOffset))
+end
 
-  local footerParts = {}
-  if plan.returnCount > 0 then
-    footerParts[#footerParts + 1] = plan.returnCount .. ' to return'
+-- ── Plan display ─────────────────────────────────────────────────────────
+
+local function renderPlanDisplay(plan, phase)
+  overlay.spinner:Hide()
+  overlay.spinner:ClearAllPoints()
+  overlay.spinner:SetPoint('TOP', overlay, 'TOP', 0, -TOP_PAD)
+  if overlay.loadingText then overlay.loadingText:Hide() end
+  overlay.titleText:SetText('Guild Found Mail')
+  overlay.titleText:SetTextColor(COLORS.title.r, COLORS.title.g, COLORS.title.b)
+
+  -- Subtitle stays the same regardless of phase
+  overlay.subtitleText:SetText('Resolve flagged mail before access can be granted:')
+  overlay.subtitleText:SetTextColor(COLORS.subtitle.r, COLORS.subtitle.g, COLORS.subtitle.b)
+  overlay.subtitleText:Show()
+  overlay.listArea:Show()
+
+  renderActionRows(plan)
+
+  -- Footer: shows processing status during work, counts otherwise
+  if phase == 'verifying' then
+    overlay.footerText:SetText('Verifying ' .. (plan.pendingCount or 0) .. ' sender(s)...')
+    overlay.footerText:SetTextColor(COLORS.pendRow.r, COLORS.pendRow.g, COLORS.pendRow.b)
+  elseif phase == 'executing' then
+    overlay.footerText:SetText('Returning mail...')
+    overlay.footerText:SetTextColor(COLORS.pendRow.r, COLORS.pendRow.g, COLORS.pendRow.b)
+  else
+    local footerParts = {}
+    if plan.returnCount > 0 then
+      footerParts[#footerParts + 1] = plan.returnCount .. ' to return'
+    end
+    if plan.pendingCount > 0 then
+      footerParts[#footerParts + 1] = plan.pendingCount .. ' pending'
+    end
+    if plan.allowedCount > 0 then
+      footerParts[#footerParts + 1] = plan.allowedCount .. ' allowed'
+    end
+    overlay.footerText:SetText(table.concat(footerParts, '   ·   '))
+    overlay.footerText:SetTextColor(COLORS.title.r, COLORS.title.g, COLORS.title.b)
   end
-  if plan.pendingCount > 0 then
-    footerParts[#footerParts + 1] = plan.pendingCount .. ' awaiting verification'
-  end
-  if plan.allowedCount > 0 then
-    footerParts[#footerParts + 1] = plan.allowedCount .. ' allowed'
-  end
-  overlay.footerText:SetText(table.concat(footerParts, '   ·   '))
-  overlay.footerText:SetTextColor(COLORS.title.r, COLORS.title.g, COLORS.title.b)
   overlay.footerText:Show()
 
-  local showButtons = plan.requiresReturn
-  setButtonVisible(overlay.proceedBtn, showButtons)
-  setButtonVisible(overlay.cancelBtn, showButtons)
+  -- Cancel is always available
+  overlay.cancelBtn:Show()
+  overlay.cancelBtn:Enable()
+
+  -- Proceed: always visible, text and state change per phase
+  overlay.proceedBtn:Show()
+  if phase == 'verifying' or phase == 'executing' then
+    overlay.proceedBtn:Disable()
+  else
+    overlay.proceedBtn:Enable()
+  end
+  if plan.requiresPending then
+    overlay.proceedBtn:SetText('Verify')
+  elseif plan.requiresReturn then
+    overlay.proceedBtn:SetText('Return')
+  else
+    overlay.proceedBtn:SetText('Proceed')
+  end
 end
+
+-- ── Main refresh ─────────────────────────────────────────────────────────
 
 local function refreshMailOverlay()
   if not overlay or not overlay:IsShown() then return end
 
   local session = RaceLocked_GetMailAccessSession and RaceLocked_GetMailAccessSession()
   local loading = not session or not session.plan or session.phase == 'loading'
-  local executing = session and session.phase == 'executing'
-
-  if executing then
-    showLoadingState('Returning mail — please wait...')
-    return
-  end
 
   if loading then
     showLoadingState('Checking mailbox...')
@@ -213,13 +240,12 @@ local function refreshMailOverlay()
   end
 
   local plan = session.plan
+  local phase = session.phase
 
   if not session.statusPrinted then
     session.statusPrinted = true
-    if plan.requiresReturn then
+    if plan.requiresAction then
       RaceLocked_PrintRestrictionMessage('Mail contents need resolution.')
-    elseif plan.requiresPending then
-      RaceLocked_PrintRestrictionMessage('Verifying mail senders...')
     else
       RaceLocked_PrintRestrictionMessage('Mail contents verified.')
     end
@@ -232,8 +258,42 @@ local function refreshMailOverlay()
     return
   end
 
-  renderPlanDisplay(plan)
+  renderPlanDisplay(plan, phase)
 end
+
+-- ── Tooltip helper ───────────────────────────────────────────────────────
+
+local function updateProceedTooltip(self)
+  if not GameTooltip then return end
+  GameTooltip:SetOwner(self, 'ANCHOR_TOP')
+
+  local sess = RaceLocked_GetMailAccessSession and RaceLocked_GetMailAccessSession()
+  local plan = sess and sess.plan
+  if not plan then
+    GameTooltip:AddLine('Proceed', 1, 0.82, 0)
+    GameTooltip:Show()
+    return
+  end
+
+  if plan.requiresPending then
+    GameTooltip:AddLine('Verify unknown senders', 1, 0.82, 0)
+    GameTooltip:AddLine(
+      plan.pendingCount .. ' sender(s) will be checked via addon handshake.',
+      1, 1, 1, true
+    )
+  elseif plan.requiresReturn then
+    GameTooltip:AddLine('Return flagged mail', 1, 0.82, 0)
+    GameTooltip:AddLine(
+      plan.returnCount .. ' message(s) will be returned to their sender.',
+      1, 1, 1, true
+    )
+  else
+    GameTooltip:AddLine('Proceed', 1, 0.82, 0)
+  end
+  GameTooltip:Show()
+end
+
+-- ── Frame creation ───────────────────────────────────────────────────────
 
 local function ensureOverlay()
   if overlay then return overlay end
@@ -254,7 +314,7 @@ local function ensureOverlay()
   overlay:SetBackdropColor(0.08, 0.08, 0.1, 0.95)
   overlay:SetBackdropBorderColor(0.4, 0.4, 0.4, 0.8)
 
-  -- Spinner (centered, shown during loading/executing)
+  -- Spinner (centered, shown during loading)
   overlay.spinner = overlay:CreateTexture(nil, 'ARTWORK')
   overlay.spinner:SetTexture('Interface\\COMMON\\StreamBackground')
   overlay.spinner:SetSize(32, 32)
@@ -268,16 +328,16 @@ local function ensureOverlay()
 
   -- Subtitle (below title)
   overlay.subtitleText = overlay:CreateFontString(nil, 'OVERLAY', BODY_FONT)
-  overlay.subtitleText:SetPoint('TOPLEFT', overlay.titleText, 'BOTTOMLEFT', 0, -6)
+  overlay.subtitleText:SetPoint('TOPLEFT', overlay.titleText, 'BOTTOMLEFT', 0, -8)
   overlay.subtitleText:SetPoint('RIGHT', overlay, 'RIGHT', -INNER_PAD, 0)
   overlay.subtitleText:SetJustifyH('LEFT')
   overlay.subtitleText:SetWordWrap(true)
 
   -- Scrollable action list (below subtitle, above footer)
   overlay.listArea = CreateFrame('ScrollFrame', 'RaceLocked_MailListScroll', overlay, 'UIPanelScrollFrameTemplate')
-  overlay.listArea:SetPoint('TOPLEFT', overlay.subtitleText, 'BOTTOMLEFT', 0, -8)
+  overlay.listArea:SetPoint('TOPLEFT', overlay.subtitleText, 'BOTTOMLEFT', 0, -12)
   overlay.listArea:SetPoint('RIGHT', overlay, 'RIGHT', -INNER_PAD - 22, 0)
-  overlay.listArea:SetPoint('BOTTOM', overlay, 'BOTTOM', 0, BUTTON_HEIGHT + BUTTON_GAP + 28)
+  overlay.listArea:SetPoint('BOTTOM', overlay, 'BOTTOM', 0, BUTTON_HEIGHT + BTN_BOTTOM_PAD + 38)
 
   overlay.scrollChild = CreateFrame('Frame', nil, overlay.listArea)
   overlay.scrollChild:SetWidth(overlay.listArea:GetWidth())
@@ -287,15 +347,15 @@ local function ensureOverlay()
 
   -- Footer (above buttons)
   overlay.footerText = overlay:CreateFontString(nil, 'OVERLAY', FOOTER_FONT)
-  overlay.footerText:SetPoint('BOTTOM', overlay, 'BOTTOM', 0, BUTTON_HEIGHT + BUTTON_GAP + 10)
+  overlay.footerText:SetPoint('BOTTOM', overlay, 'BOTTOM', 0, BUTTON_HEIGHT + BTN_BOTTOM_PAD + 16)
   overlay.footerText:SetPoint('LEFT', overlay, 'LEFT', INNER_PAD, 0)
   overlay.footerText:SetPoint('RIGHT', overlay, 'RIGHT', -INNER_PAD, 0)
   overlay.footerText:SetJustifyH('CENTER')
 
-  -- Cancel (left), Proceed (right)
+  -- Cancel (left of center)
   overlay.cancelBtn = CreateFrame('Button', nil, overlay, 'UIPanelButtonTemplate')
   overlay.cancelBtn:SetSize(100, BUTTON_HEIGHT)
-  overlay.cancelBtn:SetPoint('BOTTOMLEFT', overlay, 'BOTTOMLEFT', INNER_PAD, BUTTON_GAP)
+  overlay.cancelBtn:SetPoint('BOTTOMRIGHT', overlay, 'BOTTOM', -BTN_CENTER_GAP, BTN_BOTTOM_PAD)
   overlay.cancelBtn:SetText('Cancel')
   overlay.cancelBtn:SetScript('OnClick', function()
     if RaceLocked_CancelMailAccessSession then
@@ -304,30 +364,16 @@ local function ensureOverlay()
     RaceLocked_HideMailVerificationOverlay()
   end)
 
+  -- Proceed (right of center)
   overlay.proceedBtn = CreateFrame('Button', nil, overlay, 'UIPanelButtonTemplate')
   overlay.proceedBtn:SetSize(100, BUTTON_HEIGHT)
-  overlay.proceedBtn:SetPoint('BOTTOMRIGHT', overlay, 'BOTTOMRIGHT', -INNER_PAD, BUTTON_GAP)
+  overlay.proceedBtn:SetPoint('BOTTOMLEFT', overlay, 'BOTTOM', BTN_CENTER_GAP, BTN_BOTTOM_PAD)
   overlay.proceedBtn:SetText('Proceed')
-  overlay.proceedBtn:SetScript('OnEnter', function(self)
-    if not GameTooltip then return end
-    GameTooltip:SetOwner(self, 'ANCHOR_TOP')
-    GameTooltip:AddLine('Return flagged mail', 1, 0.82, 0)
-    local sess = RaceLocked_GetMailAccessSession and RaceLocked_GetMailAccessSession()
-    local count = sess and sess.plan and sess.plan.returnCount or 0
-    if count > 0 then
-      GameTooltip:AddLine(
-        count .. ' message(s) will be returned to their sender.',
-        1, 1, 1, true
-      )
-    end
-    GameTooltip:Show()
-  end)
+  overlay.proceedBtn:SetScript('OnEnter', updateProceedTooltip)
   overlay.proceedBtn:SetScript('OnLeave', function()
     if GameTooltip then GameTooltip:Hide() end
   end)
   overlay.proceedBtn:SetScript('OnClick', function()
-    setButtonVisible(overlay.proceedBtn, false)
-    setButtonVisible(overlay.cancelBtn, false)
     if RaceLocked_ApproveMailAccessSession then
       RaceLocked_ApproveMailAccessSession(function()
         RaceLocked_HideMailVerificationOverlay()

@@ -1,4 +1,11 @@
 --- Consent-first mailbox session: scan on open, confirm, then execute returns.
+---
+--- Phases:
+---   loading    – waiting for first MAIL_INBOX_UPDATE after CheckInbox()
+---   ready      – plan is built, waiting for user action
+---   verifying  – TV probes in flight, waiting for replies or timeout
+---   executing  – returning flagged mail one item at a time
+---   approved   – inbox is clean, overlay dismissed
 
 local session
 local EXECUTE_STEP_DELAY = 0.6
@@ -36,7 +43,7 @@ function RaceLocked_BeginMailAccessSession()
   end
 end
 
-local PROBE_TIMEOUT = RACE_LOCKED_MAIL_PROBE_TIMEOUT  -- shared in MailRestriction/Utils/Constants.lua
+local PROBE_TIMEOUT = RACE_LOCKED_MAIL_PROBE_TIMEOUT
 
 local function sendNewProbes(plan)
   if not session or not plan then return end
@@ -52,6 +59,7 @@ local function sendNewProbes(plan)
         if C_Timer and C_Timer.After then
           C_Timer.After(PROBE_TIMEOUT + 0.1, function()
             if session ~= sessionRef then return end
+            if session.phase ~= 'verifying' then return end
             if RaceLocked_RefreshMailAccessPlan then
               RaceLocked_RefreshMailAccessPlan()
             end
@@ -79,7 +87,6 @@ local function finishExecution()
 end
 
 --- Timer-driven execution: remove one item, wait, refresh inbox, repeat.
---- Each step rebuilds the plan from fresh inbox data so indices are always correct.
 local function executeStep()
   if not session or session.phase ~= 'executing' then return end
 
@@ -89,16 +96,7 @@ local function executeStep()
   session.plan = plan
 
   if not plan.requiresReturn then
-    if plan.requiresPending then
-      -- Returns are done but unverified senders remain. Drop back to 'ready'
-      -- so the overlay shows the pending state and probes can keep firing.
-      -- Staying in 'executing' would soft-lock the "Returning mail..." view,
-      -- because RefreshMailAccessPlan is a no-op while executing.
-      session.phase = 'ready'
-      sendNewProbes(plan)
-    else
-      finishExecution()
-    end
+    finishExecution()
     if RaceLocked_RefreshMailVerificationDisplay then
       RaceLocked_RefreshMailVerificationDisplay()
     end
@@ -125,8 +123,14 @@ function RaceLocked_RefreshMailAccessPlan()
 
   local pendingProbes = session.pendingProbes or {}
   session.plan = RaceLocked_BuildMailAccessPlan(pendingProbes)
-  sendNewProbes(session.plan)
-  session.phase = 'ready'
+
+  -- If we were verifying and all probes have resolved, transition to ready
+  -- so the button re-enables for the next step.
+  if session.phase == 'verifying' and not session.plan.requiresPending then
+    session.phase = 'ready'
+  elseif session.phase == 'loading' then
+    session.phase = 'ready'
+  end
 end
 
 function RaceLocked_ResetMailAccessSession()
@@ -137,11 +141,13 @@ function RaceLocked_ResetMailAccessApproval()
   if not session then return end
   session.approved = false
   session.phase = 'ready'
-  session.statusPrinted = false
   session.plannedReturns = 0
 end
 
---- User confirmed — begin executing required returns.
+--- User clicked Proceed. Behavior depends on current state:
+---   ready + pending senders  → start verifying (send probes)
+---   ready + returns needed   → start executing (return mail)
+---   ready + clean            → approve and dismiss
 --- @param onComplete function|nil  called when the inbox is clean
 function RaceLocked_ApproveMailAccessSession(onComplete)
   if not session or session.approved then return end
@@ -151,19 +157,25 @@ function RaceLocked_ApproveMailAccessSession(onComplete)
 
   session.onApproveComplete = onComplete
 
-  if not plan.requiresReturn and not plan.requiresPending then
-    session.approved = true
-    session.phase = 'approved'
-    if onComplete then onComplete() end
+  -- Step 1: if there are unverified senders, kick off probes first.
+  if plan.requiresPending then
+    session.phase = 'verifying'
+    sendNewProbes(plan)
     return
   end
 
-  session.phase = 'executing'
-
+  -- Step 2: if there are returns, execute them.
   if plan.requiresReturn then
+    session.phase = 'executing'
     session.plannedReturns = plan.returnCount
     executeStep()
+    return
   end
+
+  -- Everything is clean.
+  session.approved = true
+  session.phase = 'approved'
+  if onComplete then onComplete() end
 end
 
 function RaceLocked_CancelMailAccessSession()
