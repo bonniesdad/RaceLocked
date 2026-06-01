@@ -106,30 +106,38 @@ local SELF_REPORT_THROTTLE = 2
 local lastSelfReportAt = 0
 
 local function broadcastSelfReport()
+  if RaceLocked_HasValidatedLocalMoneyThisSession
+    and not RaceLocked_HasValidatedLocalMoneyThisSession() then
+    sessionLog('info', 'Skipping self-report — waiting for money validation.')
+    return false
+  end
+
   if UnitLevel and UnitLevel('player') < 60 then
     sessionLog('info', 'Skipping self-report (level ' .. UnitLevel('player') .. ' < 60)')
-    return
+    return false
   end
   local now = (GetTime and GetTime()) or 0
-  if now > 0 and (now - lastSelfReportAt) < SELF_REPORT_THROTTLE then
-    return
-  end
+  if now > 0 and (now - lastSelfReportAt) < SELF_REPORT_THROTTLE then return false end
   local send = getAddonSend()
-  if not send then return end
+  if not send then return false end
   local playerName = RaceLocked_Roster_GetPlayerName()
   local guildName = RaceLocked_Roster_GetPlayerGuildName()
-  if not playerName or not guildName then return end
+  if not playerName or not guildName then return false end
 
   lastSelfReportAt = now
 
   local verified = RaceLocked_IsLocalVerified and RaceLocked_IsLocalVerified() or false
   local clean = RaceLocked_IsLocalClean and RaceLocked_IsLocalClean() or false
+  local tamperAt = RaceLocked_GetLocalTamperAt and RaceLocked_GetLocalTamperAt() or 0
 
-  RaceLocked_Roster_SetSelfReport(guildName, playerName, verified, clean)
+  RaceLocked_Roster_SetSelfReport(guildName, playerName, verified, clean, tamperAt)
 
+  -- Wire layout: S:name,verified,clean,tamperAt[,gmVerified,gmClean,gmTimestamp]
+  -- tamperAt is always present (field 4) so the optional GM badge stays at a
+  -- fixed offset (fields 5-7).
   local v = boolToWire(verified)
   local c = boolToWire(clean)
-  local msg = 'S:' .. playerName .. ',' .. v .. ',' .. c
+  local msg = 'S:' .. playerName .. ',' .. v .. ',' .. c .. ',' .. tostring(tamperAt)
 
   local entry = RaceLocked_Roster_GetEntry(guildName, playerName)
   if entry and (entry.gmVerified ~= nil or entry.gmClean ~= nil) then
@@ -140,6 +148,7 @@ local function broadcastSelfReport()
   send(ADDON_PREFIX, msg, 'GUILD')
   sessionLog('sent', playerName .. ' — ' .. describeStatus(verified, clean)
     .. describeOverrideSuffix(entry and entry.gmVerified, entry and entry.gmClean), msg)
+  return true
 end
 
 --- Send a targeted O: relay for a single player whose S: arrived without
@@ -241,9 +250,11 @@ local function splitComma(str)
 end
 
 local function handleSelfReport(guildName, senderShort, fields, rawMessage)
+  -- Wire layout: name,verified,clean,tamperAt[,gmVerified,gmClean,gmTimestamp]
   local playerName = fields[1]
   local verified = wireToBool(fields[2])
   local clean = wireToBool(fields[3])
+  local clientTamperAt = tonumber(fields[4]) or 0
   if not playerName or playerName == '' or verified == nil or clean == nil then return end
 
   -- A self-report can only speak for the sender. Reject any payload whose
@@ -262,19 +273,19 @@ local function handleSelfReport(guildName, senderShort, fields, rawMessage)
   local hadLocalOverride = existingEntry
     and (existingEntry.gmVerified ~= nil or existingEntry.gmClean ~= nil)
 
-  RaceLocked_Roster_SetSelfReport(guildName, playerName, verified, clean)
+  RaceLocked_Roster_SetSelfReport(guildName, playerName, verified, clean, clientTamperAt)
 
-  -- A self-report may carry the sender's own GM override badge (fields 4-6).
+  -- A self-report may carry the sender's own GM override badge (fields 5-7).
   -- If present, store it; otherwise we may need to relay an override the
   -- sender is missing. Like O: relays, this badge is accepted on timestamp
   -- alone (not GM-authenticated) — see the trust-model note on handlePeerRelay.
   local incomingHasBadge = false
-  if fields[4] and fields[5] then
-    local gmVerified = wireToBool(fields[4])
-    local gmClean = wireToBool(fields[5])
+  if fields[5] and fields[6] then
+    local gmVerified = wireToBool(fields[5])
+    local gmClean = wireToBool(fields[6])
     if gmVerified ~= nil or gmClean ~= nil then
       incomingHasBadge = true
-      local gmTimestamp = tonumber(fields[6]) or 0
+      local gmTimestamp = tonumber(fields[7]) or 0
       local accepted = RaceLocked_Roster_SetGMOverride(guildName, playerName, gmVerified, gmClean, gmTimestamp)
       -- The sender already carries an override, so no relay is needed for them.
       cancelPendingRelay(playerName)
@@ -445,6 +456,12 @@ SlashCmdList['RLROSTER'] = function(input)
       RaceLocked_Roster_SetSelfReport(guildName, f.name, f.v, f.c)
     end
     RaceLocked_PrintRestrictionMessage('Injected ' .. #fakes .. ' fake roster entries.')
+    -- If the Guild Verification tab is currently visible, refresh it so the
+    -- injected rows appear immediately in the table.
+    if RaceLocked_GetActiveTab and RaceLocked_SwitchToTab
+      and RaceLocked_GetActiveTab() == 3 then
+      RaceLocked_SwitchToTab(3)
+    end
     return
   end
 
@@ -490,6 +507,10 @@ local hasAnnouncedThisSession = false
 --- so several events call this until it succeeds.
 local function trySessionAnnounce()
   if hasAnnouncedThisSession then return end
+  if RaceLocked_HasValidatedLocalMoneyThisSession
+    and not RaceLocked_HasValidatedLocalMoneyThisSession() then
+    return
+  end
   local playerName = RaceLocked_Roster_GetPlayerName()
   local guildName = RaceLocked_Roster_GetPlayerGuildName()
   if not playerName or not guildName then
@@ -502,7 +523,6 @@ local function trySessionAnnounce()
     return
   end
 
-  hasAnnouncedThisSession = true
   local verified = RaceLocked_IsLocalVerified and RaceLocked_IsLocalVerified() or false
   local clean = RaceLocked_IsLocalClean and RaceLocked_IsLocalClean() or false
   local loginStatus = 'Login — ' .. describeStatus(verified, clean)
@@ -510,7 +530,10 @@ local function trySessionAnnounce()
   -- Echo just this one line to chat so players can confirm the addon
   -- initialized correctly on login.
   RaceLocked_PrintRestrictionMessage(loginStatus)
-  broadcastSelfReport()
+  local sent = broadcastSelfReport()
+  if sent then
+    hasAnnouncedThisSession = true
+  end
 end
 
 local service = CreateFrame('Frame')
@@ -570,6 +593,12 @@ service:SetScript('OnEvent', function(_, event, ...)
       if removed > 0 then
         RaceLocked_PrintRestrictionMessage(
           'Removed ' .. removed .. ' former member(s) from the Guild Found roster.')
+        -- If the Guild Verification tab is currently visible, refresh it so the
+        -- table view drops departed members immediately.
+        if RaceLocked_GetActiveTab and RaceLocked_SwitchToTab
+          and RaceLocked_GetActiveTab() == 3 then
+          RaceLocked_SwitchToTab(3)
+        end
       else
         RaceLocked_PrintRestrictionMessage('Roster cleanup complete — no departed members found.')
       end

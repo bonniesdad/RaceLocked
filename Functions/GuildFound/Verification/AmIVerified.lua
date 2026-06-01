@@ -17,6 +17,16 @@ function RaceLocked_IsLocalTampered()
   return RaceLocked_GetDBValue('playerMoneyValidationFailed') == true
 end
 
+--- Atomic: unix time of the most recent detected tamper incident, or 0 if the
+--- character is not currently flagged. Used as the "tamper epoch" so a GM
+--- override (which carries its own timestamp) only clears incidents up to its
+--- own time — a newer incident beats it. Also broadcast in the self-report so
+--- peers can apply the same comparison (see RosterStore.GetEffectiveStatus).
+function RaceLocked_GetLocalTamperAt()
+  if RaceLocked_GetDBValue('playerMoneyValidationFailed') ~= true then return 0 end
+  return tonumber(RaceLocked_GetDBValue('playerMoneyValidationFailedAt')) or 0
+end
+
 --- Whether the local player has passed the verified requirement (60+ SF or override).
 function RaceLocked_IsLocalVerified()
   local verified = RaceLocked_IsLocalMaxLevelSelfFound()
@@ -33,13 +43,24 @@ function RaceLocked_IsLocalVerified()
 end
 
 --- Whether the local player has a clean (not tampered) status.
+--- A GM "clean" override only clears tamper incidents up to the override's own
+--- timestamp. A tamper detected AFTER the override (newer epoch) reflags the
+--- player, so an override can't grant a permanent pass on future tampering.
 function RaceLocked_IsLocalClean()
   local clean = not RaceLocked_IsLocalTampered()
 
   if RaceLocked_Roster_GetGMOverrideForSelf then
     local gmOverride = RaceLocked_Roster_GetGMOverrideForSelf()
-    if gmOverride.clean ~= nil then
-      clean = gmOverride.clean == true
+    if gmOverride.clean == false then
+      clean = false
+    elseif gmOverride.clean == true then
+      local tamperAt = RaceLocked_GetLocalTamperAt()
+      local overrideAt = tonumber(gmOverride.timestamp) or 0
+      if tamperAt > 0 and tamperAt > overrideAt then
+        clean = false  -- tampered after the override was issued
+      else
+        clean = true
+      end
     end
   end
 

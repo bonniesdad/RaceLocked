@@ -44,6 +44,20 @@ Mark each test PASS/FAIL as you go. Tests are grouped by feature area.
 - [ ] Have GM apply clean override (`gmClean = true`) via roster panel
 - [ ] Confirm `AmIVerified()` now returns `true` (assuming verified is also satisfied)
 
+### 1.4b — Tamper AFTER a GM clean override re-flags (tamper epoch)
+> A GM "clean" override only clears tamper incidents that happened **up to the
+> override's timestamp**. A NEW offline edit after the override gets a newer
+> incident time and re-flags the player — an override is not a permanent pass.
+- [ ] Start from a character that was tampered and then GM-cleared (end state of 1.4:
+      `AmIVerified()` = `true`, Tampered row shows the override)
+- [ ] Log out and edit `playerMoney` in SavedVariables AGAIN to a new value, log back in
+- [ ] Run `/script print(RaceLocked_GetLocalTamperAt())` — expect a non-zero timestamp
+- [ ] Run `/script print(RaceLocked_IsLocalClean())` — expect `false` (the new incident
+      post-dates the override, so it wins)
+- [ ] Confirm `AmIVerified()` now returns `false` again despite the existing GM clean override
+- [ ] Self-found re-check: if the same character is still self-found, the flag is cleared on
+      login instead (self-found exemption takes precedence — see 1.3)
+
 ### 1.5 — Rank-based self override (guild note)
 - [ ] On a character that fails normal verification, have it gain a guild-note/rank override
       recognized by `RaceLocked_ShouldOverrideVerificationViaGuildNote`
@@ -66,11 +80,15 @@ Mark each test PASS/FAIL as you go. Tests are grouped by feature area.
 ### 2.2b — Manual sync prunes departed members (deferred)
 - [ ] On Tester A, inject a fake entry for a non-member: `/rlroster fakedata`
 - [ ] Confirm the fake names (Cheaterboy, Newbieguy, etc.) appear via `/rlroster`
+- [ ] If the Guild Found roster tab is currently open, the fake rows should also
+      appear immediately in the roster table (no need to close/reopen the window).
 - [ ] Run `/rlroster sync` (or click the Sync button) → chat shows
       "Roster cleanup queued — waiting for guild data."
 - [ ] Within a few seconds, a second message should appear:
       "Removed N former member(s) from the Guild Found roster."
       (cleanup fires on the next GUILD_ROSTER_UPDATE, not inline)
+- [ ] If the Guild Found roster tab is open when cleanup runs, the removed
+      members should disappear from the table without closing the window.
 - [ ] Run `/rlroster` again → the injected non-members are gone; real guild
       members (including yourself) remain
 - [ ] Negative — early reload: run `/rlroster sync` immediately after `/reload`
@@ -92,6 +110,19 @@ Mark each test PASS/FAIL as you go. Tests are grouped by feature area.
 - [ ] Have a member who missed the GM override log in and self-report
 - [ ] An online member who holds the override should relay it (check session log for relay)
 - [ ] The late-joining member should receive the relayed override
+
+### 2.4b — Re-tamper after override propagates to the guild (tamper epoch, C2)
+> The self-report carries the sender's tamper-incident time (wire field 4:
+> `S:Name,verified,clean,tamperAt[,gmV,gmC,gmTs]`). Peers compare it against the
+> stored GM clean override's timestamp, so a re-flag reaches everyone — not just
+> the local client.
+- [ ] Set up Tester A as tampered-then-GM-cleared (per 1.4) and confirm Tester B's roster
+      shows Tester A as Eligible with the GM override (`*`)
+- [ ] On Tester A, perform a NEW offline `playerMoney` edit and log back in (per 1.4b)
+- [ ] After Tester A's next self-report, confirm on **Tester B** that Tester A flips to
+      **Ineligible / Tampered** even though Tester B still holds the (now older) GM clean override
+- [ ] Inspect the raw `S:` message on Tester B (hover the session-log row) and confirm a
+      non-zero tamperAt in field 4
 
 ### 2.5 — Self-report spoofing is rejected (C3 anti-poison)
 - [ ] From Tester B, broadcast a self-report naming a DIFFERENT player, e.g.
@@ -262,6 +293,22 @@ Mark each test PASS/FAIL as you go. Tests are grouped by feature area.
 - [ ] Toggle to session log view → should show sent/received sync messages
 - [ ] Hover over log entries → should show raw wire message (if enabled)
 
+### 6.6 — Re-tampered player reads as plain tampered + GM can re-override
+> Once a GM clean override is superseded by a newer tamper, the row drops the
+> override styling for the Tampered column (the stored override is kept, but the
+> display treats it as inactive) so the player reads as a plain self-reported
+> tampered member.
+- [ ] Using a player in the re-tamper state (per 2.4b), open the GF roster table on the GM
+- [ ] Confirm the **Tampered** column shows a plain red `Yes` (NOT blue `Yes *`)
+- [ ] Confirm the **Status** column shows `Ineligible` with no GM asterisk *unless* a separate
+      Verified override is still active
+- [ ] As GM, click **Edit** on that row → the Tampered cell should read `Yes` (tampered),
+      NOT a stale `No *`
+- [ ] Set Tampered → `No` and click **Save**
+- [ ] Confirm the override takes effect immediately (row flips to `Not tampered` / Eligible),
+      i.e. the fresh override timestamp out-dates the tamper incident
+- [ ] Confirm the re-clear propagates to other members (Tester B sees Eligible again)
+
 ---
 
 ## 7. Edge Cases
@@ -299,6 +346,7 @@ These are diagnostic commands for debugging during testing:
 | `/script print(RaceLocked_AmIVerified())` | Check if you are verified |
 | `/script print(RaceLocked_IsLocalVerified())` | Check verified component only |
 | `/script print(RaceLocked_IsLocalClean())` | Check clean component only |
+| `/script print(RaceLocked_GetLocalTamperAt())` | Print the most-recent tamper incident time (0 = not flagged) |
 | `/rlroster` | Print all GF roster entries to chat |
 | `/rlroster sync` | Force a self-report broadcast |
 | `/rlroster reset` | Wipe local roster data (then requires `/reload` to re-initialize) |
