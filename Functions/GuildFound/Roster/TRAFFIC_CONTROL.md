@@ -14,7 +14,7 @@ Event-driven addon traffic on `RLGFRoster`. No heartbeat, no zone re-broadcast.
 
 - **Session announce** — at most one login self-report per game session (`PLAYER_ENTERING_WORLD` retries via `ADDON_LOADED` / `GUILD_ROSTER_UPDATE` until guild name is readable).
 - **2 s throttle** — login and Sync share `broadcastSelfReport()`; double-fires collapse.
-- **Level 60** — below 60: chat confirmation only, no `S:` on the wire.
+- **Level gate** — below `RACE_LOCKED_GUILD_FOUND_MAX_LEVEL` (see `Utils/Constants.lua`): chat confirmation only, no `S:` on the wire.
 - **Sync button** — one use per window open; re-enabled after closing Race Locked.
 - **GM edits** — in-memory until **Save**; unsaved edits discarded on row change or window close; no-op Save sends nothing; Verified + Tampered changes = one `G:`.
 - **Compact payloads** — GM badge piggybacks on the player's own `S:` when possible.

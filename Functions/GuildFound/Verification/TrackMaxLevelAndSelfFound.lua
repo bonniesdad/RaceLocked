@@ -1,5 +1,3 @@
-RACE_LOCKED_GUILD_FOUND_MAX_LEVEL = 60
-
 local trackerFrame = CreateFrame('Frame')
 
 local function ensureHasBeenMaxLevelDefault()

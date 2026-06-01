@@ -105,6 +105,10 @@ local pendingCleanupGuild = nil
 local SELF_REPORT_THROTTLE = 2
 local lastSelfReportAt = 0
 
+-- Session announce runs once per game session; set when we broadcast S: or when
+-- we permanently skip broadcast (e.g. below level 60).
+local hasAnnouncedThisSession = false
+
 local function broadcastSelfReport()
   if RaceLocked_HasValidatedLocalMoneyThisSession
     and not RaceLocked_HasValidatedLocalMoneyThisSession() then
@@ -112,8 +116,12 @@ local function broadcastSelfReport()
     return false
   end
 
-  if UnitLevel and UnitLevel('player') < 60 then
-    sessionLog('info', 'Skipping self-report (level ' .. UnitLevel('player') .. ' < 60)')
+  if RaceLocked_GuildFound_IsAtOrAboveRequiredLevel
+    and not RaceLocked_GuildFound_IsAtOrAboveRequiredLevel() then
+    local lvl = UnitLevel and UnitLevel('player') or 0
+    sessionLog('info', 'Skipping self-report (level ' .. lvl .. ' < '
+      .. tostring(RACE_LOCKED_GUILD_FOUND_MAX_LEVEL) .. ')')
+    hasAnnouncedThisSession = true
     return false
   end
   local now = (GetTime and GetTime()) or 0
@@ -498,9 +506,7 @@ local thisAddonName = ...
 
 -- PLAYER_ENTERING_WORLD fires on every loading screen (zoning, instances,
 -- etc.), not just login. We only want to announce and broadcast once per
--- session, so this stays false until the first time we successfully read the
--- player's guild (which may not be available on the very first event).
-local hasAnnouncedThisSession = false
+-- session (see hasAnnouncedThisSession above).
 
 --- Log the session-start line and broadcast our self-report once guild info is
 --- readable. Guild name often isn't ready on the first PLAYER_ENTERING_WORLD,

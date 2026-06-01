@@ -40,8 +40,7 @@ characters in the same guild.
    Tampered → No if needed). Re-run Sync on that character if you also need their `S:` on the wire
    (still blocked until level 60 unless you use option 2).
 2. **Temporary test build** — Lower both gates on a **test-only branch** (revert before merge):
-   - `RACE_LOCKED_GUILD_FOUND_MAX_LEVEL` in `TrackMaxLevelAndSelfFound.lua`
-   - `UnitLevel('player') < 60` in `broadcastSelfReport()` in `Roster/Index.lua`
+   - `RACE_LOCKED_GUILD_FOUND_MAX_LEVEL` in `Functions/GuildFound/Utils/Constants.lua`
 3. **SavedVariables / script (local only)** — e.g.
    `/script RaceLocked_SaveDBData('hasBeenMaxLevelAndSelfFound', true)` then `/reload` — unlocks
    `IsLocalVerified` path but **does not** bypass the level-60 `S:` broadcast gate.

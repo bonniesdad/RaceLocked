@@ -40,6 +40,8 @@ Display/MainMenu/FactionRaceGrid/Utils/Guild.lua
 Display/MainMenu/FactionRaceGrid/View.lua
 Display/MainMenu/InitializeMainPanel.lua
 
+Functions/GuildFound/Utils/Constants.lua
+
 Display/MainMenu/GuildVerification/Utils/Constants.lua
 Display/MainMenu/GuildVerification/Utils/RosterRowData.lua
 Display/MainMenu/GuildVerification/RosterTable/View.lua
