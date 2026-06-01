@@ -98,28 +98,32 @@ function RaceLocked_OnTradeVerificationMessageReceived(sender, isVerified)
   -- no entry exists yet, so an authenticated guild-sync self-report (S:) from the
   -- real owner can later correct it. See CanPerformTradeWithPlayer.lua for the
   -- full trust-model rationale.
+  local shortName = Ambiguate(sender, 'short')
+
+  -- Notify the send guard regardless of whether a roster entry already exists.
+  -- An S: broadcast can arrive between probe and reply, so the entry may exist
+  -- by the time the TV response comes back.
+  if RaceLocked_NotifyOutboundProbeResolved then
+    RaceLocked_NotifyOutboundProbeResolved(shortName)
+  end
+
   if RaceLocked_Roster_SetSelfReport and RaceLocked_Roster_GetEntry
     and IsInGuild and IsInGuild() and GetGuildInfo then
     local guildName = GetGuildInfo('player')
     if guildName then
-      local shortName = Ambiguate(sender, 'short')
       if not RaceLocked_Roster_GetEntry(guildName, shortName) then
         if isVerified then
           RaceLocked_Roster_SetSelfReport(guildName, shortName, true, true)
         else
           RaceLocked_Roster_SetSelfReport(guildName, shortName, false, nil)
         end
-        -- Roster entry was freshly seeded; re-evaluate any mail held pending this sender
-        if RaceLocked_RefreshMailAccessPlan then
-          RaceLocked_RefreshMailAccessPlan()
-        end
-        if RaceLocked_RefreshMailVerificationDisplay then
-          RaceLocked_RefreshMailVerificationDisplay()
-        end
-        -- Notify the send guard in case the player tried to send mail to this person
-        if RaceLocked_NotifyOutboundProbeResolved then
-          RaceLocked_NotifyOutboundProbeResolved(shortName)
-        end
+      end
+      -- Re-evaluate any mail held pending this sender
+      if RaceLocked_RefreshMailAccessPlan then
+        RaceLocked_RefreshMailAccessPlan()
+      end
+      if RaceLocked_RefreshMailVerificationDisplay then
+        RaceLocked_RefreshMailVerificationDisplay()
       end
     end
   end

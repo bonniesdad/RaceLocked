@@ -4,7 +4,8 @@
 
 local PROBE_TIMEOUT = RACE_LOCKED_MAIL_PROBE_TIMEOUT  -- shared in MailRestriction/Utils/Constants.lua
 
-local pendingOutboundProbes = {}  -- shortName → timestamp
+local pendingOutboundProbes = {}  -- shortName → true while probe is in flight
+local timedOutProbes = {}         -- shortName → true; allows send on next click
 
 --- Called from TradeVerificationSession when a new roster entry is seeded.
 --- If we had a pending outbound probe for that player, notify the player they
@@ -61,55 +62,79 @@ local function isRecipientAllowed(recipient)
     return true
   end
 
-  -- No GF entry: probe and hold until reply arrives
-  local probeTime = pendingOutboundProbes[shortRecipient]
-  if probeTime then
-    local elapsed = (GetTime and GetTime() or 0) - probeTime
-    if elapsed >= PROBE_TIMEOUT then
-      -- Timed out: clear so player can try again (will re-probe)
-      pendingOutboundProbes[shortRecipient] = nil
-      return false, 'Cannot send mail to ' .. shortRecipient .. ' — no verification reply'
-    end
+  -- Probe already timed out — allow as confirmed guildmate.
+  if timedOutProbes[shortRecipient] then
+    timedOutProbes[shortRecipient] = nil
+    return true
+  end
+
+  -- Probe still in flight — keep waiting.
+  if pendingOutboundProbes[shortRecipient] then
     return false, 'Awaiting verification from ' .. shortRecipient .. '...'
   end
 
-  -- Send probe, block this attempt, let player retry when notified
-  pendingOutboundProbes[shortRecipient] = GetTime and GetTime() or 0
+  -- Send probe, block this attempt, let player retry when notified or after timeout.
+  pendingOutboundProbes[shortRecipient] = true
   if RaceLocked_SendTradeVerificationStatus and RaceLocked_AmIVerified then
     RaceLocked_SendTradeVerificationStatus(RaceLocked_AmIVerified(), recipient)
+  end
+  if C_Timer and C_Timer.After then
+    C_Timer.After(PROBE_TIMEOUT + 0.1, function()
+      if not pendingOutboundProbes[shortRecipient] then return end
+      pendingOutboundProbes[shortRecipient] = nil
+      timedOutProbes[shortRecipient] = true
+      RaceLocked_PrintRestrictionMessage(
+        'No verification reply from ' .. shortRecipient .. ' — click Send to allow as guildmate.'
+      )
+    end)
   end
   return false, 'Verification probe sent to ' .. shortRecipient .. '. Try again in a moment.'
 end
 
--- Hook on MAIL_SHOW: SendMailSendButton is created lazily when the mail frame
--- first loads, so it does not exist at PLAYER_LOGIN. _rlGuarded prevents
--- re-hooking on subsequent opens.
+local sendGuardInstalled = false
+
+local function installSendGuard()
+  if sendGuardInstalled then return end
+
+  if type(SendMail) == 'function' then
+    local origSendMail = SendMail
+    SendMail = function(recipient, ...)
+      if isGuildFoundActive() then
+        local allowed, reason = isRecipientAllowed(recipient)
+        if not allowed then
+          RaceLocked_PrintRestrictionMessage(reason)
+          return
+        end
+      end
+      return origSendMail(recipient, ...)
+    end
+    sendGuardInstalled = true
+    return
+  end
+
+  if type(SendMailFrame_SendMail) == 'function' then
+    local origFrameSend = SendMailFrame_SendMail
+    SendMailFrame_SendMail = function(...)
+      if isGuildFoundActive() then
+        local recipient = getRecipient()
+        local allowed, reason = isRecipientAllowed(recipient)
+        if not allowed then
+          RaceLocked_PrintRestrictionMessage(reason)
+          return
+        end
+      end
+      return origFrameSend(...)
+    end
+    sendGuardInstalled = true
+  end
+end
+
 local guardFrame = CreateFrame('Frame')
+guardFrame:RegisterEvent('PLAYER_LOGIN')
 guardFrame:RegisterEvent('MAIL_SHOW')
 
 guardFrame:SetScript('OnEvent', function(_, event)
-  if event ~= 'MAIL_SHOW' then return end
-
-  local btn = SendMailSendButton
-  if not btn or btn._rlGuarded then return end
-  btn._rlGuarded = true
-
-  local orig = btn:GetScript('OnClick')
-
-  btn:SetScript('OnClick', function(btnSelf, ...)
-    if isGuildFoundActive() then
-      local recipient = getRecipient()
-      local allowed, reason = isRecipientAllowed(recipient)
-      if not allowed then
-        RaceLocked_PrintRestrictionMessage(reason)
-        return
-      end
-    end
-
-    if orig then
-      orig(btnSelf, ...)
-    else
-      SendMailFrame_SendMail()
-    end
-  end)
+  if event == 'PLAYER_LOGIN' or event == 'MAIL_SHOW' then
+    installSendGuard()
+  end
 end)

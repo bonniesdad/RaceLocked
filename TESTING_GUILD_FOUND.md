@@ -14,6 +14,40 @@ Mark each test PASS/FAIL as you go. Tests are grouped by feature area.
 - [ ] Tester A has `/script RaceLocked_PrintMailStateReport()` accessible for diagnostics
 - [ ] Fresh `/reload` before starting each section
 
+### Reduced roster (one level 60, low-level alts)
+
+Use this when only **Tester A** is 60+ self-found verified and other testers are lower-level
+characters in the same guild.
+
+**What still works without leveling alts**
+
+- **Tester A (60, verified)** — full pass: roster sync (`S:`), trade/mail enforcement, inbound/outbound
+  mail, TV probes, AH block, §6 UI, GM tools.
+- **Low-level guild alts** — §3.5 / §5.5 (GF rules do not apply when `AmIVerified()` is false);
+  mail/trade **targets** for A; probe recipients (usually reply `TV:0` → seed ineligible);
+  §6.3 rows once A (or GM) seeds them; §6.4 GM edit on their row from A’s GM account.
+- **Tester C (non-guild)** — §3.4, §4.2, §5.1 unchanged.
+
+**What low alts cannot do without help**
+
+- §2.1 — their own login **does not** broadcast `S:` (`Roster/Index.lua` skips below level 60).
+- §2.x — two-way roster sync as a second **verified** peer (need A + another verified source).
+- §5.4 — “retry succeeds after **verified** reply” unless the alt is actually verified on the wire.
+
+**Ways to simulate a second verified member (pick one)**
+
+1. **GM roster override (recommended, no code change)** — On the alt’s row, GM sets Verified (and
+   Tampered → No if needed). Re-run Sync on that character if you also need their `S:` on the wire
+   (still blocked until level 60 unless you use option 2).
+2. **Temporary test build** — Lower both gates on a **test-only branch** (revert before merge):
+   - `RACE_LOCKED_GUILD_FOUND_MAX_LEVEL` in `TrackMaxLevelAndSelfFound.lua`
+   - `UnitLevel('player') < 60` in `broadcastSelfReport()` in `Roster/Index.lua`
+3. **SavedVariables / script (local only)** — e.g.
+   `/script RaceLocked_SaveDBData('hasBeenMaxLevelAndSelfFound', true)` then `/reload` — unlocks
+   `IsLocalVerified` path but **does not** bypass the level-60 `S:` broadcast gate.
+
+Mark sections that need a second verified peer as **SKIP** or **PARTIAL** when using this layout.
+
 ---
 
 ## 1. Self-Verification (`AmIVerified`)
@@ -255,7 +289,9 @@ Mark each test PASS/FAIL as you go. Tests are grouped by feature area.
       (the wording is intentionally neutral; the reply does not guarantee eligibility)
 - [ ] Retry send → succeeds if the recipient replied verified; if they replied "not verified",
       the retry is blocked with "not eligible"
-- [ ] If recipient doesn't respond (5s) → next attempt says "no verification reply"
+- [ ] If recipient doesn't respond within `RACE_LOCKED_MAIL_PROBE_TIMEOUT` (5s) — e.g. old addon,
+      offline, or low-level alt replying `TV:0` only — next send **allows** mail (confirmed
+      WoW guildmate); roster may still lack an eligible entry until `S:` or a verified TV reply
 
 ### 5.5 — Send mail while not verified
 - [ ] On a character where `AmIVerified()` = false → send button should work normally (no GF restrictions)
