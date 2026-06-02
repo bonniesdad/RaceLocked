@@ -134,8 +134,11 @@ local function broadcastSelfReport()
 
   lastSelfReportAt = now
 
-  local verified = RaceLocked_IsLocalVerified and RaceLocked_IsLocalVerified() or false
-  local clean = RaceLocked_IsLocalClean and RaceLocked_IsLocalClean() or false
+  -- Self fields must reflect atomic player state only; GM overrides ride in fields 5-7.
+  local verified = RaceLocked_GetLocalSelfReportVerified
+    and RaceLocked_GetLocalSelfReportVerified() or false
+  local clean = RaceLocked_GetLocalSelfReportClean
+    and RaceLocked_GetLocalSelfReportClean() or false
   local tamperAt = RaceLocked_GetLocalTamperAt and RaceLocked_GetLocalTamperAt() or 0
 
   RaceLocked_Roster_SetSelfReport(guildName, playerName, verified, clean, tamperAt)

@@ -27,6 +27,17 @@ function RaceLocked_GetLocalTamperAt()
   return tonumber(RaceLocked_GetDBValue('playerMoneyValidationFailedAt')) or 0
 end
 
+--- Raw self-report fields for guild `S:` broadcasts and roster `entry.verified` /
+--- `entry.clean`. Excludes roster GM overrides and guild-note override; those
+--- travel separately (`gm*` on `S:` / `G:`) or apply only in IsLocalVerified.
+function RaceLocked_GetLocalSelfReportVerified()
+  return RaceLocked_IsLocalMaxLevelSelfFound()
+end
+
+function RaceLocked_GetLocalSelfReportClean()
+  return not RaceLocked_IsLocalTampered()
+end
+
 --- Whether the local player has passed the verified requirement (60+ SF or override).
 function RaceLocked_IsLocalVerified()
   local verified = RaceLocked_IsLocalMaxLevelSelfFound()
