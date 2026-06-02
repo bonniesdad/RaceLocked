@@ -16,7 +16,7 @@ addonMessageFrame:SetScript('OnEvent', function(_, event, ...)
 
   -- Auto-reply: if this probe did not come from our own active trade session,
   -- reply with our status so the sender can seed our Guild Found roster entry.
-  -- Only auto-reply to guildmates — otherwise any stranger could whisper the
+  -- Only auto-reply to guildmates • otherwise any stranger could whisper the
   -- right addon message to probe our verification status and trigger roster
   -- side effects.
   local activeSession = RaceLocked_TradeVerificationSession

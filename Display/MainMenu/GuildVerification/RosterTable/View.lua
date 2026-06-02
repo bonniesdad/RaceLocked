@@ -889,7 +889,7 @@ function RaceLocked_GuildVerification_UpdateRosterSection(content, blockEnd)
       end,
     })
 
-    -- Tampered column: inverted semantics — "Yes" (tampered) means not clean.
+    -- Tampered column: inverted semantics • "Yes" (tampered) means not clean.
     renderRosterField(row, row.cleanText, row.cleanDropdown, cleanLeft, colStatusW, isEditing, {
       text = withOverrideSuffix(tamperedText(displayClean), cleanOverride),
       color = tamperedColor(displayClean, cleanOverride),

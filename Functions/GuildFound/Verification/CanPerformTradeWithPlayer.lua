@@ -1,6 +1,6 @@
 -- Trust model: when a roster entry already exists we resolve instantly from it;
 -- otherwise we fall through to a live Trade Verification (TV) whisper handshake.
--- TV is inherently trust-based — like any client-side addon, a modified client
+-- TV is inherently trust-based • like any client-side addon, a modified client
 -- can reply TV:1 (verified) when it is not, which would both allow the trade and
 -- seed a verified=true roster entry. This cannot be prevented purely client-side.
 -- The guild-wide roster sync (S: self-report broadcasts) is the corrective layer:

@@ -126,7 +126,7 @@ local function renderActionRows(plan)
       if action.kind == 'auction_house' then
         reason = 'AH disabled'
       elseif action.description then
-        local dash = action.description:match(' — (.+)$')
+        local dash = action.description:match(' • (.+)$')
         if dash then reason = dash end
       end
     elseif action.action == 'pending' then

@@ -20,7 +20,7 @@ end
 --- Atomic: unix time of the most recent detected tamper incident, or 0 if the
 --- character is not currently flagged. Used as the "tamper epoch" so a GM
 --- override (which carries its own timestamp) only clears incidents up to its
---- own time — a newer incident beats it. Also broadcast in the self-report so
+--- own time • a newer incident beats it. Also broadcast in the self-report so
 --- peers can apply the same comparison (see RosterStore.GetEffectiveStatus).
 function RaceLocked_GetLocalTamperAt()
   if RaceLocked_GetDBValue('playerMoneyValidationFailed') ~= true then return 0 end

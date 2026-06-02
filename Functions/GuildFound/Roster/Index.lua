@@ -1,4 +1,4 @@
---- Guild Found Roster — message handling, self-broadcast, and event wiring.
+--- Guild Found Roster • message handling, self-broadcast, and event wiring.
 --- Members broadcast their own status (S:), the guild master broadcasts
 --- overrides (G:), and peers relay overrides they already hold (O:) so a
 --- member who logs in late still learns about an override that predates them.
@@ -112,7 +112,7 @@ local hasAnnouncedThisSession = false
 local function broadcastSelfReport()
   if RaceLocked_HasValidatedLocalMoneyThisSession
     and not RaceLocked_HasValidatedLocalMoneyThisSession() then
-    sessionLog('info', 'Skipping self-report — waiting for money validation.')
+    sessionLog('info', 'Skipping self-report • waiting for money validation.')
     return false
   end
 
@@ -154,7 +154,7 @@ local function broadcastSelfReport()
   end
 
   send(ADDON_PREFIX, msg, 'GUILD')
-  sessionLog('sent', playerName .. ' — ' .. describeStatus(verified, clean)
+  sessionLog('sent', playerName .. ' • ' .. describeStatus(verified, clean)
     .. describeOverrideSuffix(entry and entry.gmVerified, entry and entry.gmClean), msg)
   return true
 end
@@ -173,7 +173,7 @@ local function sendTargetedRelay(guildName, playerName)
     boolToWire(entry.gmVerified) .. ',' ..
     boolToWire(entry.gmClean) .. ',' .. tostring(entry.gmTimestamp or 0)
   send(ADDON_PREFIX, msg, 'GUILD')
-  sessionLog('sent', playerName .. ' — Relay'
+  sessionLog('sent', playerName .. ' • Relay'
     .. describeOverrideSuffix(entry.gmVerified, entry.gmClean), msg)
 end
 
@@ -225,7 +225,7 @@ end
 --- @return boolean sent  true if a message was put on the channel
 function RaceLocked_Roster_CommitGMOverride(playerName)
   if not RaceLocked_AmIGuildMaster() then
-    sessionLog('warn', 'Cannot send GM override — you are not the guild master.')
+    sessionLog('warn', 'Cannot send GM override • you are not the guild master.')
     return false
   end
   local guildName = RaceLocked_Roster_GetPlayerGuildName()
@@ -243,7 +243,7 @@ function RaceLocked_Roster_CommitGMOverride(playerName)
   local msg = 'G:' .. playerName .. ',' .. boolToWire(gmVerified) .. ',' ..
     boolToWire(gmClean) .. ',' .. tostring(ts)
   send(ADDON_PREFIX, msg, 'GUILD')
-  sessionLog('sent', playerName .. ' — GM Override: ' .. describeGMDecision(gmVerified, gmClean), msg)
+  sessionLog('sent', playerName .. ' • GM Override: ' .. describeGMDecision(gmVerified, gmClean), msg)
   return true
 end
 
@@ -270,7 +270,7 @@ local function handleSelfReport(guildName, senderShort, fields, rawMessage)
   -- could broadcast `S:Victim,1,1` and poison the victim's roster status for
   -- everyone (trade/mail now trust roster entries when present).
   if not senderShort or Ambiguate(playerName, 'short') ~= senderShort then
-    sessionLog('warn', 'Rejected self-report for ' .. playerName .. ' from ' .. tostring(senderShort) .. ' — name/sender mismatch', rawMessage)
+    sessionLog('warn', 'Rejected self-report for ' .. playerName .. ' from ' .. tostring(senderShort) .. ' • name/sender mismatch', rawMessage)
     return
   end
 
@@ -286,7 +286,7 @@ local function handleSelfReport(guildName, senderShort, fields, rawMessage)
   -- A self-report may carry the sender's own GM override badge (fields 5-7).
   -- If present, store it; otherwise we may need to relay an override the
   -- sender is missing. Like O: relays, this badge is accepted on timestamp
-  -- alone (not GM-authenticated) — see the trust-model note on handlePeerRelay.
+  -- alone (not GM-authenticated) • see the trust-model note on handlePeerRelay.
   local incomingHasBadge = false
   if fields[5] and fields[6] then
     local gmVerified = wireToBool(fields[5])
@@ -297,13 +297,13 @@ local function handleSelfReport(guildName, senderShort, fields, rawMessage)
       local accepted = RaceLocked_Roster_SetGMOverride(guildName, playerName, gmVerified, gmClean, gmTimestamp)
       -- The sender already carries an override, so no relay is needed for them.
       cancelPendingRelay(playerName)
-      sessionLog('recv', playerName .. ' — ' .. describeStatus(verified, clean)
+      sessionLog('recv', playerName .. ' • ' .. describeStatus(verified, clean)
         .. describeOverrideSuffix(gmVerified, gmClean) .. staleSuffix(accepted), rawMessage)
     end
   end
 
   if not incomingHasBadge then
-    sessionLog('recv', playerName .. ' — ' .. describeStatus(verified, clean), rawMessage)
+    sessionLog('recv', playerName .. ' • ' .. describeStatus(verified, clean), rawMessage)
     if hadLocalOverride then
       queueRelay(guildName, playerName)
     end
@@ -338,11 +338,11 @@ end
 
 local function handleGMOverride(guildName, sender, fields, rawMessage)
   if not RaceLocked_IsGuildMaster(sender) then
-    sessionLog('warn', 'Rejected override from ' .. sender .. ' — not guild master', rawMessage)
+    sessionLog('warn', 'Rejected override from ' .. sender .. ' • not guild master', rawMessage)
     return
   end
   applyOverrideGroups(guildName, fields, rawMessage, function(name, gmVerified, gmClean, _, accepted)
-    return name .. ' — GM Override (' .. sender .. '): ' .. describeGMDecision(gmVerified, gmClean) .. staleSuffix(accepted)
+    return name .. ' • GM Override (' .. sender .. '): ' .. describeGMDecision(gmVerified, gmClean) .. staleSuffix(accepted)
   end)
 end
 
@@ -355,7 +355,7 @@ end
 --   * The override is a *positive* tool (clear false-positive tampering, admit a
 --     trusted non-self-found member). Forging a grant buys nothing beyond the
 --     self-report trust a client already has (a modified client can already
---     broadcast S:Self,1,1 — see the TV/self-report trust note in
+--     broadcast S:Self,1,1 • see the TV/self-report trust note in
 --     CanPerformTradeWithPlayer.lua).
 --   * Forging a *revoke* to grief an honest member is the only residual, and the
 --     real-world remedy for such a bad actor is removal from the guild.
@@ -367,7 +367,7 @@ local function handlePeerRelay(guildName, fields, rawMessage)
     -- A current relay from a peer covers this player, so we can drop ours.
     -- (If it were stale we'd keep ours so our newer override still propagates.)
     cancelPendingRelay(name)
-    return name .. ' — Relay' .. describeOverrideSuffix(gmVerified, gmClean)
+    return name .. ' • Relay' .. describeOverrideSuffix(gmVerified, gmClean)
   end)
 end
 
@@ -433,11 +433,11 @@ SlashCmdList['RLROSTER'] = function(input)
 
     -- Request a roster refresh with offline members included, then set a flag
     -- so the next GUILD_ROSTER_UPDATE fires the actual prune. We never prune
-    -- inline because GuildRoster() is async — GetNumGuildMembers() right after
+    -- inline because GuildRoster() is async • GetNumGuildMembers() right after
     -- may still reflect an older, online-only snapshot.
     RaceLocked_RefreshGuildRoster()
     pendingCleanupGuild = guildName
-    RaceLocked_PrintRestrictionMessage('Roster cleanup queued — waiting for guild data.')
+    RaceLocked_PrintRestrictionMessage('Roster cleanup queued • waiting for guild data.')
     return
   end
 
@@ -521,7 +521,7 @@ local function trySessionAnnounce()
   local guildName = RaceLocked_Roster_GetPlayerGuildName()
   if not playerName or not guildName then
     -- IsInGuild can be true while GetGuildInfo('player') is still nil until
-    -- the roster finishes loading — nudge a refresh and try again on
+    -- the roster finishes loading • nudge a refresh and try again on
     -- GUILD_ROSTER_UPDATE.
     if IsInGuild and IsInGuild() and RaceLocked_RefreshGuildRoster then
       RaceLocked_RefreshGuildRoster()
@@ -531,7 +531,7 @@ local function trySessionAnnounce()
 
   local verified = RaceLocked_IsLocalVerified and RaceLocked_IsLocalVerified() or false
   local clean = RaceLocked_IsLocalClean and RaceLocked_IsLocalClean() or false
-  local loginStatus = 'Login — ' .. describeStatus(verified, clean)
+  local loginStatus = 'Login • ' .. describeStatus(verified, clean)
   sessionLog('info', loginStatus)
   -- Echo just this one line to chat so players can confirm the addon
   -- initialized correctly on login.
@@ -570,10 +570,10 @@ service:SetScript('OnEvent', function(_, event, ...)
     -- live roster should include offline members. Two guards prevent pruning
     -- against a bad snapshot:
     --   1. Self-name check: if our own name isn't in the scan, the roster
-    --      hasn't finished loading at all — abort.
+    --      hasn't finished loading at all • abort.
     --   2. Count guard: if the live scan has fewer than half the stored entries,
     --      the roster is likely still partial (e.g. only online members loaded
-    --      so far) — abort rather than mass-pruning offline members.
+    --      so far) • abort rather than mass-pruning offline members.
     -- Even past both guards the prune is self-correcting: a wrongly removed
     -- member reappears on their next self-report.
     if pendingCleanupGuild and RaceLocked_Roster_CleanupForRoster then
@@ -583,14 +583,14 @@ service:SetScript('OnEvent', function(_, event, ...)
       local currentMembers, liveCount = buildCurrentGuildNameSet()
       local myName = RaceLocked_Roster_GetPlayerName()
       if liveCount == 0 or not myName or not currentMembers[Ambiguate(myName, 'short')] then
-        sessionLog('info', 'Roster cleanup skipped — guild roster not fully loaded.')
+        sessionLog('info', 'Roster cleanup skipped • guild roster not fully loaded.')
         return
       end
 
       local storedCount = RaceLocked_Roster_GetEntryCount
         and RaceLocked_Roster_GetEntryCount(guildForCleanup) or 0
       if storedCount > 0 and liveCount < math.floor(storedCount / 2) then
-        sessionLog('info', 'Roster cleanup skipped — live roster (' .. liveCount
+        sessionLog('info', 'Roster cleanup skipped • live roster (' .. liveCount
           .. ') is less than half of stored entries (' .. storedCount .. ').')
         return
       end
@@ -606,7 +606,7 @@ service:SetScript('OnEvent', function(_, event, ...)
           RaceLocked_SwitchToTab(3)
         end
       else
-        RaceLocked_PrintRestrictionMessage('Roster cleanup complete — no departed members found.')
+        RaceLocked_PrintRestrictionMessage('Roster cleanup complete • no departed members found.')
       end
     end
     return

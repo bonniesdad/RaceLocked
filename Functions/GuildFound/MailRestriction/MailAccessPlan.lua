@@ -22,7 +22,7 @@ local function describeAuctionAction(inboxIndex, sender, subject)
     invoiceType, itemName = GetInboxInvoiceInfo(inboxIndex)
   end
   local invoiceLabel = INVOICE_LABELS[invoiceType] or 'invoice'
-  local itemPart = itemName and (' — ' .. itemName) or ''
+  local itemPart = itemName and (' • ' .. itemName) or ''
   local subjectPart = subject and subject ~= '' and (' "' .. subject .. '"') or ''
   return 'Return Auction House mail (' .. invoiceLabel .. ') from '
     .. trimSender(sender) .. itemPart .. subjectPart
@@ -68,7 +68,7 @@ function RaceLocked_GetMailRequiredAction(inboxIndex, guildName, pendingProbes)
       kind = mail.kind,
       sender = sender,
       subject = subject,
-      description = 'Return mail from ' .. shortSender .. subjectPart .. ' — not in guild',
+      description = 'Return mail from ' .. shortSender .. subjectPart .. ' • not in guild',
     }
   end
 
@@ -85,7 +85,7 @@ function RaceLocked_GetMailRequiredAction(inboxIndex, guildName, pendingProbes)
           kind = mail.kind,
           sender = sender,
           subject = subject,
-          description = 'Return mail from ' .. shortSender .. subjectPart .. ' — not eligible',
+          description = 'Return mail from ' .. shortSender .. subjectPart .. ' • not eligible',
         }
       end
       -- Eligible: allow
@@ -105,7 +105,7 @@ function RaceLocked_GetMailRequiredAction(inboxIndex, guildName, pendingProbes)
           sender = sender,
           subject = subject,
           description = 'Return mail from ' .. shortSender .. subjectPart
-            .. ' — no verification reply',
+            .. ' • no verification reply',
         }
       end
       -- Still within timeout: pending
@@ -226,7 +226,7 @@ function RaceLocked_BuildMailAccessPlan(pendingProbes)
       plan.lines[#plan.lines + 1] = plan.allowedCount .. ' other message(s) will remain.'
     end
   elseif plan.requiresPending then
-    plan.lines[#plan.lines + 1] = 'Verifying sender(s) — please wait...'
+    plan.lines[#plan.lines + 1] = 'Verifying sender(s) • please wait...'
     plan.lines[#plan.lines + 1] = ''
     for i, action in ipairs(plan.actions) do
       if i <= 6 then

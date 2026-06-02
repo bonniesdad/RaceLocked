@@ -10,12 +10,12 @@ local timedOutProbes = {}         -- shortName → true; allows send on next cli
 --- Called from TradeVerificationSession when a new roster entry is seeded.
 --- If we had a pending outbound probe for that player, notify the player they
 --- can retry. The reply doesn't guarantee the recipient is eligible (they may
---- have answered "not verified"), so the message stays neutral — the retry
+--- have answered "not verified"), so the message stays neutral • the retry
 --- itself will allow or block with the precise reason.
 function RaceLocked_NotifyOutboundProbeResolved(shortName)
   if pendingOutboundProbes[shortName] then
     pendingOutboundProbes[shortName] = nil
-    RaceLocked_PrintRestrictionMessage(shortName .. ' responded to verification — try sending again.')
+    RaceLocked_PrintRestrictionMessage(shortName .. ' responded to verification • try sending again.')
   end
 end
 
@@ -38,7 +38,7 @@ local function isRecipientAllowed(recipient)
 
   -- Must be in the WoW guild
   if not RaceLocked_IsPlayerInGuildRoster(recipient) then
-    return false, 'Cannot send mail to ' .. Ambiguate(recipient, 'short') .. ' — not in guild'
+    return false, 'Cannot send mail to ' .. Ambiguate(recipient, 'short') .. ' • not in guild'
   end
 
   local guildName = RaceLocked_Roster_GetPlayerGuildName
@@ -46,7 +46,7 @@ local function isRecipientAllowed(recipient)
   -- Default-deny: if guild data isn't available we can't verify the recipient,
   -- so block rather than silently allow (consistent with the mail policy).
   if not guildName then
-    return false, 'Cannot verify ' .. Ambiguate(recipient, 'short') .. ' — guild data unavailable'
+    return false, 'Cannot verify ' .. Ambiguate(recipient, 'short') .. ' • guild data unavailable'
   end
 
   local shortRecipient = Ambiguate(recipient, 'short')
@@ -57,18 +57,18 @@ local function isRecipientAllowed(recipient)
     if RaceLocked_Roster_IsPlayerEligible
       and not RaceLocked_Roster_IsPlayerEligible(guildName, shortRecipient)
     then
-      return false, 'Cannot send mail to ' .. shortRecipient .. ' — not eligible'
+      return false, 'Cannot send mail to ' .. shortRecipient .. ' • not eligible'
     end
     return true
   end
 
-  -- Probe already timed out — allow as confirmed guildmate.
+  -- Probe already timed out • allow as confirmed guildmate.
   if timedOutProbes[shortRecipient] then
     timedOutProbes[shortRecipient] = nil
     return true
   end
 
-  -- Probe still in flight — keep waiting.
+  -- Probe still in flight • keep waiting.
   if pendingOutboundProbes[shortRecipient] then
     return false, 'Awaiting verification from ' .. shortRecipient .. '...'
   end
@@ -84,7 +84,7 @@ local function isRecipientAllowed(recipient)
       pendingOutboundProbes[shortRecipient] = nil
       timedOutProbes[shortRecipient] = true
       RaceLocked_PrintRestrictionMessage(
-        'No verification reply from ' .. shortRecipient .. ' — click Send to allow as guildmate.'
+        'No verification reply from ' .. shortRecipient .. ' • click Send to allow as guildmate.'
       )
     end)
   end

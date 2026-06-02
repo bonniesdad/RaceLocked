@@ -114,7 +114,7 @@ local function getVerificationChecks()
     ) or nil,
   }
 
-  -- 4. GM override — grey when absent (informational, not a blocker on its own)
+  -- 4. GM override • grey when absent (informational, not a blocker on its own)
   checks[#checks + 1] = {
     passed = hasGMOverride,
     passMessage = 'Manual override applied',

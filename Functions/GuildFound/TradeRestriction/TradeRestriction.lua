@@ -12,7 +12,7 @@ local tradeVerifyStarted = false
 local function tryVerifyTradePartner()
   if tradeVerifyStarted then return end
   local targetName = GetUnitName('npc', true)
-  -- Name not ready yet — a later TRADE_UPDATE will retry before any trade
+  -- Name not ready yet • a later TRADE_UPDATE will retry before any trade
   -- can be completed, so we never allow an unverified trade through.
   if not targetName then return end
   tradeVerifyStarted = true

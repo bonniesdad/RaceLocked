@@ -172,7 +172,7 @@ end
 --- No-op when `currentMembers` is empty (basic protection against a completely
 --- unloaded roster). Callers should apply their own higher-level guards (e.g.
 --- self-name presence, count ratio) before invoking this. Even past all guards
---- the prune is self-correcting — a wrongly removed member reappears on their
+--- the prune is self-correcting • a wrongly removed member reappears on their
 --- next self-report.
 --- @param guildName string
 --- @param currentMembers table<string, boolean>  short names currently in the guild

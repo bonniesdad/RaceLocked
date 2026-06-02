@@ -1,4 +1,4 @@
---- Dev-oriented mail snapshot — delegates to the consent-first access plan.
+--- Dev-oriented mail snapshot • delegates to the consent-first access plan.
 --- Not called during normal play.
 
 --- Build human-readable lines for chat diagnostics.
@@ -8,12 +8,12 @@ function RaceLocked_BuildMailStateReport()
   lines[#lines + 1] = 'Guild Found mail (consent flow)'
 
   if not RaceLocked_IsInGuildFoundGuild or not RaceLocked_IsInGuildFoundGuild() then
-    lines[#lines + 1] = 'Not in a Guild Found guild — no mail gate.'
+    lines[#lines + 1] = 'Not in a Guild Found guild • no mail gate.'
     return { lines = lines }
   end
 
   if not RaceLocked_AmIVerified or not RaceLocked_AmIVerified() then
-    lines[#lines + 1] = 'You are not verified — no mail rules apply.'
+    lines[#lines + 1] = 'You are not verified • no mail rules apply.'
     return { lines = lines }
   end
 
@@ -38,7 +38,7 @@ function RaceLocked_BuildMailStateReport()
   return { lines = lines }
 end
 
---- Dev diagnostic — prints full inbox state to chat on demand.
+--- Dev diagnostic • prints full inbox state to chat on demand.
 --- Not called during normal play; use /script RaceLocked_PrintMailStateReport() to inspect.
 
 function RaceLocked_PrintMailStateReport()

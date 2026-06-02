@@ -1,4 +1,4 @@
--- Title bar, divider, header art, and close control — same patterns as UltraFound
+-- Title bar, divider, header art, and close control • same patterns as UltraFound
 
 --- @param settingsFrame Frame
 function RaceLocked_Settings_CreateTitleChrome(settingsFrame)

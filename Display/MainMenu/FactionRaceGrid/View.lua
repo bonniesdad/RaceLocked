@@ -176,7 +176,7 @@ local function createRaceStatPane(root, raceToken, raceAccent)
 
   local det = f:CreateFontString(nil, 'OVERLAY', 'GameFontHighlight')
   det:SetJustifyH('CENTER')
-  det:SetText('—')
+  det:SetText('•')
   det:SetTextColor(G.MUTED[1], G.MUTED[2], G.MUTED[3])
   f._detailFs = det
 
@@ -770,7 +770,7 @@ function RaceLocked_CreateFactionRaceGrid(parent)
     end
 
     -- Roster may still be loading after GuildRoster(); user can click again. Under min size: no broadcast.
-    -- SendChatMessage to CHANNEL is protected — broadcast only runs here on the same stack as this click.
+    -- SendChatMessage to CHANNEL is protected • broadcast only runs here on the same stack as this click.
     local ok = refreshOwnStoredRowsAndRedraw()
     if ok then
       setGuildLoadFailVisible(false)

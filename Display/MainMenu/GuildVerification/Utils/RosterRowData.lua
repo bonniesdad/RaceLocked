@@ -1,5 +1,5 @@
 --- Build a sorted row list for the Guild Found roster UI.
---- Uses only the persisted roster store — no live guild roster scan.
+--- Uses only the persisted roster store • no live guild roster scan.
 
 --- @return table[] rows, boolean isGM
 function RaceLocked_GetGuildFoundRosterRows()
@@ -25,7 +25,7 @@ function RaceLocked_GetGuildFoundRosterRows()
     -- override is superseded (see RosterStore.GetEffectiveStatus). Present it
     -- as absent for display/editing so the row reads as a plain self-reported
     -- tampered player, and the GM's edit buffer starts without the dead
-    -- override — letting a fresh "Not tampered" selection commit a new,
+    -- override • letting a fresh "Not tampered" selection commit a new,
     -- winning timestamp. The stored override is left intact (it stays robust
     -- against peer relays); only the displayed value is adjusted.
     local gmClean = entry.gmClean
