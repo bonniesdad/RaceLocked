@@ -298,8 +298,14 @@ local function handleSelfReport(guildName, senderShort, fields, rawMessage)
       incomingHasBadge = true
       local gmTimestamp = tonumber(fields[7]) or 0
       local accepted = RaceLocked_Roster_SetGMOverride(guildName, playerName, gmVerified, gmClean, gmTimestamp)
-      -- The sender already carries an override, so no relay is needed for them.
-      cancelPendingRelay(playerName)
+      -- If the sender's badge is current, no relay is needed. If it was rejected
+      -- as stale, we hold a newer override (e.g. issued while they were offline)
+      -- and must relay it back so they pick it up.
+      if accepted then
+        cancelPendingRelay(playerName)
+      else
+        queueRelay(guildName, playerName)
+      end
       sessionLog('recv', playerName .. ' • ' .. describeStatus(verified, clean)
         .. describeOverrideSuffix(gmVerified, gmClean) .. staleSuffix(accepted), rawMessage)
     end
