@@ -11,31 +11,30 @@ function RaceLocked_DevToggleGM()
 end
 
 function RaceLocked_IsGuildMaster(playerName)
-  return true
-  -- if not playerName or not IsInGuild() then
-  --   return false
-  -- end
+  if not playerName or not IsInGuild() then
+    return false
+  end
 
-  -- if devForceGM then
-  --   local localName = UnitName and UnitName('player')
-  --   if localName and Ambiguate(playerName, 'short') == localName then
-  --     return true
-  --   end
-  -- end
+  if devForceGM then
+    local localName = UnitName and UnitName('player')
+    if localName and Ambiguate(playerName, 'short') == localName then
+      return true
+    end
+  end
 
-  -- RaceLocked_RefreshGuildRoster()
+  RaceLocked_RefreshGuildRoster()
 
-  -- local targetName = Ambiguate(playerName, 'short')
-  -- local numMembers = GetNumGuildMembers()
+  local targetName = Ambiguate(playerName, 'short')
+  local numMembers = GetNumGuildMembers()
 
-  -- for index = 1, numMembers do
-  --   local name, _, rankIndex = GetGuildRosterInfo(index)
-  --   if name and Ambiguate(name, 'short') == targetName then
-  --     return rankIndex == 0
-  --   end
-  -- end
+  for index = 1, numMembers do
+    local name, _, rankIndex = GetGuildRosterInfo(index)
+    if name and Ambiguate(name, 'short') == targetName then
+      return rankIndex == 1 or rankIndex == 0
+    end
+  end
 
-  -- return false
+  return false
 end
 
 function RaceLocked_AmIGuildMaster()
