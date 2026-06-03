@@ -2,7 +2,7 @@
 
 --- Minimum character level for roster self-report (`S:`) and for marking
 --- `hasBeenMaxLevelAndSelfFound` while self-found.
-RACE_LOCKED_GUILD_FOUND_MAX_LEVEL = 60
+RACE_LOCKED_GUILD_FOUND_MAX_LEVEL = 1
 
 --- @return boolean
 function RaceLocked_GuildFound_IsAtOrAboveRequiredLevel()
