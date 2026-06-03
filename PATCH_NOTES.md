@@ -1,5 +1,11 @@
 ### PATCH NOTES
 
+**1.0.9 (03-06-2026)**
+
+### Features
+
+- Guild Found Override system
+
 **1.0.8 (28-05-2026)**
 
 ### Features
