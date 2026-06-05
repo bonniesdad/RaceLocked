@@ -108,5 +108,4 @@ Functions/GuildFound/Verification/IsBuffActive.lua
 Functions/GuildFound/Verification/TrackMaxLevelAndSelfFound.lua
 Functions/GuildFound/Verification/AmIVerified.lua
 Functions/GuildFound/Verification/CanPerformTradeWithPlayer.lua
-Functions/GuildFound/Verification/GoldGainedTracker.lua
 Functions/GuildFound/Verification/ShouldOverrideVerificationViaGuildNote.lua
