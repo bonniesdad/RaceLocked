@@ -1,6 +1,6 @@
 ## Interface: 11508, 20505
 ## Title: Race Locked
-## Version: 1.0.8
+## Version: 1.0.9
 ## Author: BonniesDad
 ## Notes: Apply Race Locked event rules and share competative information
 ## SavedVariablesPerCharacter: RaceLockedDB
@@ -40,12 +40,11 @@ Display/MainMenu/FactionRaceGrid/Utils/Guild.lua
 Display/MainMenu/FactionRaceGrid/View.lua
 Display/MainMenu/InitializeMainPanel.lua
 
+Functions/GuildFound/Utils/Constants.lua
+
 Display/MainMenu/GuildVerification/Utils/Constants.lua
-Display/MainMenu/GuildVerification/Utils/StripRealmFromName.lua
-Display/MainMenu/GuildVerification/Utils/IsLocalGuildRow.lua
-Display/MainMenu/GuildVerification/Utils/ComputeGuildTableColumns.lua
-Display/MainMenu/GuildVerification/Utils/GetPrimaryRowTint.lua
-Display/MainMenu/GuildVerification/Utils/GetGuildVerificationRosterRows.lua
+Display/MainMenu/GuildVerification/Utils/RosterRowData.lua
+Display/MainMenu/GuildVerification/RosterTable/View.lua
 Display/MainMenu/GuildVerification/View.lua
 
 Display/MainMenu/SettingsWindow/Utils/Constants.lua
@@ -68,9 +67,16 @@ Display/MainMenu/RaceLockedOptions/Index.lua
 
 Functions/SlashCommand/Index.lua
 
+## Roster
+Functions/GuildFound/Roster/Utils/PlayerIdentity.lua
+Functions/GuildFound/Roster/Utils/RosterStore.lua
+Functions/GuildFound/Roster/Utils/IsRosterEligible.lua
+Functions/GuildFound/Roster/Utils/IsGuildMaster.lua
+Functions/GuildFound/Roster/Utils/SessionLog.lua
+Functions/GuildFound/Roster/Index.lua
+
 ## Trade Restrictions
 Functions/GuildFound/TradeRestriction/Utils/CancelAuctionHouseWithMessage.lua
-Functions/GuildFound/TradeRestriction/Utils/CancelMailWithMessage.lua
 Functions/GuildFound/TradeRestriction/Utils/CancelTradeWithMessage.lua
 Functions/GuildFound/TradeRestriction/Utils/IsPlayerInGuildRoster.lua
 Functions/GuildFound/TradeRestriction/Utils/IsTradePartnerInMyGuild.lua
@@ -78,6 +84,16 @@ Functions/GuildFound/TradeRestriction/Utils/PrintRestrictionMessage.lua
 Functions/GuildFound/TradeRestriction/Utils/RefreshGuildRoster.lua
 Functions/GuildFound/TradeRestriction/Utils/IsInGuildFoundGuild.lua
 Functions/GuildFound/TradeRestriction/TradeRestriction.lua
+
+## Mail Restriction
+Functions/GuildFound/MailRestriction/Utils/Constants.lua
+Functions/GuildFound/MailRestriction/Utils/ClassifyInboxMail.lua
+Functions/GuildFound/MailRestriction/MailAccessPlan.lua
+Functions/GuildFound/MailRestriction/MailAccessSession.lua
+Functions/GuildFound/MailRestriction/MailStateReport.lua
+Functions/GuildFound/MailRestriction/MailVerificationOverlay.lua
+Functions/GuildFound/MailRestriction/MailSendGuard.lua
+Functions/GuildFound/MailRestriction/Index.lua
 
 
 ## Verification
@@ -87,7 +103,6 @@ Functions/GuildFound/Verification/SendTradeVerificationStatus.lua
 Functions/GuildFound/Verification/TradeVerificationCache.lua
 Functions/GuildFound/Verification/HandleTradeVerificationAddonMessage.lua
 Functions/GuildFound/Verification/TradeVerificationOverlay.lua
-Functions/GuildFound/Verification/MailVerificationOverlay.lua
 Functions/GuildFound/Verification/TradeVerificationSession.lua
 Functions/GuildFound/Verification/IsBuffActive.lua
 Functions/GuildFound/Verification/TrackMaxLevelAndSelfFound.lua

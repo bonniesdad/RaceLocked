@@ -365,7 +365,7 @@ function RaceLocked_GuildChampion_RefreshRaceGridDisplay(panes, raceTokens)
       ensureGuildNamesTooltip(pane, token)
       pane._guildNamesHit:Show()
     else
-      pane._guildNames:SetText('—')
+      pane._guildNames:SetText('•')
       pane._guildNames:SetTextColor(G.MUTED[1], G.MUTED[2], G.MUTED[3])
       if pane._guildNamesHit then
         pane._guildNamesHit:Hide()
@@ -429,7 +429,7 @@ function RaceLocked_GuildChampion_RefreshRaceGridDisplay(panes, raceTokens)
     end
 
     local row = pane._classBarRow
-    -- Inner width (row), not outer host — matches padded bar area inside the chart border.
+    -- Inner width (row), not outer host • matches padded bar area inside the chart border.
     local hostW = row and row:GetWidth() or 0
     if not hostW or hostW < 4 then
       hostW = 160

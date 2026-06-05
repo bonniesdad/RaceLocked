@@ -100,7 +100,7 @@ function RaceLocked_GetGuildRaceGridReportForRaceToken(raceToken)
   local playerShort = UnitName('player') and stripRealmFromRosterName(UnitName('player')) or ''
   local rosterNames = {}
   for i = 1, total do
-    -- Returns (warcraft.wiki.gg): … class (11), …, guid (17) — not an 18th slot.
+    -- Returns (warcraft.wiki.gg): … class (11), …, guid (17) • not an 18th slot.
     local name, _, _, level, _, _, _, _, _, _, classFile, _, _, _, _, guid17 = GetGuildRosterInfo(i)
     local memberShort = stripRealmFromRosterName(name)
     if memberShort ~= '' then
