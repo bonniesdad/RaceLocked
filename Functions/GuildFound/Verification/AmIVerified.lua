@@ -14,7 +14,7 @@ end
 --- Atomic: has offline gold tampering been detected for this character?
 --- This is the raw tamper flag, independent of any GM override.
 function RaceLocked_IsLocalTampered()
-  return RaceLocked_GetDBValue('playerMoneyValidationFailed') == true
+  return BonniesUtilities_GetNaughtyBoolean() == true
 end
 
 --- Atomic: unix time of the most recent detected tamper incident, or 0 if the
@@ -23,8 +23,8 @@ end
 --- own time • a newer incident beats it. Also broadcast in the self-report so
 --- peers can apply the same comparison (see RosterStore.GetEffectiveStatus).
 function RaceLocked_GetLocalTamperAt()
-  if RaceLocked_GetDBValue('playerMoneyValidationFailed') ~= true then return 0 end
-  return tonumber(RaceLocked_GetDBValue('playerMoneyValidationFailedAt')) or 0
+  if BonniesUtilities_GetNaughtyBoolean() ~= true then return 0 end
+  return tonumber(BonniesUtilities_GetNaughtyTimestamp()) or 0
 end
 
 --- Raw self-report fields for guild `S:` broadcasts and roster `entry.verified` /

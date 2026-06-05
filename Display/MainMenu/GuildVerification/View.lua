@@ -57,7 +57,7 @@ local function getDetectedOnHelperText(failedAt)
 end
 
 local function getVerificationChecks()
-  local playerMoneyValidationFailed = RaceLocked_GetDBValue('playerMoneyValidationFailed')
+  local playerMoneyValidationFailed = BonniesUtilities_GetNaughtyBoolean()
   local hasBeenMaxLevelAndSelfFound = RaceLocked_GetDBValue('hasBeenMaxLevelAndSelfFound')
 
   if playerMoneyValidationFailed == nil then
@@ -110,7 +110,7 @@ local function getVerificationChecks()
     passMessage = 'No tampering detected',
     failMessage = 'Tampering detected',
     failHelperText = tampered and getDetectedOnHelperText(
-      RaceLocked_GetDBValue('playerMoneyValidationFailedAt')
+      BonniesUtilities_GetNaughtyTimestamp()
     ) or nil,
   }
 
